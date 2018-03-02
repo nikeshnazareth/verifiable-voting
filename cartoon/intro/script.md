@@ -113,8 +113,6 @@ As an added bonus, it is extremely convenient and cheap without compromising sec
 
 ## Close
 
-From the simplest polls, to national elections, this is voting as it should be.
-
-The results are in: 100% of Earthlings agree that it's the best voting system around.
+So there you have it: 100% of Earthlings intend to use this scheme whenever they vote - from simple polls to national elections.
 
 Try it out at the link on the screen, or join me in the next video where we will discuss the underlying technology.
