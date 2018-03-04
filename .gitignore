@@ -1,2 +1,5 @@
 # Webstorm files
 .idea
+
+# Mac files
+**/.DS_Store
