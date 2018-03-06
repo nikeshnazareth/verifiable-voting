@@ -26,7 +26,7 @@ If you're the kind of person who would watch this video, you might be wondering:
 
 A full explanation would be too long for this video, so instead I will simply point out that the security mechanism is completely content agnostic: all records that occur at the same time are equally malleable. This means that it is as easy to change a one million dollar transaction, as it is to change a one dollar transaction.
 
-At the time of recording, the global population collectively relies on the tamper-proof mechanism to secure over 93 billion US dollars.
+At the time of recording, the global population collectively relies on the tamper-proof mechanism to secure over 100 billion US dollars.
 
 Of course, as we all know, "a public-opinion poll is no substitute for thought", so if you are not convinced, I encourage you to research how, and to what extent, Ethereum provides this feature.
 
