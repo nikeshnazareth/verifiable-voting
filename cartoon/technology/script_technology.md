@@ -10,7 +10,7 @@ Let's start with the Ethereum Blockchain.
 
 There are many interesting properties and claims about blockchains, which can be overwhelming for newcomers to the field.
 
-For our purposes, we can narrow our focus, and consider the Ethereum Blockchain to be a public, pseudononymous and tamper-proof ledger.
+For our purposes, we can narrow our focus, and consider the Ethereum Blockchain to be a public, tamper-proof and pseudononymous ledger.
 
 ### Public
 
