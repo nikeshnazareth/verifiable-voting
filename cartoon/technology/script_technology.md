@@ -38,21 +38,23 @@ Every record must be added to the ledger with an Ethereum account, which is list
 
 Fortunately, any user can create new accounts whenever desired.
 
-So, if an individual creates a new account, uses it to add a record to the ledger, never uses it for anything else and never reveals it anyone - that account (and therefore that record) is truly anonymous, at least at the blockchain level.
+Putting those pieced together, if an individual creates a new account, uses it to add a record to the ledger, never uses it for anything else and never reveals it anyone - that account (and therefore that record) is truly anonymous, at least at the blockchain level.
 
 ## Voting
 
 To return to the voting use case, if each voter simply creates a new account and writes their vote to the ledger, then all votes are public and tamper-proof, even though the voters themselves are anonymous. This means that anyone can verify the results.
 
-However, there is still one major problem that needs to be solved: if anyone can create multiple anonymous accounts, how do we authorise the legitimate accounts without compromising anonymity?
+However, there is still one major problem that needs to be solved: if anyone can create multiple anonymous accounts, how do we recognise the legitimate accounts without compromising anonymity?
 
 ## RSA Blinding
 
 There is a cryptographic solution, known as RSA blinding. To understand it, we must first explain digital signatures.
 
-A digital signature, unsuprisingly, is the digital equivalent of a signature, although much more secure: A single person or entity can sign any message in such a way that anyone with the public reference value ( known as the verification key ) can confirm that it was signed by the right person or entity.
+A digital signature, unsuprisingly, is the digital equivalent of a signature, although much more secure: anyone with the public reference value ( known as the verification key ) can confirm that it was signed by the right person.
 
-RSA blinding is an extension of this mechanism, which allows someone (let's call him Bob), to sign a message provided by someone else (let's call her Alice), without actually knowing what he's signing. The protocol works like this:
+RSA blinding is an extension of this mechanism, which allows someone (let's call him Bob), to sign a message provided by someone else (let's call her Alice), without actually knowing what he's signing. In the next video, we will explore a use case for this technique.
+
+For now, we will simply describe the protocol:
 * Alice creates the message that she wants Bob to sign
 * She seals it in such a way that only she can open it, but Bob can sign it
 * She gives Bob the sealed message
