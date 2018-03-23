@@ -1,5 +1,8 @@
 # Webstorm files
 .idea
 
+# Protools session
+cartoon/background/backing_track
+
 # Mac files
 **/.DS_Store
