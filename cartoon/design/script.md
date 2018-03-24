@@ -26,19 +26,31 @@ Importantly, the address was sealed before publication, so nobody else, not even
 
 The voters then simply use that address to publish their vote, along with the signature that proves they are authorised.
 
-Finally, everyone can independently count the votes and determine the result.
+Finally, everyone can independently validate the signatures, count the votes and determine the result.
 
 ## Security
 
+Let's take a closer look at some security implications.
+
 ### Eligibility vs Registration
 
-The specific eligibility criteria and approval process are intentionally not specified. Some simple cases are provided as options, but more complex criteria can easily be integrated.
+The verifiable voting scheme ensures that a population of registered voters can securely collect and publish anonymous ballots without the need for trust.
+
+The procedure for identifying legitimate voters is intentionally left open. Some simple cases are provided as options, but more complex criteria can easily be integrated.
 
 One important principle to consider when designing custom criteria is that identifying eligible voters, and registering those voters are two distinct activities, and should be isolated from each other.
 
-In many cases, the voter approval process can be public and transparent, which means it can be verified entirely on the blockchain. This also means that the process can be reused for multiple votes.
+In many cases, the voter approval process can be public and transparent, which means it can be verified entirely on the blockchain. Moreover, the process can be reused for multiple votes.
 
 Crucially, it also constrains the role of the trusted registration authority to simply reading the blockchain and signing the relevant RSA blinded addresses, which limits the scope of potential vulnerabilities.
+
+### Bribery
+
+A second concern is that verifiability typically implies provability. A knowledgeable voter can disclose their cryptographic secrets to anyone else, which reveals how they voted.
+
+Although voluntarily disclosing votes is possible in any scheme, being able to prove it makes bribery or blackmail more effective.
+
+Since verifiability is intrinsic to the scheme, the risk must be accepted, or custom mitigations must be introduced.
 
 ### Refreshing signing keys
 
