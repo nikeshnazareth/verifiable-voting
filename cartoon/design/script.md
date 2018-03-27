@@ -36,7 +36,7 @@ Let's take a closer look at some security implications.
 
 The verifiable voting scheme ensures that a population of registered voters can securely collect and publish anonymous ballots without the need for trust.
 
-The procedure for identifying legitimate voters is intentionally left open. Some simple cases are provided as options, but more complex criteria can easily be integrated.
+However, the procedure for identifying legitimate voters is intentionally left open. Some simple cases are provided as options, but more complex criteria can easily be integrated.
 
 One important principle to consider when designing custom criteria is that identifying eligible voters, and registering those voters are two distinct activities, and should be isolated from each other.
 
@@ -50,7 +50,7 @@ A second concern is that verifiability typically implies provability. A knowledg
 
 Although voluntarily disclosing votes is possible in any scheme, being able to prove it makes bribery or blackmail more effective.
 
-Since verifiability is intrinsic to the scheme, the risk must be accepted, or custom mitigations must be introduced.
+Since verifiability is intrinsic to the scheme, this risk must be accepted, or custom mitigations must be introduced.
 
 ### Refreshing signing keys
 
@@ -74,7 +74,7 @@ However, there are two alternatives that can be chosen by the organiser, each re
 The first technique is known as asymmetric encryption, which allows someone with a cryptographic lock, to seal a message that can only be opened with the corresponding cryptographic key.
 
 In the context of this scheme it would work as follows:
-* Before declaring the vote, the organiser chooses a trusted Vote Authority to hold the key.
+* When declaring the vote, the organiser chooses a trusted Vote Authority to generate and hold the key.
 * They then publish the lock to the blockchain
 * All voters lock their ballot before submitting it, which ensures it remains private.
 * After the vote, the Vote Authority publishes the key, which allows everyone to open the locks and count the ballots.
