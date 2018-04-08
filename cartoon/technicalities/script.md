@@ -1,4 +1,4 @@
-# Technicalities
++# Technicalities
 
 ## Title
 
@@ -24,9 +24,9 @@ Unfortunately, all plausible mechanisms for transferring Ether to the account ar
 * The organiser could establish a separate process for anonymous accounts to prove their authorisation and request funds, 
   but this weakens the guarantee that all authorised voters were able to vote.
 
-As the technology matures, it will be possible for the organiser to directly pay the fees on behalf of the voters. 
+As the technology matures, it will become possible for the organiser to directly pay the fees on behalf of the voters.
 
-It will also be possible to leverage Ethereum security without directly interacting with it. 
+It will also become possible to leverage the blockchain's security without directly interacting with it.
 
 Either option will preserve anonymity and security.
 
@@ -38,7 +38,7 @@ The second constraint is that there is a large fee associated with storing data 
 
 Once again, as the technology matures, the storage fees will be reduced, and possibly eliminated. 
 
-Nevertheless, it is still good practice to limit Ethereum data storage. 
+Nevertheless, it is still good practice to limit Ethereum data storage requirements.
 
 To this end, the verifiable voting scheme uses the Interplanetary File System (IPFS).
 
@@ -53,16 +53,18 @@ while the data itself is stored in IPFS.
 
 As long as at least one active IPFS node has the data, it will remain retrievable.
 
+Note that anyone in the world can host a node, including the voters and vote organiser, if they want to ensure data availability.
+
 ### Security
 
 It is worth noting that there is an obscure vulnerability introduced by IPFS. 
 
 It is possible for someone to publish an IPFS fingerprint to Ethereum, without publishing the corresponding data to IPFS. 
 
-This will result in users being unable to retrieve the data, and likely discarding it. 
+This will result in users being unable to retrieve the data, and likely ignoring it.
 
 From a strictly record-keeping perspective, this situation is indistinguishable from one in which a user simply 
-disregards votes they don't like, while claiming they were never published.
+disregards votes that they don't like, while claiming they were never published.
 
 Given the extreme transparency of the scheme, the truth will almost always be obvious from other considerations, 
 such as whether other people could retrieve the data.
