@@ -50,7 +50,10 @@ A second concern is that verifiability typically implies provability. A knowledg
 
 Although voluntarily disclosing votes is possible in any scheme, being able to prove it makes bribery or blackmail more effective.
 
-Since verifiability is intrinsic to the scheme, this risk must be accepted, or custom mitigations must be introduced.
+It is possible to design a complicated verifiable scheme that is also resistant to coercion.
+If voters are able to produce fake votes or secrets (that are plausible but don't actually affect the final tally) then they cannot be coerced into producing the real ones.
+
+However, the current version of the verifiable voting scheme does not have this feature, and should be used accordingly.
 
 ### Refreshing signing keys
 
