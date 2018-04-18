@@ -1,0 +1,19 @@
+{
+  "name": "verifiable-voting",
+  "version": "0.0.1",
+  "description": "A verifiable and anonymous voting system, available at https://verifiable-voting.nikeshnazareth.com",
+  "main": "index.js",
+  "scripts": {
+    "test": ""
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nikeshnazareth/verifiable-voting.git"
+  },
+  "author": "Nikesh Nazareth",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/nikeshnazareth/verifiable-voting/issues"
+  },
+  "homepage": "https://github.com/nikeshnazareth/verifiable-voting#readme"
+}
