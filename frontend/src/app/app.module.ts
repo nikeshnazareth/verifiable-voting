@@ -6,6 +6,7 @@ import { NgModule } from '@angular/core';
 import { AppComponent } from './app.component';
 import { MaterialModule } from './material/material.module';
 import { UiModule } from './ui/ui.module';
+import { CoreModule } from './core/core.module';
 
 @NgModule({
   declarations: [
@@ -14,6 +15,7 @@ import { UiModule } from './ui/ui.module';
   imports: [
     BrowserModule,
     BrowserAnimationsModule,
+    CoreModule,
     MaterialModule,
     UiModule
   ],
