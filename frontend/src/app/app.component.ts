@@ -2,9 +2,12 @@ import { Component } from '@angular/core';
 
 @Component({
   selector: 'vv-root',
-  templateUrl: './app.component.html',
-  styleUrls: ['./app.component.css']
+  styleUrls: ['./app.component.scss'],
+  template: `
+    <div class="mat-app-background">
+      <h1>Verifiable Voting</h1>
+    </div>
+  `
 })
 export class AppComponent {
-  title = 'vv';
 }
