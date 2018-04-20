@@ -2,7 +2,7 @@ import * as IPFS from 'ipfs-mini';
 import { Injectable } from '@angular/core';
 import { APP_CONFIG } from '../../config';
 
-interface IIPFSService {
+export interface IIPFSService {
   addJSON(data: object): Promise<string>;
 
   catJSON(hash: string): Promise<object>;

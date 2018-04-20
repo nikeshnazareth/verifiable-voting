@@ -1,4 +1,5 @@
 import { Component } from '@angular/core';
+import { IPFSService } from '../../core/ipfs/ipfs.service';
 
 @Component({
   selector: 'vv-launch-vote',
@@ -25,9 +26,15 @@ import { Component } from '@angular/core';
   `
 })
 export class LaunchVoteComponent {
-  public params: string = '';
+  private params: string = '';
+
+  public constructor(private ipfsSvc: IPFSService) {
+  }
 
   private launch() {
-    console.log('clicked');
+    this.ipfsSvc.addJSON({parameters: this.params})
+      .then(hash => this.ipfsSvc.catJSON(hash))
+      .then(result => console.log('Successfully added parameters to IPFS:', result))
+      .catch(error => console.log('Error'));
   }
 }

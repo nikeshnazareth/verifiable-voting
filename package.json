@@ -4,7 +4,8 @@
   "description": "A verifiable and anonymous voting system, available at https://verifiable-voting.nikeshnazareth.com",
   "main": "index.js",
   "scripts": {
-    "serve": "cd frontend; npm run start"
+    "serve": "cd frontend; npm run start",
+    "test-frontend": "cd frontend; npm run test"
   },
   "repository": {
     "type": "git",
