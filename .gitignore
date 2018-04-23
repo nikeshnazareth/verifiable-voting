@@ -4,5 +4,8 @@
 # Protools session
 cartoon/background/backing_track
 
+# Truffle build files
+backend/build
+
 # Mac files
 **/.DS_Store
