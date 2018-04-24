@@ -1,12 +1,13 @@
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { By } from '@angular/platform-browser';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { TestBed, async, ComponentFixture } from '@angular/core/testing';
+import { TestBed, async, ComponentFixture, fakeAsync, tick } from '@angular/core/testing';
 
 
 import { LaunchVoteComponent } from './launch-vote.component';
 import { IIPFSService, IPFSService } from '../../core/ipfs/ipfs.service';
 import { MaterialModule } from '../../material/material.module';
+import { EthereumService, IEthereumService } from '../../core/ethereum/ethereum.service';
 
 describe('Component: LaunchVoteComponent', () => {
   let fixture: ComponentFixture<LaunchVoteComponent>;
@@ -14,12 +15,14 @@ describe('Component: LaunchVoteComponent', () => {
 
   class Page {
     public ipfsSvc: IIPFSService;
+    public ethSvc: IEthereumService;
     public textArea: HTMLTextAreaElement;
     public submitButton: HTMLButtonElement;
 
     constructor() {
       const compInjector = fixture.debugElement.injector;
       this.ipfsSvc = compInjector.get(IPFSService);
+      this.ethSvc = compInjector.get(EthereumService);
       this.textArea = fixture.debugElement.query(By.css('textarea')).nativeElement;
       this.submitButton = fixture.debugElement.query(By.css('button')).nativeElement;
     }
@@ -44,6 +47,7 @@ describe('Component: LaunchVoteComponent', () => {
         MaterialModule
       ],
       providers: [
+        {provide: EthereumService, useClass: MockEthereumSvc},
         {provide: IPFSService, useClass: MockIPFSSvc}
       ]
     })
@@ -92,28 +96,44 @@ describe('Component: LaunchVoteComponent', () => {
   });
 
   describe('Functionality', () => {
+    const vote_params: string = 'Some arbitrary text';
+    const json_obj = {parameters: vote_params};
+
+    beforeEach(() => {
+      page.setTextValue(vote_params);
+    });
 
     it('should wrap the content of the text area in an object and publish it to IPFS', () => {
-      const vote_params: string = 'Some arbitrary text';
-      const json_obj = { parameters: vote_params };
-      page.setTextValue(vote_params);
       spyOn(page.ipfsSvc, 'addJSON').and.callThrough();
       page.submitButton.click();
       expect(page.ipfsSvc.addJSON).toHaveBeenCalledWith(json_obj);
     });
 
-    xit('should handle errors when adding the vote parameters to IPFS', () => {}); // TODO
+    xit('should handle errors when adding the vote parameters to IPFS', () => {
+    }); // TODO
+
+    it('should get the IPFS hash and publish it to Ethereum', fakeAsync(() => {
+      spyOn(page.ethSvc, 'deployVote').and.callThrough();
+      page.submitButton.click();
+      tick(); // we need to wait for the promise to return before inspecting deployVote
+      expect(page.ethSvc.deployVote).toHaveBeenCalledWith(DUMMY_HASH);
+    }));
   });
-
-
 });
 
+const DUMMY_HASH = 'DUMMY_HASH';
 class MockIPFSSvc implements IIPFSService {
   addJSON(data: object): Promise<string> {
-    return new Promise((resolve, reject) => resolve('HASH'));
+    return Promise.resolve(DUMMY_HASH);
   }
 
   catJSON(hash: string): Promise<object> {
-    return new Promise((resolve, reject) => resolve({}));
+    return Promise.resolve({});
+  }
+}
+
+class MockEthereumSvc implements IEthereumService {
+  deployVote(paramsHash: string): Promise<void> {
+    return Promise.resolve();
   }
 }
