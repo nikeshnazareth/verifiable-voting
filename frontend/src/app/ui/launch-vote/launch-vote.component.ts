@@ -1,23 +1,24 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+
 import { IPFSService } from '../../core/ipfs/ipfs.service';
 import { EthereumService } from '../../core/ethereum/ethereum.service';
+
 
 @Component({
   selector: 'vv-launch-vote',
   template: `
-    <form (submit)="launch()" #launchVoteForm="ngForm">
+    <form [formGroup]=launchVoteForm (ngSubmit)="onSubmit()">
       <h2>Launch Vote</h2>
       <mat-form-field>
-        <textarea [(ngModel)]="params"
-                  name="txtParams"
+        <textarea formControlName="parameters"
                   placeholder="Vote parameters"
-                  matInput
-                  required>
+                  matInput>
         </textarea>
       </mat-form-field>
       <div>
         <button type="submit"
-                [disabled]="!launchVoteForm.form.valid"
+                [disabled]="!launchVoteForm.valid"
                 mat-raised-button
                 color="primary">
           Launch
@@ -26,15 +27,30 @@ import { EthereumService } from '../../core/ethereum/ethereum.service';
     </form>
   `
 })
-export class LaunchVoteComponent {
-  private params: string = '';
+export class LaunchVoteComponent implements OnInit {
+  private launchVoteForm: FormGroup;
 
-  public constructor(private ipfsSvc: IPFSService, private ethSvc: EthereumService) {}
+  public constructor(private ipfsSvc: IPFSService,
+                     private ethSvc: EthereumService,
+                     private fb: FormBuilder) {
 
-  private launch() {
-    this.ipfsSvc.addJSON({parameters: this.params})
+    this.createForm();
+  }
+
+  ngOnInit() {
+    this.createForm();
+  }
+
+  onSubmit() {
+    const params = this.launchVoteForm.value.parameters;
+    this.ipfsSvc.addJSON({parameters: params})
       .then(hash => this.ethSvc.deployVote(hash))
-      .then(result => console.log('Successfully deployed vote'))
-      .catch(error => console.log('Error: ', error));
+      .catch(err => console.log(err));
+  }
+
+  private createForm() {
+    this.launchVoteForm = this.fb.group({
+      parameters: ['', Validators.required]
+    });
   }
 }
