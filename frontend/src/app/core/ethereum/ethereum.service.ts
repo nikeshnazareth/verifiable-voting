@@ -1,9 +1,9 @@
 import { Injectable } from '@angular/core';
-import * as contract from 'truffle-contract';
 
 import { APP_CONFIG } from '../../config';
 import { IVoteListingContract } from './voteListing.contract.interface';
 import { Web3Service } from './web3.service';
+import { ITruffleContractAbstraction, TruffleContractService } from './truffle-contract.service';
 
 
 export interface IEthereumService {
@@ -16,11 +16,11 @@ export class EthereumService implements IEthereumService {
 
   private _voteListingContractPromise: Promise<IVoteListingContract>;
 
-  constructor(private web3Svc: Web3Service) {
-    const voteListingDefinition = contract(APP_CONFIG.contracts.vote_listing);
+  constructor(private web3Svc: Web3Service, private contractSvc: TruffleContractService ) {
+    const voteListingDefinition: ITruffleContractAbstraction = contractSvc.wrap(APP_CONFIG.contracts.vote_listing);
     this._voteListingContractPromise = this.web3Svc.afterInjected()
       .then(() => voteListingDefinition.setProvider(this.web3Svc.currentProvider))
-      .then(() => voteListingDefinition.deployed());
+      .then(() => <Promise<IVoteListingContract>> voteListingDefinition.deployed());
   }
 
   /**
