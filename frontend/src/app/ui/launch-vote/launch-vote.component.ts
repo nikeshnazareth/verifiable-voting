@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 
 import { IPFSService } from '../../core/ipfs/ipfs.service';
-import { EthereumService } from '../../core/ethereum/ethereum.service';
+import { VoteListingContractService } from '../../core/ethereum/vote-listing-contract/vote-listing-contract.service';
 
 
 @Component({
@@ -31,7 +31,7 @@ export class LaunchVoteComponent implements OnInit {
   private launchVoteForm: FormGroup;
 
   public constructor(private ipfsSvc: IPFSService,
-                     private ethSvc: EthereumService,
+                     private voteListingSvc: VoteListingContractService,
                      private fb: FormBuilder) {
 
     this.createForm();
@@ -44,7 +44,7 @@ export class LaunchVoteComponent implements OnInit {
   onSubmit() {
     const params = this.launchVoteForm.value.parameters;
     this.ipfsSvc.addJSON({parameters: params})
-      .then(hash => this.ethSvc.deployVote(hash))
+      .then(hash => this.voteListingSvc.deployVote(hash))
       .catch(err => console.log(err));
   }
 

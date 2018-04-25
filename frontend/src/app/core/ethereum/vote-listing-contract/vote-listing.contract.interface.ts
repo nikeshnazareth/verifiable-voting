@@ -1,4 +1,4 @@
-import { ITransactionProperties, ITransactionReceipt } from './transaction.interface';
+import { ITransactionProperties, ITransactionReceipt } from '../transaction.interface';
 
 export interface IVoteListingContract {
   // address[] public votingContracts

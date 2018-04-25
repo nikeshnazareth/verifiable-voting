@@ -7,7 +7,10 @@ import { TestBed, async, ComponentFixture, fakeAsync, tick } from '@angular/core
 import { LaunchVoteComponent } from './launch-vote.component';
 import { IIPFSService, IPFSService } from '../../core/ipfs/ipfs.service';
 import { MaterialModule } from '../../material/material.module';
-import { EthereumService, IEthereumService } from '../../core/ethereum/ethereum.service';
+import {
+  IVoteListingContractService,
+  VoteListingContractService
+} from '../../core/ethereum/vote-listing-contract/vote-listing-contract.service';
 
 describe('Component: LaunchVoteComponent', () => {
   let fixture: ComponentFixture<LaunchVoteComponent>;
@@ -15,14 +18,14 @@ describe('Component: LaunchVoteComponent', () => {
 
   class Page {
     public ipfsSvc: IIPFSService;
-    public ethSvc: IEthereumService;
+    public voteListingSvc: IVoteListingContractService;
     public textArea: HTMLTextAreaElement;
     public submitButton: HTMLButtonElement;
 
     constructor() {
       const compInjector = fixture.debugElement.injector;
       this.ipfsSvc = compInjector.get(IPFSService);
-      this.ethSvc = compInjector.get(EthereumService);
+      this.voteListingSvc = compInjector.get(VoteListingContractService);
       this.textArea = fixture.debugElement.query(By.css('textarea')).nativeElement;
       this.submitButton = fixture.debugElement.query(By.css('button')).nativeElement;
     }
@@ -47,7 +50,7 @@ describe('Component: LaunchVoteComponent', () => {
         MaterialModule
       ],
       providers: [
-        {provide: EthereumService, useClass: MockEthereumSvc},
+        {provide: VoteListingContractService, useClass: MockVoteListingContractSvc},
         {provide: IPFSService, useClass: MockIPFSSvc}
       ]
     })
@@ -113,10 +116,10 @@ describe('Component: LaunchVoteComponent', () => {
     }); // TODO
 
     it('should get the IPFS hash and publish it to Ethereum', fakeAsync(() => {
-      spyOn(page.ethSvc, 'deployVote').and.callThrough();
+      spyOn(page.voteListingSvc, 'deployVote').and.callThrough();
       page.submitButton.click();
       tick(); // we need to wait for the promise to return before inspecting deployVote
-      expect(page.ethSvc.deployVote).toHaveBeenCalledWith(DUMMY_HASH);
+      expect(page.voteListingSvc.deployVote).toHaveBeenCalledWith(DUMMY_HASH);
     }));
   });
 });
@@ -132,7 +135,7 @@ class MockIPFSSvc implements IIPFSService {
   }
 }
 
-class MockEthereumSvc implements IEthereumService {
+class MockVoteListingContractSvc implements IVoteListingContractService {
   deployVote(paramsHash: string): Promise<void> {
     return Promise.resolve();
   }
