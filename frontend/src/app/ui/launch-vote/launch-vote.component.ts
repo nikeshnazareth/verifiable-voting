@@ -33,8 +33,6 @@ export class LaunchVoteComponent implements OnInit {
   public constructor(private ipfsSvc: IPFSService,
                      private voteListingSvc: VoteListingContractService,
                      private fb: FormBuilder) {
-
-    this.createForm();
   }
 
   ngOnInit() {
