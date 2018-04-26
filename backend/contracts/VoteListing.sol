@@ -11,12 +11,16 @@ pragma solidity ^0.4.21;
 contract VoteListing {
     address[] public votingContracts;
 
+    event VoteCreated(address contractAddress);
+
     /**
         @notice Deploys a new AnonymousVote contract with the specified parameters
         @param _paramsHash the IPFS hash of the vote parameters
     */
     function deploy(bytes32 _paramsHash) public {
-        votingContracts.push(new AnonymousVoting(_paramsHash));
+        address addr = new AnonymousVoting(_paramsHash);
+        votingContracts.push(addr);
+        emit VoteCreated(addr);
     }
 
     /**
