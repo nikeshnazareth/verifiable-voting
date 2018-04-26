@@ -1,20 +1,16 @@
 import * as contract from 'truffle-contract';
 
 import { IWeb3Provider } from './web3.service';
+import { IContract } from './contract.interfaces';
 
 export interface ITruffleContractService {
   wrap(definition: object): ITruffleContractAbstraction;
 }
 
-// The interface will correspond to the particular contract API
-// This empty interface is simply used for code clarity
-export interface IContract { //tslint:disable-line
-}
-
 export interface ITruffleContractAbstraction {
   setProvider(p: IWeb3Provider);
 
-  deployed(): IContract;
+  deployed(): Promise<IContract>;
 }
 
 export class TruffleContractService {

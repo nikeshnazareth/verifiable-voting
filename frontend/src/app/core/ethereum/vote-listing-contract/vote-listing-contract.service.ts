@@ -1,24 +1,36 @@
-import { Injectable } from '@angular/core';
+import { EventEmitter, Injectable } from '@angular/core';
 
 import { APP_CONFIG } from '../../../config';
-import { IVoteListingContract } from './vote-listing.contract.interface';
+import { VoteCreated, IVoteListingContract } from './vote-listing.contract.interface';
 import { Web3Service } from '../web3.service';
-import { ITruffleContractAbstraction, TruffleContractService } from '../truffle-contract.service';
+import { TruffleContractService } from '../truffle-contract.service';
+import { IContractEventStream } from '../contract.interfaces';
+import { ErrorService } from '../../error-service/error-service';
 
 export interface IVoteListingContractService {
-  deployVote(paramsHash: string): any;
+  voteCreated$: EventEmitter<string>;
+
+  deployVote(paramsHash: string): Promise<void>;
 }
 
 @Injectable()
 export class VoteListingContractService implements IVoteListingContractService {
+  /**
+   * A stream of new vote contract addresses deployed from the VoteListing contract
+   */
+  public voteCreated$: EventEmitter<string>;
 
-  private _contract: Promise<IVoteListingContract>;
+  private _initialised: Promise<void>;
+  private _contract: IVoteListingContract;
 
-  constructor(private web3Svc: Web3Service, private contractSvc: TruffleContractService) {
-    const abstraction: ITruffleContractAbstraction = contractSvc.wrap(APP_CONFIG.contracts.vote_listing);
-    this._contract = this.web3Svc.afterInjected()
-      .then(() => abstraction.setProvider(this.web3Svc.currentProvider))
-      .then(() => <Promise<IVoteListingContract>> abstraction.deployed());
+  constructor(private web3Svc: Web3Service,
+              private contractSvc: TruffleContractService,
+              private errSvc: ErrorService) {
+    this.voteCreated$ = new EventEmitter<string>();
+
+    this._initialised = this.initialiseContract()
+      .then(() => this.emitVoteCreatedEvents())
+      .catch(err => this.errSvc.add(err));
   }
 
   /**
@@ -27,9 +39,41 @@ export class VoteListingContractService implements IVoteListingContractService {
    * @returns {Promise<void>} A promise indicating when the contract is deployed
    */
   deployVote(paramsHash: string): Promise<void> {
-    return this._contract
-      .then(voteListingContract => voteListingContract.deploy(paramsHash, {from: this.web3Svc.defaultAccount}))
+    return this._initialised
+      .then(() => this._contract.deploy(paramsHash, {from: this.web3Svc.defaultAccount}))
       .then(tx => null);
+  }
+
+  /**
+   * Uses the truffle build object to find the VoteListing contract on the injected blockchain
+   * and assigns it to this._contract
+   * @returns {Promise<void>} A promise indicating when this._contract is initialised (or an error occurs)
+   */
+  private initialiseContract(): Promise<void> {
+    return this.web3Svc.afterInjected()
+      .then(() => this.contractSvc.wrap(APP_CONFIG.contracts.vote_listing))
+      .then(abstraction => {
+        abstraction.setProvider(this.web3Svc.currentProvider);
+        return abstraction.deployed();
+      })
+      .then(contract => {
+        this._contract = <IVoteListingContract> contract;
+      });
+  }
+
+  /**
+   * Listens for VoteCreated events on the VoteListing contract and
+   * pipes the events to this.voteCreated$
+   */
+  private emitVoteCreatedEvents(): void {
+     const events: IContractEventStream = this._contract.allEvents();
+    events.watch((err, log) => {
+      if (err) {
+        this.errSvc.add(err);
+      } else if (log.event === VoteCreated.event) {
+        this.voteCreated$.emit((<VoteCreated.Log> log).args.contractAddress);
+      }
+    });
   }
 }
 

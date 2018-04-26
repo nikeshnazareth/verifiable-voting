@@ -2,7 +2,7 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { By } from '@angular/platform-browser';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { TestBed, async, ComponentFixture, fakeAsync, tick } from '@angular/core/testing';
-
+import { EventEmitter } from '@angular/core';
 
 import { LaunchVoteComponent } from './launch-vote.component';
 import { IIPFSService, IPFSService } from '../../core/ipfs/ipfs.service';
@@ -136,6 +136,8 @@ class MockIPFSSvc implements IIPFSService {
 }
 
 class MockVoteListingContractSvc implements IVoteListingContractService {
+  voteCreated$: EventEmitter<string>;
+
   deployVote(paramsHash: string): Promise<void> {
     return Promise.resolve();
   }

@@ -1,14 +1,15 @@
-import { EventEmitter } from '@angular/core';
-import { TestBed } from '@angular/core/testing';
+import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 
 import { IVoteListingContractService, VoteListingContractService } from './vote-listing-contract.service';
-import {
-  ITruffleContractAbstraction, ITruffleContractService,
-  TruffleContractService
-} from '../truffle-contract.service';
-import { IWeb3Provider, IWeb3Service, Web3Service } from '../web3.service';
+import { ITruffleContractService, TruffleContractService } from '../truffle-contract.service';
+import { IWeb3Service, Web3Service } from '../web3.service';
 import { ExpectedErrorWasNotThrown } from '../../../mocha.extensions';
-import { IVoteListingContract } from './vote-listing.contract.interface';
+import { VoteCreated } from './vote-listing.contract.interface';
+import { ErrorService } from '../../error-service/error-service';
+import {
+  DummyAbstraction, IDummyAbstraction, MockTruffleContractSvc,
+  MockWeb3Svc
+} from './vote-listing-contract.service.spec.mocks';
 
 
 describe('Service: VoteListingContractService', () => {
@@ -18,26 +19,59 @@ describe('Service: VoteListingContractService', () => {
   let voteListingContractSvc: IVoteListingContractService;
   let web3Svc: IWeb3Service;
   let contractSvc: ITruffleContractService;
+  let errSvc: ErrorService;
 
   beforeEach(() => {
     TestBed.configureTestingModule({
       providers: [
         VoteListingContractService,
+        ErrorService,
         {provide: Web3Service, useClass: MockWeb3Svc},
-        {provide: TruffleContractService, useClass: MockTruffleContractSvc}
+        {provide: TruffleContractService, useClass: MockTruffleContractSvc},
       ]
     });
 
     voteListingContractSvc = TestBed.get(VoteListingContractService);
     web3Svc = TestBed.get(Web3Service);
     contractSvc = TestBed.get(TruffleContractService);
+    errSvc = TestBed.get(ErrorService);
+  });
+
+  // create a reference to the dummy abstraction so it is easier to spy
+  let abstraction: IDummyAbstraction;
+  beforeEach(() => {
+    abstraction = new DummyAbstraction();
+    spyOn(contractSvc, 'wrap').and.callFake(definition => abstraction);
+  });
+
+  describe('constructor', () => {
+    it('should raise an error with the ErrorService if web3 is not injected', fakeAsync(() => {
+      const errorMsg: string = 'Not injected';
+      spyOn(web3Svc, 'afterInjected').and.returnValue(Promise.reject(errorMsg));
+      spyOn(errSvc, 'add').and.stub();
+      // recreate the service (the constructor in the original has already been called)
+      voteListingContractSvc = new VoteListingContractService(<Web3Service> web3Svc, contractSvc, errSvc);
+      tick(); // wait for the promise to finish
+      expect(errSvc.add).toHaveBeenCalledWith(errorMsg);
+    }));
+
+    it('should raise an error with the ErrorService if the contract is not deployed', fakeAsync(() => {
+      const errorMsg: string = 'VoteListing not deployed to network';
+      spyOn(abstraction, 'deployed').and.throwError(errorMsg);
+      spyOn(errSvc, 'add').and.stub();
+      // recreate the service (the constructor in the original has already been called)
+      voteListingContractSvc = new VoteListingContractService(<Web3Service> web3Svc, contractSvc, errSvc);
+      tick(); // wait for the promise to finish
+      expect(errSvc.add).toHaveBeenCalledWith(Error(errorMsg));
+    }));
   });
 
   describe('method: deployVote', () => {
-    it('should fail if web3 is not injected', done => {
-      spyOn(web3Svc, 'afterInjected').and.returnValue(Promise.reject('Not injected'));
+    it('should fail if the contract was not initialised', done => {
+      spyOn(web3Svc, 'afterInjected').and.returnValue(Promise.reject(''));
       // recreate the service (the constructor in the original has already been called)
-      voteListingContractSvc = new VoteListingContractService(<Web3Service> web3Svc, contractSvc);
+      voteListingContractSvc = new VoteListingContractService(<Web3Service> web3Svc, contractSvc, errSvc);
+
       voteListingContractSvc.deployVote(paramsHash)
         .then(() => {
           throw new ExpectedErrorWasNotThrown();
@@ -46,10 +80,11 @@ describe('Service: VoteListingContractService', () => {
         .then(done);
     });
 
+
     it('should fail if contract.deploy fails', done => {
-      spyOn(dummyContract, 'deploy').and.returnValue(Promise.reject('Deploy vote failed'));
+      spyOn(abstraction.contract, 'deploy').and.returnValue(Promise.reject('Deploy vote failed'));
       // recreate the service (the constructor in the original has already been called)
-      voteListingContractSvc = new VoteListingContractService(<Web3Service> web3Svc, contractSvc);
+      voteListingContractSvc = new VoteListingContractService(<Web3Service> web3Svc, contractSvc, errSvc);
       voteListingContractSvc.deployVote(paramsHash)
         .then(() => {
           throw new ExpectedErrorWasNotThrown();
@@ -65,34 +100,71 @@ describe('Service: VoteListingContractService', () => {
     });
   });
 
-
-  class MockWeb3Svc implements IWeb3Service {
-    public block$: EventEmitter<null> = null;
-    public isInjected: boolean = true;
-    public currentProvider: IWeb3Provider = null;
-    public defaultAccount: string = null;
-
-    afterInjected() {
-      return Promise.resolve();
-    }
-  }
-
-  const dummyContract: IVoteListingContract = {
-    votingContracts: null,
-    numberOfVotingContracts: null,
-    deploy: (hash, options) => Promise.resolve({tx: 'A dummy transaction'})
-  };
-
-  class MockTruffleContractSvc implements ITruffleContractService {
-
-    public abstraction: ITruffleContractAbstraction = {
-      setProvider: (provider: IWeb3Provider) => null,
-      deployed: () => dummyContract
+  describe('eventEmitter: voteCreated$', () => {
+    const addr: string = 'dummy_address';
+    const log: VoteCreated.Log = {
+      event: VoteCreated.event,
+      args: {
+        contractAddress: addr
+      }
     };
+    const error: Error = new Error('Error Message');
 
-    wrap(definition: object) {
-      return this.abstraction;
-    }
-  }
+    let eventHandler;
+    beforeEach(() => {
+      eventHandler = jasmine.createSpy('handleVoteCreated');
+    });
+
+    it('should track and pass-through the VoteCreated event on the VoteListing contract', done => {
+      // wait for the initialisation promise to complete
+      setTimeout(() => {
+        voteListingContractSvc.voteCreated$.subscribe(eventHandler);
+        abstraction.contract.eventStream.trigger(null, log);
+        expect(eventHandler).toHaveBeenCalledWith(addr);
+        done();
+      });
+    });
+
+    it('should raise an error with the ErrorService if the contract event stream contains errors', done => {
+      spyOn(errSvc, 'add').and.stub();
+      // wait for the initialisation promise to complete
+      setTimeout(() => {
+        voteListingContractSvc.voteCreated$.subscribe(eventHandler);
+        abstraction.contract.eventStream.trigger(error, null);
+        expect(errSvc.add).toHaveBeenCalledWith(error);
+        expect(eventHandler).not.toHaveBeenCalled();
+        done();
+      });
+    });
+
+    it('should handle interleaved log events and errors', done => {
+      spyOn(errSvc, 'add').and.stub();
+      // wait for the initialisation promise to complete
+      setTimeout(() => {
+        voteListingContractSvc.voteCreated$.subscribe(eventHandler);
+        // 1. log event
+        abstraction.contract.eventStream.trigger(null, log);
+        expect(eventHandler).toHaveBeenCalledWith(addr);
+        expect(errSvc.add).not.toHaveBeenCalled();
+        // 2. error
+        abstraction.contract.eventStream.trigger(error, null);
+        expect(eventHandler).toHaveBeenCalledWith(addr);
+        expect(errSvc.add).toHaveBeenCalledWith(error);
+        // 3. log event
+        abstraction.contract.eventStream.trigger(null, log);
+        expect(eventHandler).toHaveBeenCalledTimes(2);
+        expect(errSvc.add).toHaveBeenCalledTimes(1);
+        // 4. log event
+        abstraction.contract.eventStream.trigger(null, log);
+        expect(eventHandler).toHaveBeenCalledTimes(3);
+        expect(errSvc.add).toHaveBeenCalledTimes(1);
+        // 5. error
+        abstraction.contract.eventStream.trigger(error, null);
+        expect(eventHandler).toHaveBeenCalledTimes(3);
+        expect(errSvc.add).toHaveBeenCalledTimes(2);
+        done();
+      });
+    });
+  });
 });
 
