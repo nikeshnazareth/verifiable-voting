@@ -1,5 +1,7 @@
 import { Component } from '@angular/core';
 
+import { ErrorService } from './core/error-service/error-service';
+
 @Component({
   selector: 'vv-root',
   template: `
@@ -10,4 +12,11 @@ import { Component } from '@angular/core';
   `
 })
 export class AppComponent {
+
+  constructor(errSvc: ErrorService) {
+    // TODO: do something more user friendly
+    errSvc.error$.subscribe(err => {
+      console.log(err);
+    });
+  }
 }
