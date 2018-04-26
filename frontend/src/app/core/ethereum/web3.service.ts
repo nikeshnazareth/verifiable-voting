@@ -1,4 +1,7 @@
+import { EventEmitter } from '@angular/core';
+
 export interface IWeb3Service {
+  block$: EventEmitter<null>;
   isInjected: boolean;
   currentProvider: IWeb3Provider;
   defaultAccount: string;
@@ -13,6 +16,14 @@ export interface IWeb3Provider { //tslint:disable-line
 declare const web3: IWeb3;
 
 export class Web3Service {
+  /**
+   * An observable corresponding to the stream of mined blocks
+   */
+  public block$: EventEmitter<null>;
+
+  constructor() {
+    this.initialiseBlock$();
+  }
 
   /**
    * @returns {boolean} whether or not web3 has been injected into the current context
@@ -43,6 +54,17 @@ export class Web3Service {
   get defaultAccount(): string {
     return this.isInjected ? web3.eth.defaultAccount : null;
   }
+
+  /**
+   * Maps block$ to the stream of blocks from web3
+   */
+  private initialiseBlock$() {
+    this.block$ = new EventEmitter<null>();
+    const filter: IFilter = web3.eth.filter('latest');
+    filter.watch(() => {
+      this.block$.emit();
+    });
+  }
 }
 
 
@@ -52,7 +74,12 @@ interface IWeb3 {
   currentProvider: any;
   eth: {
     defaultAccount: string;
+    filter(event: string): IFilter;
   };
+}
+
+interface IFilter {
+  watch(cb): void;
 }
 
 
