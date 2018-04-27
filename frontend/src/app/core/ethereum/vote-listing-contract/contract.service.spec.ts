@@ -7,6 +7,7 @@ import { ExpectedErrorWasNotThrown } from '../../../mocha.extensions';
 import { VoteCreatedEvent } from './contract.api';
 import { ErrorService } from '../../error-service/error.service';
 import { Mock } from './contract.service.spec.mock';
+import { IContractLog } from '../contract.interface';
 
 
 describe('Service: VoteListingContractService', () => {
@@ -129,6 +130,23 @@ describe('Service: VoteListingContractService', () => {
         voteListingContractSvc.voteCreated$.subscribe(eventHandler);
         abstraction.contract.eventStream.trigger(error, null);
         expect(errSvc.add).toHaveBeenCalledWith(error);
+        expect(eventHandler).not.toHaveBeenCalled();
+        done();
+      });
+    });
+
+    it('should ignore non-VotedCreated events', done => {
+      const otherEventLog: IContractLog = {
+        event: 'Other Event',
+        args: {
+          param1: 'param',
+          param2: 'second param'
+        }
+      };
+      // wait for the initialisation promise to complete
+      setTimeout(() => {
+        voteListingContractSvc.voteCreated$.subscribe(eventHandler);
+        abstraction.contract.eventStream.trigger(null, otherEventLog);
         expect(eventHandler).not.toHaveBeenCalled();
         done();
       });
