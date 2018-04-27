@@ -6,6 +6,7 @@ import { Web3Service } from '../web3.service';
 import { TruffleContractWrapperService } from '../truffle-contract.service';
 import { IContractEventStream } from '../contract.interface';
 import { ErrorService } from '../../error-service/error.service';
+import { address, bytes32 } from '../type.mappings';
 
 export interface IVoteListingContractService {
   voteCreated$: EventEmitter<string>;
@@ -18,7 +19,7 @@ export class VoteListingContractService implements IVoteListingContractService {
   /**
    * A stream of new vote contract addresses deployed from the VoteListing contract
    */
-  public voteCreated$: EventEmitter<string>;
+  public voteCreated$: EventEmitter<address>;
 
   private _initialised: Promise<void>;
   private _contract: VoteListingAPI;
@@ -35,10 +36,10 @@ export class VoteListingContractService implements IVoteListingContractService {
 
   /**
    * Uses the VoteListing contract to deploy a new vote to the blockchain
-   * @param {string} paramsHash the IPFS hash of the vote parameters
+   * @param {bytes32} paramsHash the IPFS hash of the vote parameters
    * @returns {Promise<void>} A promise indicating when the contract is deployed
    */
-  deployVote(paramsHash: string): Promise<void> {
+  deployVote(paramsHash: bytes32): Promise<void> {
     return this._initialised
       .then(() => this._contract.deploy(paramsHash, {from: this.web3Svc.defaultAccount}))
       .then(tx => null);
