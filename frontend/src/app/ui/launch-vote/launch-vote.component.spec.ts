@@ -11,6 +11,7 @@ import {
   IVoteListingContractService,
   VoteListingContractService
 } from '../../core/ethereum/vote-listing-contract/contract.service';
+import { address } from '../../core/ethereum/type.mappings';
 
 describe('Component: LaunchVoteComponent', () => {
   let fixture: ComponentFixture<LaunchVoteComponent>;
@@ -125,6 +126,7 @@ describe('Component: LaunchVoteComponent', () => {
 });
 
 const DUMMY_HASH = 'DUMMY_HASH';
+
 class MockIPFSSvc implements IIPFSService {
   addJSON(data: object): Promise<string> {
     return Promise.resolve(DUMMY_HASH);
@@ -140,5 +142,9 @@ class MockVoteListingContractSvc implements IVoteListingContractService {
 
   deployVote(paramsHash: string): Promise<void> {
     return Promise.resolve();
+  }
+
+  deployedVotes(): Promise<address[]> {
+    return Promise.resolve([]);
   }
 }

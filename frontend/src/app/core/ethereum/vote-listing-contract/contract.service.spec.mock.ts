@@ -7,6 +7,8 @@ import {
   ITruffleContractAbstraction as IProdTruffleContractAbstraction,
   ITruffleContractWrapperService
 } from '../truffle-contract.service';
+import { address } from '../type.mappings';
+import * as BigNumber from 'bignumber.js';
 
 export namespace Mock {
   export class Web3Service implements IWeb3Service {
@@ -46,12 +48,19 @@ export namespace Mock {
 
   interface IVoteListingContract extends IProdVoteListingContract {
     eventStream: IContractEventStream;
+
+    setContractAddresses(contracts: address[]);
   }
 
   class VoteListingContract implements IVoteListingContract {
+    private contracts: address[] = [];
     eventStream = new ContractEventStream();
-    votingContracts;
-    numberOfVotingContracts;
+    votingContracts = {
+      call: (idx: number) => Promise.resolve(this.contracts[idx])
+    };
+    numberOfVotingContracts = {
+      call: () => new BigNumber(this.contracts.length)
+    };
 
     deploy(hash, options) {
       return Promise.resolve({tx: 'A dummy transaction'});
@@ -59,6 +68,10 @@ export namespace Mock {
 
     allEvents() {
       return this.eventStream;
+    }
+
+    setContractAddresses(contracts) {
+      this.contracts = contracts;
     }
   }
 

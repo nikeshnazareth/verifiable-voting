@@ -1,4 +1,3 @@
-
 import * as BigNumber from 'bignumber.js';
 
 // Type mappings from solidity to javascript
@@ -6,4 +5,4 @@ import * as BigNumber from 'bignumber.js';
 
 export type bytes32 = string;
 export type address = string;
-export type uint = BigNumber.BigNumber;
+export type uint = BigNumber;

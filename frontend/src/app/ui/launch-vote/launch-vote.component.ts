@@ -4,7 +4,6 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { IPFSService } from '../../core/ipfs/ipfs.service';
 import { VoteListingContractService } from '../../core/ethereum/vote-listing-contract/contract.service';
 
-
 @Component({
   selector: 'vv-launch-vote',
   template: `

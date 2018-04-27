@@ -12,6 +12,8 @@ export interface IVoteListingContractService {
   voteCreated$: EventEmitter<string>;
 
   deployVote(paramsHash: string): Promise<void>;
+
+  deployedVotes(): Promise<address[]>;
 }
 
 @Injectable()
@@ -43,6 +45,18 @@ export class VoteListingContractService implements IVoteListingContractService {
     return this._initialised
       .then(() => this._contract.deploy(paramsHash, {from: this.web3Svc.defaultAccount}))
       .then(tx => null);
+  }
+
+  /**
+   * @returns {Promise<address[]>} The deployed contract addresses from the VoteListing contract
+   */
+  deployedVotes(): Promise<address[]> {
+    return this._initialised
+      .then(() => this._contract.numberOfVotingContracts.call())
+      .then(countBN => countBN.toNumber())
+      .then(count => Array(count).fill(0).map((_, idx) => idx)) // produce an array of the numbers up to count
+      .then(range => range.map(i => this._contract.votingContracts.call(i)))
+      .then(reqs => Promise.all(reqs));
   }
 
   /**

@@ -99,6 +99,41 @@ describe('Service: VoteListingContractService', () => {
     });
   });
 
+  describe('method: deployedVotes', () => {
+    it('should fail if the contract was not initialised', done => {
+      spyOn(web3Svc, 'afterInjected').and.returnValue(Promise.reject(''));
+      // recreate the service (the constructor in the original has already been called)
+      voteListingContractSvc = new VoteListingContractService(<Web3Service> web3Svc, contractSvc, errSvc);
+
+      voteListingContractSvc.deployedVotes()
+        .then(() => {
+          throw new ExpectedErrorWasNotThrown();
+        })
+        .catch(err => err instanceof ExpectedErrorWasNotThrown ? fail(err) : null) // suppress the expected error
+        .then(done);
+    });
+
+    it('should return a Promise of an empty list if there are no deployed votes', done => {
+      const addresses: address[] = [];
+      abstraction.contract.setContractAddresses(addresses);
+      voteListingContractSvc.deployedVotes()
+        .then(result => expect(result).toEqual(addresses))
+        .then(done);
+    });
+
+    it('should return a Promise of a list of addresses corresponding to votingContracts array', done => {
+      const addresses: address[] = [
+        'address1',
+        'address2',
+        'address3'
+      ];
+      abstraction.contract.setContractAddresses(addresses);
+      voteListingContractSvc.deployedVotes()
+        .then(result => expect(result).toEqual(addresses))
+        .then(done);
+    });
+  });
+
   describe('eventEmitter: voteCreated$', () => {
     const addr: address = 'dummy_address';
     const log: VoteCreatedEvent.Log = {
