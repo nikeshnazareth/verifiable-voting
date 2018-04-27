@@ -10,7 +10,7 @@ import { MaterialModule } from '../../material/material.module';
 import {
   IVoteListingContractService,
   VoteListingContractService
-} from '../../core/ethereum/vote-listing-contract/vote-listing-contract.service';
+} from '../../core/ethereum/vote-listing-contract/contract.service';
 
 describe('Component: LaunchVoteComponent', () => {
   let fixture: ComponentFixture<LaunchVoteComponent>;

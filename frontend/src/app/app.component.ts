@@ -1,6 +1,6 @@
 import { Component } from '@angular/core';
 
-import { ErrorService } from './core/error-service/error-service';
+import { ErrorService } from './core/error-service/error.service';
 
 @Component({
   selector: 'vv-root',

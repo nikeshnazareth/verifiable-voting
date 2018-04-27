@@ -1,11 +1,11 @@
 import { EventEmitter, Injectable } from '@angular/core';
 
 import { APP_CONFIG } from '../../../config';
-import { VoteCreated, IVoteListingContract } from './vote-listing.contract.interface';
+import { VoteCreatedEvent, VoteListingAPI } from './contract.api';
 import { Web3Service } from '../web3.service';
-import { TruffleContractService } from '../truffle-contract.service';
-import { IContractEventStream } from '../contract.interfaces';
-import { ErrorService } from '../../error-service/error-service';
+import { TruffleContractWrapperService } from '../truffle-contract.service';
+import { IContractEventStream } from '../contract.interface';
+import { ErrorService } from '../../error-service/error.service';
 
 export interface IVoteListingContractService {
   voteCreated$: EventEmitter<string>;
@@ -21,10 +21,10 @@ export class VoteListingContractService implements IVoteListingContractService {
   public voteCreated$: EventEmitter<string>;
 
   private _initialised: Promise<void>;
-  private _contract: IVoteListingContract;
+  private _contract: VoteListingAPI;
 
   constructor(private web3Svc: Web3Service,
-              private contractSvc: TruffleContractService,
+              private contractSvc: TruffleContractWrapperService,
               private errSvc: ErrorService) {
     this.voteCreated$ = new EventEmitter<string>();
 
@@ -57,7 +57,7 @@ export class VoteListingContractService implements IVoteListingContractService {
         return abstraction.deployed();
       })
       .then(contract => {
-        this._contract = <IVoteListingContract> contract;
+        this._contract = <VoteListingAPI> contract;
       });
   }
 
@@ -70,8 +70,8 @@ export class VoteListingContractService implements IVoteListingContractService {
     events.watch((err, log) => {
       if (err) {
         this.errSvc.add(err);
-      } else if (log.event === VoteCreated.event) {
-        this.voteCreated$.emit((<VoteCreated.Log> log).args.contractAddress);
+      } else if (log.event === VoteCreatedEvent.name) {
+        this.voteCreated$.emit((<VoteCreatedEvent.Log> log).args.contractAddress);
       }
     });
   }

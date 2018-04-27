@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 
 import { IPFSService } from '../../core/ipfs/ipfs.service';
-import { VoteListingContractService } from '../../core/ethereum/vote-listing-contract/vote-listing-contract.service';
+import { VoteListingContractService } from '../../core/ethereum/vote-listing-contract/contract.service';
 
 
 @Component({

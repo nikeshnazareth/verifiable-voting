@@ -1,15 +1,12 @@
 import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 
-import { IVoteListingContractService, VoteListingContractService } from './vote-listing-contract.service';
-import { ITruffleContractService, TruffleContractService } from '../truffle-contract.service';
+import { IVoteListingContractService, VoteListingContractService } from './contract.service';
+import { ITruffleContractWrapperService, TruffleContractWrapperService } from '../truffle-contract.service';
 import { IWeb3Service, Web3Service } from '../web3.service';
 import { ExpectedErrorWasNotThrown } from '../../../mocha.extensions';
-import { VoteCreated } from './vote-listing.contract.interface';
-import { ErrorService } from '../../error-service/error-service';
-import {
-  DummyAbstraction, IDummyAbstraction, MockTruffleContractSvc,
-  MockWeb3Svc
-} from './vote-listing-contract.service.spec.mocks';
+import { VoteCreatedEvent } from './contract.api';
+import { ErrorService } from '../../error-service/error.service';
+import { Mock } from './contract.service.spec.mock';
 
 
 describe('Service: VoteListingContractService', () => {
@@ -18,7 +15,7 @@ describe('Service: VoteListingContractService', () => {
 
   let voteListingContractSvc: IVoteListingContractService;
   let web3Svc: IWeb3Service;
-  let contractSvc: ITruffleContractService;
+  let contractSvc: ITruffleContractWrapperService;
   let errSvc: ErrorService;
 
   beforeEach(() => {
@@ -26,21 +23,21 @@ describe('Service: VoteListingContractService', () => {
       providers: [
         VoteListingContractService,
         ErrorService,
-        {provide: Web3Service, useClass: MockWeb3Svc},
-        {provide: TruffleContractService, useClass: MockTruffleContractSvc},
+        {provide: Web3Service, useClass: Mock.Web3Service},
+        {provide: TruffleContractWrapperService, useClass: Mock.TruffleContractWrapperService},
       ]
     });
 
     voteListingContractSvc = TestBed.get(VoteListingContractService);
     web3Svc = TestBed.get(Web3Service);
-    contractSvc = TestBed.get(TruffleContractService);
+    contractSvc = TestBed.get(TruffleContractWrapperService);
     errSvc = TestBed.get(ErrorService);
   });
 
   // create a reference to the dummy abstraction so it is easier to spy
-  let abstraction: IDummyAbstraction;
+  let abstraction: Mock.ITruffleContractAbstraction;
   beforeEach(() => {
-    abstraction = new DummyAbstraction();
+    abstraction = new Mock.TruffleContractAbstraction();
     spyOn(contractSvc, 'wrap').and.callFake(definition => abstraction);
   });
 
@@ -102,8 +99,8 @@ describe('Service: VoteListingContractService', () => {
 
   describe('eventEmitter: voteCreated$', () => {
     const addr: string = 'dummy_address';
-    const log: VoteCreated.Log = {
-      event: VoteCreated.event,
+    const log: VoteCreatedEvent.Log = {
+      event: VoteCreatedEvent.name,
       args: {
         contractAddress: addr
       }

@@ -1,9 +1,9 @@
 import * as contract from 'truffle-contract';
 
 import { IWeb3Provider } from './web3.service';
-import { IContract } from './contract.interfaces';
+import { IContract } from './contract.interface';
 
-export interface ITruffleContractService {
+export interface ITruffleContractWrapperService {
   wrap(definition: object): ITruffleContractAbstraction;
 }
 
@@ -13,7 +13,7 @@ export interface ITruffleContractAbstraction {
   deployed(): Promise<IContract>;
 }
 
-export class TruffleContractService {
+export class TruffleContractWrapperService implements ITruffleContractWrapperService {
   wrap(definition: object): ITruffleContractAbstraction {
     return contract(definition);
   }

@@ -1,7 +1,7 @@
 import { ITransactionProperties, ITransactionReceipt } from '../transaction.interface';
-import { IContract, IContractLog } from '../contract.interfaces';
+import { IContract, IContractLog } from '../contract.interface';
 
-export interface IVoteListingContract extends IContract {
+export interface VoteListingAPI extends IContract {
   // address[] public votingContracts
   votingContracts: {
     call(index: number): Promise<string>;
@@ -14,8 +14,8 @@ export interface IVoteListingContract extends IContract {
   deploy(_paramsHash: string, props: ITransactionProperties): Promise<ITransactionReceipt>;
 }
 
-export namespace VoteCreated {
-  export const event = 'VoteCreated';
+export namespace VoteCreatedEvent {
+  export const name = 'VoteCreated';
   export interface Log extends IContractLog {
     args: {
       contractAddress: string;
