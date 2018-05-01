@@ -15,9 +15,10 @@ export interface IAnonymousVotingContractService {
 }
 
 export const AnonymousVotingContractErrors = {
-  network: (addr) => new Error(`Cannot find the VoteListing contract on the blockchain at address ${addr}. ` +
+  network: (addr) => new Error(`Unable to find the VoteListing contract on the blockchain at address ${addr}. ` +
     'Ensure the address is correct ' +
     `and MetaMask (or the web3 provider) is connected to the ${APP_CONFIG.network.name}`),
+  paramsHash: (addr) => new Error(`Unable to retrieve the parameters hash from the AnonymousVoting contract at ${addr}`)
 };
 
 @Injectable()
