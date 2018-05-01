@@ -8,3 +8,5 @@ export interface AnonymousVotingAPI extends IContract {
     call(): Promise<bytes32>;
   };
 }
+
+

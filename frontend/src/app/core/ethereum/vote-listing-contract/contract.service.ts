@@ -9,6 +9,7 @@ import 'rxjs/add/operator/concat';
 import 'rxjs/add/operator/scan';
 import 'rxjs/add/operator/catch';
 import 'rxjs/add/observable/never';
+import 'rxjs/add/observable/of';
 
 import { APP_CONFIG } from '../../../config';
 import { VoteCreatedEvent, VoteListingAPI } from './contract.api';

@@ -49,6 +49,10 @@ export namespace Mock {
     deployed() {
       return Promise.resolve(this.contract);
     }
+
+    at(addr: address) {
+      return Promise.resolve(null);
+    }
   }
 
   interface IVoteListingContract extends IProdVoteListingContract {
