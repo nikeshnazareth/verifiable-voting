@@ -26,7 +26,6 @@ export interface IVoteListingContractService {
 }
 
 export const VoteListingContractErrors = {
-  web3: new Error('No web3 provider found. Please install the MetaMask extension'),
   network: new Error('Cannot find the VoteListing contract on the blockchain. ' +
     `Ensure MetaMask (or the web3 provider) is connected to the ${APP_CONFIG.network.name}`),
   voteCreated: new Error('Cannot listen for VoteCreated events on the VoteListing contract. ' +
@@ -58,7 +57,7 @@ export class VoteListingContractService implements IVoteListingContractService {
     return this._contract$
       .map(contract => contract.deploy(paramsHash, {from: this.web3Svc.defaultAccount}))
       .switchMap(promise => Observable.fromPromise(promise))
-      .catch(err => {
+      .catch(() => {
         this.errSvc.add(VoteListingContractErrors.deployVote);
         // Observable.empty may be misleading because consumers might assume any response
         // implies success - they shouldn't have to check the receipt if they don't care about it
@@ -78,7 +77,7 @@ export class VoteListingContractService implements IVoteListingContractService {
           .then(count => Array(count).fill(0).map((_, idx) => idx)) // produce an array of the numbers up to count
           .then(range => range.map(i =>
             contract.votingContracts.call(i)
-              .catch(err => {
+              .catch(() => {
                 this.errSvc.add(VoteListingContractErrors.contractAddress(i));
                 return Promise.resolve(null);
               })
@@ -86,7 +85,7 @@ export class VoteListingContractService implements IVoteListingContractService {
           .then(reqs => Promise.all(reqs))
           .then(addresses => <address[]> addresses.filter(el => el)) // filter out null elements
       ))
-      .catch(err => {
+      .catch(() => {
         this.errSvc.add(VoteListingContractErrors.deployedVotes);
         return Observable.of(<address[]> []);
       })
@@ -113,14 +112,14 @@ export class VoteListingContractService implements IVoteListingContractService {
       return Observable.fromPromise(
         abstraction.deployed()
           .then(contract => <VoteListingAPI> contract)
-          .catch(err => {
+          .catch(() => {
               this.errSvc.add(VoteListingContractErrors.network);
               return null;
             }
           )
       );
     } else {
-      this.errSvc.add(VoteListingContractErrors.web3);
+      this.errSvc.add(APP_CONFIG.errors.web3);
       return Observable.of(null); // to be consistent with the other path. See the (TODO) above
     }
   }
@@ -131,7 +130,7 @@ export class VoteListingContractService implements IVoteListingContractService {
    */
   private _initVoteCreated$(): Observable<address> {
     const log$: EventEmitter<IContractLog> = new EventEmitter<IContractLog>();
-    const sub = this._contract$
+    this._contract$
       .map(contract => contract.allEvents())
       .map(events => events.watch((err, log) => {
         if (err) {
@@ -140,7 +139,7 @@ export class VoteListingContractService implements IVoteListingContractService {
           log$.emit(log);
         }
       }))
-      .catch(err => {
+      .catch(() => {
         this.errSvc.add(VoteListingContractErrors.voteCreated);
         return Observable.empty();
       })

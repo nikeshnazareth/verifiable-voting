@@ -8,6 +8,7 @@ import { ErrorService } from '../../error-service/error.service';
 import { Mock } from './contract.service.spec.mock';
 import { IContractLog } from '../contract.interface';
 import { address, bytes32 } from '../type.mappings';
+import { APP_CONFIG } from '../../../config';
 import Spy = jasmine.Spy;
 
 
@@ -58,7 +59,7 @@ describe('Service: VoteListingContractService', () => {
       // recreate the service (the constructor in the original has already been called)
       voteListingContractSvc = new VoteListingContractService(<Web3Service> web3Svc, contractSvc, errSvc);
       tick(); // wait for the promise to finish
-      expect(errSvc.add).toHaveBeenCalledWith(VoteListingContractErrors.web3);
+      expect(errSvc.add).toHaveBeenCalledWith(APP_CONFIG.errors.web3);
     }));
 
     it('should notify the Error Service if the contract is not deployed', fakeAsync(() => {
