@@ -1,4 +1,4 @@
-import { EventEmitter } from '@angular/core';
+import * as BigNumber from 'bignumber.js';
 
 import { IWeb3Provider, IWeb3Service } from '../web3.service';
 import { IContractEventStream as IProdContractEventStream } from '../contract.interface';
@@ -8,17 +8,22 @@ import {
   ITruffleContractWrapperService
 } from '../truffle-contract.service';
 import { address } from '../type.mappings';
-import * as BigNumber from 'bignumber.js';
+import { ITransactionReceipt } from '../transaction.interface';
 
 export namespace Mock {
-  export class Web3Service implements IWeb3Service {
-    public block$: EventEmitter<null> = null;
-    public isInjected: boolean = true;
-    public currentProvider: IWeb3Provider = null;
-    public defaultAccount: string = null;
+  export const DUMMY_TX_RECEIPT: ITransactionReceipt = {tx: 'A dummy transaction'};
 
-    afterInjected() {
-      return Promise.resolve();
+  export class Web3Service implements IWeb3Service {
+    get isInjected(): boolean {
+      return true;
+    }
+
+    get currentProvider(): IWeb3Provider {
+      return this.isInjected ? 'Some provider' : null;
+    }
+
+    get defaultAccount(): string {
+      return this.isInjected ? 'default account' : null;
     }
   }
 
@@ -59,11 +64,11 @@ export namespace Mock {
       call: (idx: number) => Promise.resolve(this.contracts[idx])
     };
     numberOfVotingContracts = {
-      call: () => new BigNumber(this.contracts.length)
+      call: () => Promise.resolve(new BigNumber(this.contracts.length))
     };
 
     deploy(hash, options) {
-      return Promise.resolve({tx: 'A dummy transaction'});
+      return Promise.resolve(DUMMY_TX_RECEIPT);
     }
 
     allEvents() {

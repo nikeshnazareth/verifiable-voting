@@ -2,7 +2,8 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { By } from '@angular/platform-browser';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { TestBed, async, ComponentFixture, fakeAsync, tick } from '@angular/core/testing';
-import { EventEmitter } from '@angular/core';
+import { Observable } from 'rxjs/Observable';
+import 'rxjs/add/observable/of';
 
 import { LaunchVoteComponent } from './launch-vote.component';
 import { IIPFSService, IPFSService } from '../../core/ipfs/ipfs.service';
@@ -12,6 +13,7 @@ import {
   VoteListingContractService
 } from '../../core/ethereum/vote-listing-contract/contract.service';
 import { address } from '../../core/ethereum/type.mappings';
+import { ITransactionReceipt } from '../../core/ethereum/transaction.interface';
 
 describe('Component: LaunchVoteComponent', () => {
   let fixture: ComponentFixture<LaunchVoteComponent>;
@@ -138,13 +140,9 @@ class MockIPFSSvc implements IIPFSService {
 }
 
 class MockVoteListingContractSvc implements IVoteListingContractService {
-  voteCreated$: EventEmitter<string>;
+  deployedVotes$: Observable<address[]> = Observable.of([]);
 
-  deployVote(paramsHash: string): Promise<void> {
-    return Promise.resolve();
-  }
-
-  deployedVotes(): Promise<address[]> {
-    return Promise.resolve([]);
+  deployVote(paramsHash: string): Observable<ITransactionReceipt> {
+    return Observable.of({});
   }
 }

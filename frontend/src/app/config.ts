@@ -10,5 +10,9 @@ export let APP_CONFIG = {
   // contract files created by the truffle build process
   contracts: {
     vote_listing: VoteListing
+  },
+  // network name used in error messages
+  network: {
+    name: 'ROPSTEN (test) network'
   }
 };
