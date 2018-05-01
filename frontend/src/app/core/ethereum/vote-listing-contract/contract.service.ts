@@ -10,6 +10,7 @@ import 'rxjs/add/operator/scan';
 import 'rxjs/add/operator/catch';
 import 'rxjs/add/observable/never';
 import 'rxjs/add/observable/of';
+import 'rxjs/add/operator/defaultIfEmpty';
 
 import { APP_CONFIG } from '../../../config';
 import { VoteCreatedEvent, VoteListingAPI } from './contract.api';
@@ -52,7 +53,8 @@ export class VoteListingContractService implements IVoteListingContractService {
   /**
    * Uses the VoteListing contract to deploy a new vote to the blockchain
    * @param {bytes32} paramsHash the IPFS hash of the vote parameters
-   * @returns {Observable<ITransactionReceipt>} An observable that emits the receipt when the contract is deployed
+   * @returns {Observable<ITransactionReceipt>} An observable that emits the receipt when the contract is deployed</br>
+   * or an empty observable if there was an error
    */
   deployVote(paramsHash: bytes32): Observable<ITransactionReceipt> {
     return this._contract$
@@ -60,9 +62,7 @@ export class VoteListingContractService implements IVoteListingContractService {
       .switchMap(promise => Observable.fromPromise(promise))
       .catch(() => {
         this.errSvc.add(VoteListingContractErrors.deployVote);
-        // Observable.empty may be misleading because consumers might assume any response
-        // implies success - they shouldn't have to check the receipt if they don't care about it
-        return Observable.never();
+        return Observable.empty();
       });
   }
 
@@ -84,44 +84,46 @@ export class VoteListingContractService implements IVoteListingContractService {
               })
           ))
           .then(reqs => Promise.all(reqs))
-          .then(addresses => <address[]> addresses.filter(el => el)) // filter out null elements
+          .then(addresses => <address[]> addresses.filter(el => el)) // filter out elements that couldn't be retrieved
       ))
       .catch(() => {
         this.errSvc.add(VoteListingContractErrors.deployedVotes);
         return Observable.of(<address[]> []);
       })
+      .defaultIfEmpty([])
       // add new vote contracts as they are deployed
       .concat(this._voteCreated$.map(addr => [addr]))
       // combine all address arrays into a single array
       .scan((arr0, arr1) => arr0.concat(arr1), []);
   }
 
+
   /**
    * Uses the truffle build object to find the VoteListing contract on the injected blockchain and
-   * emits the result on this._contract$
-   * It notifies the Error Service if web3 is not injected
+   * emits the result on the return observable before completing
+   * Notifies the Error Service if web3 is not injected or the VoteListing contract doesn't exist
+   * on the blockchain
+   * @returns {Observable<VoteListingAPI>} An observable that emits VoteListing contract and completes  </br>
+   * or simply completes (without emitting anything) if there is an error
+   * @private
    */
   private _initContract$(): Observable<VoteListingAPI> {
-
     if (this.web3Svc.currentProvider) {
       const abstraction: ITruffleContractAbstraction = this.contractSvc.wrap(APP_CONFIG.contracts.vote_listing);
       abstraction.setProvider(this.web3Svc.currentProvider);
-      // Observable.fromPromise won't let the outer observable catch the errors so I'm catching them on
-      // the promise and letting the error produce a null value
-      // TODO: find a better way
 
       return Observable.fromPromise(
         abstraction.deployed()
           .then(contract => <VoteListingAPI> contract)
           .catch(() => {
-              this.errSvc.add(VoteListingContractErrors.network);
-              return null;
-            }
-          )
-      );
+            this.errSvc.add(VoteListingContractErrors.network);
+            return null;
+          })
+      ).filter(contract => contract); // filter out the null value if the VoteListing contract cannot be found
+
     } else {
       this.errSvc.add(APP_CONFIG.errors.web3);
-      return Observable.of(null); // to be consistent with the other path. See the (TODO) above
+      return Observable.empty();
     }
   }
 
