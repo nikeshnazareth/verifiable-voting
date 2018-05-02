@@ -1,8 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-
-import { IPFSService } from '../../core/ipfs/ipfs.service';
-import { VoteListingContractService } from '../../core/ethereum/vote-listing-contract/contract.service';
+import { IVoteParameters, VoteManagerService } from '../../core/vote-manager/vote-manager.service';
 
 @Component({
   selector: 'vv-launch-vote',
@@ -29,9 +27,8 @@ import { VoteListingContractService } from '../../core/ethereum/vote-listing-con
 export class LaunchVoteComponent implements OnInit {
   private launchVoteForm: FormGroup;
 
-  public constructor(private ipfsSvc: IPFSService,
-                     private voteListingSvc: VoteListingContractService,
-                     private fb: FormBuilder) {
+  public constructor(private fb: FormBuilder,
+                     private voteManagerSvc: VoteManagerService) {
   }
 
   ngOnInit() {
@@ -39,10 +36,12 @@ export class LaunchVoteComponent implements OnInit {
   }
 
   onSubmit() {
-    const params = this.launchVoteForm.value.parameters;
-    this.ipfsSvc.addJSON({parameters: params})
-      .then(hash => this.voteListingSvc.deployVote(hash))
-      .catch(err => console.log(err));
+    const params: IVoteParameters = {
+      parameters: this.launchVoteForm.value.parameters
+    };
+
+    this.voteManagerSvc.deployVote$(params)
+      .subscribe(); // this completes immediately so we don't need to unsubscribe
   }
 
   private createForm() {

@@ -5,14 +5,18 @@ import { TruffleContractWrapperService } from './ethereum/truffle-contract.servi
 import { VoteListingContractService } from './ethereum/vote-listing-contract/contract.service';
 import { Web3Service } from './ethereum/web3.service';
 import { ErrorService } from './error-service/error.service';
+import { VoteManagerService } from './vote-manager/vote-manager.service';
+import { AnonymousVotingContractService } from './ethereum/anonymous-voting-contract/contract.service';
 
 @NgModule({
   providers: [
     ErrorService,
-    VoteListingContractService,
     IPFSService,
     TruffleContractWrapperService,
-    Web3Service
+    Web3Service,
+    VoteListingContractService,
+    AnonymousVotingContractService,
+    VoteManagerService
   ]
 })
 export class CoreModule {

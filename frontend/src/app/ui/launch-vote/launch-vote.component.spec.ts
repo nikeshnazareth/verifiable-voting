@@ -3,32 +3,26 @@ import { By } from '@angular/platform-browser';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { TestBed, async, ComponentFixture, fakeAsync, tick } from '@angular/core/testing';
 import { Observable } from 'rxjs/Observable';
-import 'rxjs/add/observable/of';
 
 import { LaunchVoteComponent } from './launch-vote.component';
-import { IIPFSService, IPFSService } from '../../core/ipfs/ipfs.service';
 import { MaterialModule } from '../../material/material.module';
-import {
-  IVoteListingContractService,
-  VoteListingContractService
-} from '../../core/ethereum/vote-listing-contract/contract.service';
-import { address } from '../../core/ethereum/type.mappings';
+import { IVoteManagerService, IVoteParameters, VoteManagerService } from '../../core/vote-manager/vote-manager.service';
 import { ITransactionReceipt } from '../../core/ethereum/transaction.interface';
+import { address } from '../../core/ethereum/type.mappings';
+
 
 describe('Component: LaunchVoteComponent', () => {
   let fixture: ComponentFixture<LaunchVoteComponent>;
   let page: Page;
 
   class Page {
-    public ipfsSvc: IIPFSService;
-    public voteListingSvc: IVoteListingContractService;
+    public voteManagerSvc: VoteManagerService;
     public textArea: HTMLTextAreaElement;
     public submitButton: HTMLButtonElement;
 
     constructor() {
       const compInjector = fixture.debugElement.injector;
-      this.ipfsSvc = compInjector.get(IPFSService);
-      this.voteListingSvc = compInjector.get(VoteListingContractService);
+      this.voteManagerSvc = compInjector.get(VoteManagerService);
       this.textArea = fixture.debugElement.query(By.css('textarea')).nativeElement;
       this.submitButton = fixture.debugElement.query(By.css('button')).nativeElement;
     }
@@ -53,8 +47,7 @@ describe('Component: LaunchVoteComponent', () => {
         MaterialModule
       ],
       providers: [
-        {provide: VoteListingContractService, useClass: MockVoteListingContractSvc},
-        {provide: IPFSService, useClass: MockIPFSSvc}
+        {provide: VoteManagerService, useClass: MockVoteManagerService}
       ]
     })
       .compileComponents()
@@ -82,7 +75,6 @@ describe('Component: LaunchVoteComponent', () => {
       expect(page.submitButton.disabled).toBe(true);
     });
 
-
     it('should enable the submit button when the text area has content', () => {
       fixture.detectChanges();
       expect(page.submitButton.disabled).toBe(true);
@@ -101,48 +93,38 @@ describe('Component: LaunchVoteComponent', () => {
     });
   });
 
-  xdescribe('Functionality', () => {
-    const vote_params: string = 'Some arbitrary text';
-    const json_obj = {parameters: vote_params};
+  describe('Functionality', () => {
 
     beforeEach(() => {
-      page.setTextValue(vote_params);
+      page.setTextValue(DUMMY_VOTE_PARAMETERS.parameters);
     });
 
-    it('should wrap the content of the text area in an object and publish it to IPFS', () => {
-      spyOn(page.ipfsSvc, 'addJSON').and.callThrough();
-      page.submitButton.click();
-      expect(page.ipfsSvc.addJSON).toHaveBeenCalledWith(json_obj);
+    describe('submit button', () => {
+      it('should wrap the parameters in an IVoteParameters object and pass it to VoteManager.deployVote$', () => {
+        spyOn(page.voteManagerSvc, 'deployVote$').and.callThrough();
+        page.submitButton.click();
+        expect(page.voteManagerSvc.deployVote$).toHaveBeenCalledWith(DUMMY_VOTE_PARAMETERS);
+      });
     });
-
-    xit('should handle errors when adding the vote parameters to IPFS', () => {
-    }); // TODO
-
-    it('should get the IPFS hash and publish it to Ethereum', fakeAsync(() => {
-      spyOn(page.voteListingSvc, 'deployVote$').and.callThrough();
-      page.submitButton.click();
-      tick(); // we need to wait for the promise to return before inspecting deployVote
-      expect(page.voteListingSvc.deployVote$).toHaveBeenCalledWith(DUMMY_HASH);
-    }));
   });
+
+  const DUMMY_VOTE_PARAMETERS: IVoteParameters = {
+    parameters: 'dummy parameters text'
+  };
+
+  const DUMMY_TX_RECEIPT: ITransactionReceipt = {
+    tx: 'A dummy tranasction'
+  };
+
+  class MockVoteManagerService implements IVoteManagerService {
+    deployVote$(params: IVoteParameters): Observable<ITransactionReceipt> {
+      return Observable.of(DUMMY_TX_RECEIPT);
+    };
+
+    getParameters$(addr: address): Observable<IVoteParameters> {
+      return null;
+    };
+  }
 });
 
-const DUMMY_HASH = 'DUMMY_HASH';
 
-class MockIPFSSvc implements IIPFSService {
-  addJSON(data: object): Promise<string> {
-    return Promise.resolve(DUMMY_HASH);
-  }
-
-  catJSON(hash: string): Promise<object> {
-    return Promise.resolve({});
-  }
-}
-
-class MockVoteListingContractSvc implements IVoteListingContractService {
-  deployedVotes$: Observable<address> = Observable.of(null);
-
-  deployVote$(paramsHash: string): Observable<ITransactionReceipt> {
-    return Observable.of({});
-  }
-}

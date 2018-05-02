@@ -8,6 +8,7 @@ import { ErrorService } from './core/error-service/error.service';
     <div class="mat-app-background">
       <mat-toolbar>Verifiable Voting</mat-toolbar>
       <vv-launch-vote></vv-launch-vote>
+      <vv-list-votes></vv-list-votes>
     </div>
   `
 })
