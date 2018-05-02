@@ -5,12 +5,13 @@ import { address, bytes32 } from '../ethereum/type.mappings';
 import { AnonymousVotingAPI } from '../ethereum/anonymous-voting-contract/contract.api';
 import { IIPFSService } from '../ipfs/ipfs.service';
 import { IVoteParameters } from './vote-manager.service';
+import { IVoteListingContractService } from '../ethereum/vote-listing-contract/contract.service';
+import { ITransactionReceipt } from '../ethereum/transaction.interface';
 
 // These classes simulate the ideal scenario
 // Error cases must be tested by overriding the functionality
 
 class AnonymousVotingContract implements AnonymousVotingAPI {
-
   parametersHash = {
     call: () => Promise.resolve(Mock.DUMMY_HASH)
   };
@@ -23,9 +24,8 @@ class AnonymousVotingContract implements AnonymousVotingAPI {
 export namespace Mock {
   export const ANONYMOUS_VOTING_CONTRACT: AnonymousVotingAPI = new AnonymousVotingContract();
   export const DUMMY_HASH: bytes32 = 'DUMMY_HASH';
-  export const VOTE_PARAMETERS: IVoteParameters = {
-    parameters: 'DUMMY_PARAMETERS'
-  };
+  export const DUMMY_VOTE_PARAMETERS: IVoteParameters = {parameters: 'DUMMY_PARAMETERS'};
+  export const DUMMY_TX_RECEIPT: ITransactionReceipt = {tx: 'A dummy receipt'};
 
   export class AnonymousVotingContractService implements IAnonymousVotingContractService {
     contractAt(addr: address) {
@@ -39,8 +39,16 @@ export namespace Mock {
     }
 
     catJSON(hash: string): Promise<object> {
-      return Promise.resolve(VOTE_PARAMETERS);
+      return Promise.resolve(DUMMY_VOTE_PARAMETERS);
     }
+  }
+
+  export class VoteListingContractService implements IVoteListingContractService {
+    deployedVotes$: Observable<address>;
+
+    deployVote$(paramsHash: bytes32): Observable<ITransactionReceipt> {
+      return Observable.of(DUMMY_TX_RECEIPT);
+    };
   }
 }
 

@@ -23,7 +23,7 @@ import { ITransactionReceipt } from '../transaction.interface';
 export interface IVoteListingContractService {
   deployedVotes$: Observable<address>;
 
-  deployVote(paramsHash: bytes32): Observable<ITransactionReceipt>;
+  deployVote$(paramsHash: bytes32): Observable<ITransactionReceipt>;
 }
 
 export const VoteListingContractErrors = {
@@ -55,7 +55,7 @@ export class VoteListingContractService implements IVoteListingContractService {
    * @returns {Observable<ITransactionReceipt>} An observable that emits the receipt when the contract is deployed</br>
    * or an empty observable if there was an error
    */
-  deployVote(paramsHash: bytes32): Observable<ITransactionReceipt> {
+  deployVote$(paramsHash: bytes32): Observable<ITransactionReceipt> {
     return this._contract$
       .map(contract => contract.deploy(paramsHash, {from: this.web3Svc.defaultAccount}))
       .switchMap(promise => Observable.fromPromise(promise))

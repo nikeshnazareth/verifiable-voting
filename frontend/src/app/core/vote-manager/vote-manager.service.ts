@@ -15,19 +15,24 @@ import {
 import { IPFSService } from '../ipfs/ipfs.service';
 import { ErrorService } from '../error-service/error.service';
 import { address } from '../ethereum/type.mappings';
+import { ITransactionReceipt } from '../ethereum/transaction.interface';
+import { VoteListingContractService } from '../ethereum/vote-listing-contract/contract.service';
 
 export interface IVoteParameters {
   parameters: string;
 }
 
 export interface IVoteManagerService {
+  deployVote$(params: IVoteParameters): Observable<ITransactionReceipt>;
+
   getParameters$(addr: address): Observable<IVoteParameters>;
 }
 
 export const VoteManagerServiceErrors = {
   ipfs: {
-    parametersHash: (addr, hash) => new Error('Unable to retrieve the parameters for the AnonymousVoting contract ' +
-      `at ${addr} from the IPFS hash (${hash})`)
+    addParametersHash: (params) => new Error(`Unable to add parameters (${params}) to IPFS`),
+    getParametersHash: (addr, hash) => new Error('Unable to retrieve the parameters for the AnonymousVoting contract' +
+      ` at ${addr} from the IPFS hash (${hash})`)
   },
   format: {
     parametersHash: (params) => new Error(`Retrieved parameters (${params}) do not match the expected format`)
@@ -37,9 +42,25 @@ export const VoteManagerServiceErrors = {
 @Injectable()
 export class VoteManagerService implements IVoteManagerService {
 
-  constructor(private votingContractSvc: AnonymousVotingContractService,
+  constructor(private voteListingSvc: VoteListingContractService,
+              private votingContractSvc: AnonymousVotingContractService,
               private ipfsSvc: IPFSService,
               private errSvc: ErrorService) {
+  }
+
+  /**
+   * Adds the parameters to IPFS and deploys a new AnonymousVoting contract with the resulting hash
+   * @param {IVoteParameters} params the vote parameters to add to IPFS
+   * @returns {Observable<ITransactionReceipt>} an observable that emits the deployment transaction receipt</br>
+   * or an empty observable if there is an error
+   */
+  deployVote$(params: IVoteParameters): Observable<ITransactionReceipt> {
+    return Observable.fromPromise(this.ipfsSvc.addJSON(params))
+      .catch(() => {
+        this.errSvc.add(VoteManagerServiceErrors.ipfs.addParametersHash(params));
+        return <Observable<string>> Observable.empty();
+      })
+      .switchMap(hash => this.voteListingSvc.deployVote$(hash));
   }
 
   /**
@@ -64,7 +85,7 @@ export class VoteManagerService implements IVoteManagerService {
       .switchMap(hash => Observable.fromPromise(
         this.ipfsSvc.catJSON(hash)
           .catch(() => {
-            this.errSvc.add(VoteManagerServiceErrors.ipfs.parametersHash(addr, hash));
+            this.errSvc.add(VoteManagerServiceErrors.ipfs.getParametersHash(addr, hash));
             return null;
           })
       ))

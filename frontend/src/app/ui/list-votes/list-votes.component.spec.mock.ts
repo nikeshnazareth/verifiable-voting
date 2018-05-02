@@ -20,12 +20,16 @@ export namespace Mock {
       return Observable.from(DUMMY_ADDRESSES);
     }
 
-    deployVote(paramsHash: bytes32): Observable<ITransactionReceipt> {
+    deployVote$(paramsHash: bytes32): Observable<ITransactionReceipt> {
       return Observable.of(null);
     }
   }
 
   export class VoteManagerService implements IVoteManagerService {
+    deployVote$(params: IVoteParameters): Observable<ITransactionReceipt> {
+      return null;
+    }
+
     getParameters$(addr: address): Observable<IVoteParameters> {
       return Observable.of({parameters: addr + '_params'});
     }
