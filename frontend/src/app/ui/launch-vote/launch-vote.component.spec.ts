@@ -140,7 +140,7 @@ class MockIPFSSvc implements IIPFSService {
 }
 
 class MockVoteListingContractSvc implements IVoteListingContractService {
-  deployedVotes$: Observable<address[]> = Observable.of([]);
+  deployedVotes$: Observable<address> = Observable.of(null);
 
   deployVote(paramsHash: string): Observable<ITransactionReceipt> {
     return Observable.of({});

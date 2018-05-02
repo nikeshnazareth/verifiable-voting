@@ -1,16 +1,14 @@
 import { EventEmitter, Injectable } from '@angular/core';
 import { Observable } from 'rxjs/Observable';
-import 'rxjs/add/observable/fromPromise';
+import 'rxjs/add/observable/range';
 import 'rxjs/add/operator/map';
 import 'rxjs/add/observable/empty';
+import 'rxjs/add/observable/fromPromise';
 import 'rxjs/add/operator/filter';
-import 'rxjs/add/operator/switchMap';
-import 'rxjs/add/operator/concat';
-import 'rxjs/add/operator/scan';
 import 'rxjs/add/operator/catch';
-import 'rxjs/add/observable/never';
-import 'rxjs/add/observable/of';
-import 'rxjs/add/operator/defaultIfEmpty';
+import 'rxjs/add/operator/concat';
+import 'rxjs/add/observable/from';
+
 
 import { APP_CONFIG } from '../../../config';
 import { VoteCreatedEvent, VoteListingAPI } from './contract.api';
@@ -21,8 +19,9 @@ import { ErrorService } from '../../error-service/error.service';
 import { address, bytes32, uint } from '../type.mappings';
 import { ITransactionReceipt } from '../transaction.interface';
 
+
 export interface IVoteListingContractService {
-  deployedVotes$: Observable<address[]>;
+  deployedVotes$: Observable<address>;
 
   deployVote(paramsHash: bytes32): Observable<ITransactionReceipt>;
 }
@@ -67,34 +66,37 @@ export class VoteListingContractService implements IVoteListingContractService {
   }
 
   /**
-   * @returns {Observable<address[]>} The deployed contract addresses from the VoteListing contract
+   * Notifies the Error Service for every contract address that cannot be retrieved
+   * @returns {Observable<address>} The deployed contract addresses (in order) from the VoteListing contract <br/>
+   * with null values wherever a contract could not be retrieved (to maintain the correct index)<br/>
+   * or an empty observable if the contract cannot be contacted
    */
-  get deployedVotes$(): Observable<address[]> {
+  get deployedVotes$(): Observable<address> {
     return this._contract$
     // get the deployed contract addresses
-      .switchMap(contract => Observable.fromPromise(
-        contract.numberOfVotingContracts.call()
-          .then(countBN => countBN.toNumber())
-          .then(count => Array(count).fill(0).map((_, idx) => idx)) // produce an array of the numbers up to count
-          .then(range => range.map(i =>
-            contract.votingContracts.call(i)
-              .catch(() => {
-                this.errSvc.add(VoteListingContractErrors.contractAddress(i));
-                return Promise.resolve(null);
-              })
-          ))
-          .then(reqs => Promise.all(reqs))
-          .then(addresses => <address[]> addresses.filter(el => el)) // filter out elements that couldn't be retrieved
-      ))
+      .switchMap(contract =>
+        Observable.fromPromise(
+          contract.numberOfVotingContracts.call()
+            .then(countBN => countBN.toNumber())
+            .then(count => Array(count).fill(0).map((_, idx) => idx)) // produce an array of the numbers up to count
+            .then(range => range.map(i =>
+              contract.votingContracts.call(i)
+                .catch(() => {
+                  this.errSvc.add(VoteListingContractErrors.contractAddress(i));
+                  return Promise.resolve(null);
+                })
+            ))
+            .then(reqs => Promise.all(reqs))
+        )
+          .map(addresses => <address[]> addresses)
+          .switchMap(addresses => Observable.from(addresses))
+          // add new vote contracts as they are deployed
+          .concat(this._voteCreated$)
+      )
       .catch(() => {
         this.errSvc.add(VoteListingContractErrors.deployedVotes);
-        return Observable.of(<address[]> []);
-      })
-      .defaultIfEmpty([])
-      // add new vote contracts as they are deployed
-      .concat(this._voteCreated$.map(addr => [addr]))
-      // combine all address arrays into a single array
-      .scan((arr0, arr1) => arr0.concat(arr1), []);
+        return <Observable<string>> Observable.empty();
+      });
   }
 
 
