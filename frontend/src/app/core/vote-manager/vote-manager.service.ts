@@ -12,7 +12,7 @@ import {
   AnonymousVotingContractErrors,
   AnonymousVotingContractService
 } from '../ethereum/anonymous-voting-contract/contract.service';
-import { IPFSService } from '../ipfs/ipfs.service';
+import { IPFSService } from '../ipfs/local-ipfs.service';
 import { ErrorService } from '../error-service/error.service';
 import { address } from '../ethereum/type.mappings';
 import { ITransactionReceipt } from '../ethereum/transaction.interface';
