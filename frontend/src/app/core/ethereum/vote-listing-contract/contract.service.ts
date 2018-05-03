@@ -16,14 +16,14 @@ import { Web3Service } from '../web3.service';
 import { ITruffleContractAbstraction, TruffleContractWrapperService } from '../truffle-contract.service';
 import { IContractLog } from '../contract.interface';
 import { ErrorService } from '../../error-service/error.service';
-import { address, bytes32, uint } from '../type.mappings';
+import { address, uint } from '../type.mappings';
 import { ITransactionReceipt } from '../transaction.interface';
 
 
 export interface IVoteListingContractService {
   deployedVotes$: Observable<address>;
 
-  deployVote$(paramsHash: bytes32): Observable<ITransactionReceipt>;
+  deployVote$(paramsHash: string): Observable<ITransactionReceipt>;
 }
 
 export const VoteListingContractErrors = {
@@ -51,11 +51,11 @@ export class VoteListingContractService implements IVoteListingContractService {
 
   /**
    * Uses the VoteListing contract to deploy a new vote to the blockchain
-   * @param {bytes32} paramsHash the IPFS hash of the vote parameters
+   * @param {string} paramsHash the IPFS hash of the vote parameters
    * @returns {Observable<ITransactionReceipt>} An observable that emits the receipt when the contract is deployed</br>
    * or an empty observable if there was an error
    */
-  deployVote$(paramsHash: bytes32): Observable<ITransactionReceipt> {
+  deployVote$(paramsHash: string): Observable<ITransactionReceipt> {
     return this._contract$
       .map(contract => contract.deploy(paramsHash, {from: this.web3Svc.defaultAccount}))
       .switchMap(promise => Observable.fromPromise(promise))

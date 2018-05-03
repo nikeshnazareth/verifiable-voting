@@ -5,7 +5,7 @@ contract('AnonymousVoting', () => {
     describe('method: constructor', async (accounts) => {
 
         let instance;
-        const voteParamsHash = web3.sha3('DUMMY_PARAMS_HASH');
+        const voteParamsHash = 'DUMMY_PARAMS_HASH';
 
         beforeEach((async () => {
             instance = await AnonymousVoting.new(voteParamsHash);

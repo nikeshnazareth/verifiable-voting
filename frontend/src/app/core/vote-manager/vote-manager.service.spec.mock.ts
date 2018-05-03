@@ -1,7 +1,7 @@
 import { Observable } from 'rxjs/Observable';
 
 import { IAnonymousVotingContractService } from '../ethereum/anonymous-voting-contract/contract.service';
-import { address, bytes32 } from '../ethereum/type.mappings';
+import { address } from '../ethereum/type.mappings';
 import { AnonymousVotingAPI } from '../ethereum/anonymous-voting-contract/contract.api';
 import { IIPFSService } from '../ipfs/ipfs.service';
 import { IVoteParameters } from './vote-manager.service';
@@ -23,7 +23,7 @@ class AnonymousVotingContract implements AnonymousVotingAPI {
 
 export namespace Mock {
   export const ANONYMOUS_VOTING_CONTRACT: AnonymousVotingAPI = new AnonymousVotingContract();
-  export const DUMMY_HASH: bytes32 = 'DUMMY_HASH';
+  export const DUMMY_HASH: string = 'DUMMY_HASH';
   export const DUMMY_VOTE_PARAMETERS: IVoteParameters = {parameters: 'DUMMY_PARAMETERS'};
   export const DUMMY_TX_RECEIPT: ITransactionReceipt = {tx: 'A dummy receipt'};
 
@@ -46,7 +46,7 @@ export namespace Mock {
   export class VoteListingContractService implements IVoteListingContractService {
     deployedVotes$: Observable<address>;
 
-    deployVote$(paramsHash: bytes32): Observable<ITransactionReceipt> {
+    deployVote$(paramsHash: string): Observable<ITransactionReceipt> {
       return Observable.of(DUMMY_TX_RECEIPT);
     };
   }

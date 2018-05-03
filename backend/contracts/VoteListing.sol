@@ -17,7 +17,7 @@ contract VoteListing {
         @notice Deploys a new AnonymousVote contract with the specified parameters
         @param _paramsHash the IPFS hash of the vote parameters
     */
-    function deploy(bytes32 _paramsHash) public {
+    function deploy(string _paramsHash) public {
         address addr = new AnonymousVoting(_paramsHash);
         votingContracts.push(addr);
         emit VoteCreated(addr);

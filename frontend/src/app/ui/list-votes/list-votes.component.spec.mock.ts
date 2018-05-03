@@ -1,7 +1,7 @@
 import { Observable } from 'rxjs/Observable';
 
 import { IVoteListingContractService } from '../../core/ethereum/vote-listing-contract/contract.service';
-import { address, bytes32 } from '../../core/ethereum/type.mappings';
+import { address } from '../../core/ethereum/type.mappings';
 import { ITransactionReceipt } from '../../core/ethereum/transaction.interface';
 import { IVoteManagerService, IVoteParameters } from '../../core/vote-manager/vote-manager.service';
 
@@ -20,7 +20,7 @@ export namespace Mock {
       return Observable.from(DUMMY_ADDRESSES);
     }
 
-    deployVote$(paramsHash: bytes32): Observable<ITransactionReceipt> {
+    deployVote$(paramsHash: string): Observable<ITransactionReceipt> {
       return Observable.of(null);
     }
   }

@@ -1,6 +1,6 @@
 import { ITransactionProperties, ITransactionReceipt } from '../transaction.interface';
 import { IContract, IContractLog } from '../contract.interface';
-import { address, bytes32, uint } from '../type.mappings';
+import { address, uint } from '../type.mappings';
 
 export interface VoteListingAPI extends IContract {
   // address[] public votingContracts
@@ -11,8 +11,8 @@ export interface VoteListingAPI extends IContract {
   numberOfVotingContracts: {
     call(): Promise<uint>;
   };
-  // function deploy(bytes32 _paramsHash) public
-  deploy(_paramsHash: bytes32, props: ITransactionProperties): Promise<ITransactionReceipt>;
+  // function deploy(string _paramsHash) public
+  deploy(_paramsHash: string, props: ITransactionProperties): Promise<ITransactionReceipt>;
 }
 
 export namespace VoteCreatedEvent {

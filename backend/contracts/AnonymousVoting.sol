@@ -9,14 +9,14 @@ pragma solidity ^0.4.21;
     @dev Each contribution is an IPFS hash pointing to the actual content
 */
 contract AnonymousVoting {
-    bytes32 public parametersHash;
+    string public parametersHash;
 
     /**
         @notice Deploys the AnonymousVoting contract and sets the vote parameters
         @notice (anything all users need to know about the vote)
         @param _paramsHash the IPFS hash of the vote parameters
     */
-    function AnonymousVoting(bytes32 _paramsHash) public {
+    function AnonymousVoting(string _paramsHash) public {
         parametersHash = _paramsHash;
     }
 }

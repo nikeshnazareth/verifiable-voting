@@ -7,14 +7,13 @@ import { VoteCreatedEvent } from './contract.api';
 import { ErrorService } from '../../error-service/error.service';
 import { Mock } from './contract.service.spec.mock';
 import { IContractLog } from '../contract.interface';
-import { address, bytes32 } from '../type.mappings';
+import { address } from '../type.mappings';
 import { APP_CONFIG } from '../../../config';
 import Spy = jasmine.Spy;
 
 
 describe('Service: VoteListingContractService', () => {
-  // web3.sha3('DUMMY_PARAMS_HASH');
-  const paramsHash: bytes32 = '0xe1affb9b7a982d2d184a5e6b9487744fa1937c1f10d958701615efcc4f4e0555';
+  const paramsHash: string = 'DUMMY_PARAMS_HASH';
 
   let voteListingContractSvc: IVoteListingContractService;
   let web3Svc: IWeb3Service;
