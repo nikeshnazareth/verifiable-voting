@@ -8,9 +8,8 @@ import {
 } from '../ethereum/anonymous-voting-contract/contract.service';
 import { IPFSService } from '../ipfs/ipfs.service';
 import { ErrorService } from '../error-service/error.service';
-import { Mock } from './vote-manager.service.spec.mock';
-import { address } from '../ethereum/type.mappings';
 import { VoteListingContractService } from '../ethereum/vote-listing-contract/contract.service';
+import { IAnonymousVotingContractCollection, Mock } from '../../mock/module';
 import Spy = jasmine.Spy;
 
 describe('Service: VoteManagerService', () => {
@@ -24,7 +23,7 @@ describe('Service: VoteManagerService', () => {
     TestBed.configureTestingModule({
       providers: [
         VoteManagerService,
-        ErrorService,
+        {provide: ErrorService, useClass: Mock.ErrorService},
         {provide: VoteListingContractService, useClass: Mock.VoteListingContractService},
         {provide: AnonymousVotingContractService, useClass: Mock.AnonymousVotingContractService},
         {provide: IPFSService, useClass: Mock.IPFSService},
@@ -44,14 +43,16 @@ describe('Service: VoteManagerService', () => {
   beforeEach(() => {
     onNext = jasmine.createSpy('onNext');
     onCompleted = jasmine.createSpy('onCompleted');
-    spyOn(errSvc, 'add').and.stub();
   });
+
+  const VoteDetails: IAnonymousVotingContractCollection = Mock.AnonymousVotingContractCollections[0];
 
   describe('method: deployVote$', () => {
 
+
     const init_and_call_deployVote$ = () => {
       voteManagerSvc = new VoteManagerService(voteListingSvc, voteContractSvc, ipfsSvc, errSvc);
-      voteManagerSvc.deployVote$(Mock.DUMMY_VOTE_PARAMETERS)
+      voteManagerSvc.deployVote$(VoteDetails.parameters)
         .subscribe(onNext, onError, onCompleted);
       tick();
     };
@@ -59,18 +60,18 @@ describe('Service: VoteManagerService', () => {
     it('should add the hash to IPFS', fakeAsync(() => {
       spyOn(ipfsSvc, 'addJSON').and.callThrough();
       init_and_call_deployVote$();
-      expect(ipfsSvc.addJSON).toHaveBeenCalledWith(Mock.DUMMY_VOTE_PARAMETERS);
+      expect(ipfsSvc.addJSON).toHaveBeenCalledWith(VoteDetails.parameters);
     }));
 
     it('should pass the IPFS hash to VoteListingService.deployVote$', fakeAsync(() => {
       spyOn(voteListingSvc, 'deployVote$').and.callThrough();
       init_and_call_deployVote$();
-      expect(voteListingSvc.deployVote$).toHaveBeenCalledWith(Mock.DUMMY_HASH);
+      expect(voteListingSvc.deployVote$).toHaveBeenCalledWith(VoteDetails.params_hash);
     }));
 
-    it('should return an observable that emits the transaction receipt and completes', fakeAsync(()=> {
+    it('should return an observable that emits the transaction receipt and completes', fakeAsync(() => {
       init_and_call_deployVote$();
-      expect(onNext).toHaveBeenCalledWith(Mock.DUMMY_TX_RECEIPT);
+      expect(onNext).toHaveBeenCalledWith(VoteDetails.deploy_receipt);
       expect(onCompleted).toHaveBeenCalled();
     }));
 
@@ -81,7 +82,7 @@ describe('Service: VoteManagerService', () => {
       it('should notify the error service', fakeAsync(() => {
         init_and_call_deployVote$();
         expect(errSvc.add)
-          .toHaveBeenCalledWith(VoteManagerServiceErrors.ipfs.addParametersHash(Mock.DUMMY_VOTE_PARAMETERS));
+          .toHaveBeenCalledWith(VoteManagerServiceErrors.ipfs.addParametersHash(VoteDetails.parameters));
       }));
 
       it('should return an empty observable', fakeAsync(() => {
@@ -105,11 +106,9 @@ describe('Service: VoteManagerService', () => {
 
   describe('method: getParameters', () => {
 
-    const DUMMY_ADDRESS: address = 'DUMMY_ADDRESS';
-
     const init_and_call_getParameters$ = () => {
       voteManagerSvc = new VoteManagerService(voteListingSvc, voteContractSvc, ipfsSvc, errSvc);
-      voteManagerSvc.getParameters$(DUMMY_ADDRESS)
+      voteManagerSvc.getParameters$(VoteDetails.address)
         .subscribe(onNext, onError, onCompleted);
       tick();
     };
@@ -123,7 +122,7 @@ describe('Service: VoteManagerService', () => {
           describe('case: value matches IVoteParameters interface', () => {
             it('should return an observable that emits the parameters object and completes', fakeAsync(() => {
               init_and_call_getParameters$();
-              expect(onNext).toHaveBeenCalledWith(Mock.DUMMY_VOTE_PARAMETERS);
+              expect(onNext).toHaveBeenCalledWith(VoteDetails.parameters);
               expect(onNext).toHaveBeenCalledTimes(1);
               expect(onCompleted).toHaveBeenCalled();
             }));
@@ -157,7 +156,9 @@ describe('Service: VoteManagerService', () => {
           it('should notify the Error Service', fakeAsync(() => {
             init_and_call_getParameters$();
             expect(errSvc.add)
-              .toHaveBeenCalledWith(VoteManagerServiceErrors.ipfs.getParametersHash(DUMMY_ADDRESS, Mock.DUMMY_HASH));
+              .toHaveBeenCalledWith(
+                VoteManagerServiceErrors.ipfs.getParametersHash(VoteDetails.address, VoteDetails.params_hash)
+              );
           }));
 
           it('should return an empty observable', fakeAsync(() => {
@@ -171,13 +172,13 @@ describe('Service: VoteManagerService', () => {
       describe('case: cannot retrieve parameters hash', () => {
 
         beforeEach(() =>
-          spyOn(Mock.ANONYMOUS_VOTING_CONTRACT.parametersHash, 'call').and.returnValue(Promise.reject(''))
+          spyOn(VoteDetails.instance.parametersHash, 'call').and.returnValue(Promise.reject(''))
         );
 
         it('should notify the Error Service', fakeAsync(() => {
           init_and_call_getParameters$();
           expect(errSvc.add)
-            .toHaveBeenCalledWith(AnonymousVotingContractErrors.paramsHash(DUMMY_ADDRESS));
+            .toHaveBeenCalledWith(AnonymousVotingContractErrors.paramsHash(VoteDetails.address));
         }));
 
         it('should return an empty observable', fakeAsync(() => {
@@ -198,7 +199,5 @@ describe('Service: VoteManagerService', () => {
         expect(onCompleted).toHaveBeenCalled();
       }));
     });
-
-
   });
 });

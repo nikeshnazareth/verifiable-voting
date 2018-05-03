@@ -3,7 +3,7 @@ import { Observable } from 'rxjs/Observable';
 
 import { APP_CONFIG } from '../../../config';
 import { Web3Service } from '../web3.service';
-import { ITruffleContractAbstraction, TruffleContractWrapperService } from '../truffle-contract.service';
+import { ITruffleContractAbstraction, TruffleContractWrapperService } from '../truffle-contract-wrapper.service';
 import { ErrorService } from '../../error-service/error.service';
 import { address } from '../type.mappings';
 import { AnonymousVotingAPI } from './contract.api';

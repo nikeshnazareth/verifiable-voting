@@ -7,11 +7,10 @@ import {
   IVoteListingContractService,
   VoteListingContractService
 } from '../../core/ethereum/vote-listing-contract/contract.service';
-import { Mock } from './list-votes.component.spec.mock';
 import { IVoteManagerService, VoteManagerService } from '../../core/vote-manager/vote-manager.service';
 import { MaterialModule } from '../../material/material.module';
 import { address } from '../../core/ethereum/type.mappings';
-import DUMMY_ADDRESSES = Mock.DUMMY_ADDRESSES;
+import { Mock } from '../../mock/module';
 
 describe('Component: ListVotesComponent', () => {
   let fixture: ComponentFixture<ListVotesComponent>;
@@ -89,7 +88,7 @@ describe('Component: ListVotesComponent', () => {
 
     it('should start with a table row for each contract address', () => {
       fixture.detectChanges(); // onInit
-      expect(Page.getRows().length).toEqual(Mock.DUMMY_ADDRESSES.length);
+      expect(Page.getRows().length).toEqual(Mock.addresses.length);
     });
 
     it('should add a new row every time a new vote is deployed', () => {
@@ -99,11 +98,11 @@ describe('Component: ListVotesComponent', () => {
       fixture.detectChanges(); // onInit
       expect(Page.getRows().length).toEqual(0);
 
-      newVote$.emit('_New Address 1_');
+      newVote$.emit(Mock.addresses[0]);
       fixture.detectChanges();
       expect(Page.getRows().length).toEqual(1);
 
-      newVote$.emit('_New Address 1_');
+      newVote$.emit(Mock.addresses[1]);
       fixture.detectChanges();
       expect(Page.getRows().length).toEqual(2);
     });
@@ -115,7 +114,7 @@ describe('Component: ListVotesComponent', () => {
       it('it should display the contract index (0-up indexing)', () => {
         fixture.detectChanges();
         const displayedIndices: Number[] = Page.getColumn(0).map(str => Number(str));
-        expect(displayedIndices).toEqual(Page.range(DUMMY_ADDRESSES.length));
+        expect(displayedIndices).toEqual(Page.range(Mock.addresses.length));
       });
     });
 
@@ -123,8 +122,9 @@ describe('Component: ListVotesComponent', () => {
       it('should display the parameters once they are retrieved', () => {
         fixture.detectChanges();
         const displayedParameters: string[] = Page.getColumn(1);
-        const mockedParams: string[] = Mock.DUMMY_ADDRESSES.map(addr => addr + '_params');
-        expect(displayedParameters).toEqual(mockedParams);
+        const expectedParameters: string[] =
+          Mock.AnonymousVotingContractCollections.map(collection => collection.parameters.parameters);
+        expect(displayedParameters).toEqual(expectedParameters);
       });
 
       xit('should display "UNKNOWN CONTRACT ADDRESS" for each unknown address');
@@ -138,7 +138,6 @@ describe('Component: ListVotesComponent', () => {
   });
 
   describe('User Interface', () => {
-
     describe('selected contract', () => {
       xit('it should start empty');
 
@@ -147,8 +146,6 @@ describe('Component: ListVotesComponent', () => {
       xit('it should continue to emit addresses for every selection');
     });
   });
-
-
 });
 
 

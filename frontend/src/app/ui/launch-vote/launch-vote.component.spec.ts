@@ -2,13 +2,11 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { By } from '@angular/platform-browser';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { TestBed, async, ComponentFixture } from '@angular/core/testing';
-import { Observable } from 'rxjs/Observable';
 
 import { LaunchVoteComponent } from './launch-vote.component';
 import { MaterialModule } from '../../material/material.module';
-import { IVoteManagerService, IVoteParameters, VoteManagerService } from '../../core/vote-manager/vote-manager.service';
-import { ITransactionReceipt } from '../../core/ethereum/transaction.interface';
-import { address } from '../../core/ethereum/type.mappings';
+import { VoteManagerService } from '../../core/vote-manager/vote-manager.service';
+import { IAnonymousVotingContractCollection, Mock } from '../../mock/module';
 
 
 describe('Component: LaunchVoteComponent', () => {
@@ -47,7 +45,7 @@ describe('Component: LaunchVoteComponent', () => {
         MaterialModule
       ],
       providers: [
-        {provide: VoteManagerService, useClass: MockVoteManagerService}
+        {provide: VoteManagerService, useClass: Mock.VoteManagerService}
       ]
     })
       .compileComponents()
@@ -71,20 +69,16 @@ describe('Component: LaunchVoteComponent', () => {
 
   describe('User Interface', () => {
     it('should start with the submit button disabled', () => {
-      fixture.detectChanges();
       expect(page.submitButton.disabled).toBe(true);
     });
 
     it('should enable the submit button when the text area has content', () => {
-      fixture.detectChanges();
       expect(page.submitButton.disabled).toBe(true);
       page.setTextValue('Some value');
       expect(page.submitButton.disabled).toBe(false);
     });
 
     it('should disable the submit button if the text area is cleared', () => {
-      fixture.detectChanges();
-      fixture.detectChanges();
       expect(page.submitButton.disabled).toBe(true);
       page.setTextValue('Some value');
       expect(page.submitButton.disabled).toBe(false);
@@ -95,36 +89,20 @@ describe('Component: LaunchVoteComponent', () => {
 
   describe('Functionality', () => {
 
+    const VoteDetails: IAnonymousVotingContractCollection = Mock.AnonymousVotingContractCollections[0];
+
     beforeEach(() => {
-      page.setTextValue(DUMMY_VOTE_PARAMETERS.parameters);
+      page.setTextValue(VoteDetails.parameters.parameters);
     });
 
     describe('submit button', () => {
       it('should wrap the parameters in an IVoteParameters object and pass it to VoteManager.deployVote$', () => {
         spyOn(page.voteManagerSvc, 'deployVote$').and.callThrough();
         page.submitButton.click();
-        expect(page.voteManagerSvc.deployVote$).toHaveBeenCalledWith(DUMMY_VOTE_PARAMETERS);
+        expect(page.voteManagerSvc.deployVote$).toHaveBeenCalledWith(VoteDetails.parameters);
       });
     });
   });
-
-  const DUMMY_VOTE_PARAMETERS: IVoteParameters = {
-    parameters: 'dummy parameters text'
-  };
-
-  const DUMMY_TX_RECEIPT: ITransactionReceipt = {
-    tx: 'A dummy tranasction'
-  };
-
-  class MockVoteManagerService implements IVoteManagerService {
-    deployVote$(params: IVoteParameters): Observable<ITransactionReceipt> {
-      return Observable.of(DUMMY_TX_RECEIPT);
-    };
-
-    getParameters$(addr: address): Observable<IVoteParameters> {
-      return null;
-    };
-  }
 });
 
 

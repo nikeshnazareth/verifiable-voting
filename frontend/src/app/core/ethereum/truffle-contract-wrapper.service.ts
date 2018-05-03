@@ -9,7 +9,7 @@ export interface ITruffleContractWrapperService {
 }
 
 export interface ITruffleContractAbstraction {
-  setProvider(p: IWeb3Provider);
+  setProvider(p: IWeb3Provider): void;
 
   deployed(): Promise<IContract>;
 

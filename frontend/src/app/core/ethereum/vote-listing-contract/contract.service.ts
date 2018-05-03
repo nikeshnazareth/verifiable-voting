@@ -13,7 +13,7 @@ import 'rxjs/add/observable/from';
 import { APP_CONFIG } from '../../../config';
 import { VoteCreatedEvent, VoteListingAPI } from './contract.api';
 import { Web3Service } from '../web3.service';
-import { ITruffleContractAbstraction, TruffleContractWrapperService } from '../truffle-contract.service';
+import { ITruffleContractAbstraction, TruffleContractWrapperService } from '../truffle-contract-wrapper.service';
 import { IContractLog } from '../contract.interface';
 import { ErrorService } from '../../error-service/error.service';
 import { address, uint } from '../type.mappings';
