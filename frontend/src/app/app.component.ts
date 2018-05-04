@@ -1,4 +1,5 @@
 import { Component } from '@angular/core';
+import { MatSnackBar } from '@angular/material';
 
 import { ErrorService } from './core/error-service/error.service';
 
@@ -23,10 +24,10 @@ import { ErrorService } from './core/error-service/error.service';
 })
 export class AppComponent {
 
-  constructor(errSvc: ErrorService) {
-    // TODO: do something more user friendly
+  constructor(private errSvc: ErrorService,
+              private snackBar: MatSnackBar) {
     errSvc.error$.subscribe(err => {
-      console.log(err);
+      this.snackBar.open(err);
     });
   }
 }
