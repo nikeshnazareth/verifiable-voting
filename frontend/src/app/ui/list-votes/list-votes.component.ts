@@ -14,7 +14,6 @@ import { VoteManagerService } from '../../core/vote-manager/vote-manager.service
 @Component({
   selector: 'vv-list-votes',
   template: `
-    <h2>Deployed Votes</h2>
     <mat-table [dataSource]="_contractsSummary$ | async">
       <!-- Index column -->
       <ng-container matColumnDef="index">

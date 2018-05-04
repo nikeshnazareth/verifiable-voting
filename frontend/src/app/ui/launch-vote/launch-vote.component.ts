@@ -6,7 +6,6 @@ import { IVoteParameters, VoteManagerService } from '../../core/vote-manager/vot
   selector: 'vv-launch-vote',
   template: `
     <form [formGroup]=launchVoteForm (ngSubmit)="onSubmit()">
-      <h2>Launch Vote</h2>
       <mat-form-field>
         <textarea formControlName="parameters"
                   placeholder="Vote parameters"
