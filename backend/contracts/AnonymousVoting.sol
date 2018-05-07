@@ -9,6 +9,7 @@ pragma solidity ^0.4.21;
     @dev Each contribution is an IPFS hash pointing to the actual content
 */
 contract AnonymousVoting {
+    /// @notice The IPFS hash of the vote parameters (chosen by the organiser at contract creation)
     string public parametersHash;
 
     /**

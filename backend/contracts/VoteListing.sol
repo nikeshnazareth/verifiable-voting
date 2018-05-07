@@ -9,8 +9,13 @@ pragma solidity ^0.4.21;
     @notice Deploys AnonymousVote contracts, and maintains a list of the deployed contract addresses
 */
 contract VoteListing {
+    /// @notice The list of AnonymousVoting contracts deployed by this contract
     address[] public votingContracts;
 
+    /**
+        @notice An event generated whenever a new AnonymousVoting contract is deployed by this contract
+        @param contractAddress the address of the new AnonymousVoting contract
+    */
     event VoteCreated(address contractAddress);
 
     /**
