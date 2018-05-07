@@ -24,7 +24,7 @@ contract VoteListing {
         @param _votingExpiration the time when the Voting phase ends
         @param _paramsHash the IPFS hash of the vote parameters
     */
-    function deploy(uint _registrationExpiration, uint _votingExpiration, string _paramsHash) public {
+    function deploy(uint _registrationExpiration, uint _votingExpiration, string _paramsHash) external {
         address addr = new AnonymousVoting(_registrationExpiration, _votingExpiration, _paramsHash);
         votingContracts.push(addr);
         emit VoteCreated(addr);
@@ -33,7 +33,7 @@ contract VoteListing {
     /**
         @return the number of AnonymousVote contracts that have been deployed by this contract
     */
-    function numberOfVotingContracts() public constant returns (uint) {
+    function numberOfVotingContracts() public view returns (uint) {
         return votingContracts.length;
     }
 }
