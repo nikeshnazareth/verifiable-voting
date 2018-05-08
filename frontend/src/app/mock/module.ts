@@ -20,21 +20,29 @@ import { IVoteParameters } from '../core/vote-manager/vote-manager.service';
 import { IPFSService } from './ipfs.service';
 import { VoteManagerService } from './vote-manager.service';
 import { IVoteTimeframes } from '../core/ethereum/vote-listing-contract/contract.service';
+import {
+  TruffleNoRestrictionAbstraction,
+  TruffleNoRestrictionWrapperService
+} from './truffle-no-restriction-wrapper.service';
+import { NoRestrictionContract } from './no-restriction.contract';
 
 
 export class Mock {
   // services
   public static Web3Service = Web3Service;
   public static ErrorService = ErrorService;
+  public static IPFSService = IPFSService;
+
   public static TruffleVoteListingWrapperService = TruffleVoteListingWrapperService;
   public static TruffleAnonymousVotingWrapperService = TruffleAnonymousVotingWrapperService;
+  public static TruffleNoRestrictionWrapperService = TruffleNoRestrictionWrapperService;
+
   public static VoteListingContractService = VoteListingContractService;
   public static AnonymousVotingContractService = AnonymousVotingContractService;
-  public static IPFSService = IPFSService;
   public static VoteManagerService = VoteManagerService;
 
   // VoteListing contract
-  public static MOCK_VOTE_LISTING_ADDRESS: string = 'MOCK_VOTE_LISTING_ADDRESS';
+  public static VOTE_LISTING_ADDRESS: address = 'MOCK_VOTE_LISTING_ADDRESS';
   public static TruffleVoteListingAbstraction = new TruffleVoteListingAbstraction();
   public static VoteListingContract = new VoteListingContract();
   public static VoteCreatedEventStream = new TriggerableEventStream();
@@ -42,6 +50,11 @@ export class Mock {
   // AnonymousVoting contract
   public static AnonymousVotingContractCollections = range(4).map(i => generateMockVoteContract(i));
   public static TruffleAnonymousVotingAbstraction = new TruffleAnonymousVotingAbstraction();
+
+  // NoRestriction contract
+  public static NO_RESTRICTION_ADDRESS: address = 'MOCK_NO_RESTRICTION_ADDRESS';
+  public static TruffleNoRestrictionAbstraction = new TruffleNoRestrictionAbstraction();
+  public static NoRestrictionContract = new NoRestrictionContract();
 
   static get addresses(): address[] {
     return Mock.AnonymousVotingContractCollections.map(collection => collection.address);
