@@ -34,6 +34,7 @@ export class Mock {
   public static VoteManagerService = VoteManagerService;
 
   // VoteListing contract
+  public static MOCK_VOTE_LISTING_ADDRESS: string = 'MOCK_VOTE_LISTING_ADDRESS';
   public static TruffleVoteListingAbstraction = new TruffleVoteListingAbstraction();
   public static VoteListingContract = new VoteListingContract();
   public static VoteCreatedEventStream = new TriggerableEventStream();

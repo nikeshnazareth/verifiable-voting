@@ -1,4 +1,7 @@
+import { address } from './type.mappings';
+
 export interface IContract {
+  address: address;
   allEvents(): IContractEventStream;
 }
 
