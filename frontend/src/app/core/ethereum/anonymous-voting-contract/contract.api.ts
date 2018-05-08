@@ -14,13 +14,13 @@ interface VotePhasesAPI extends IContract {
     call(): Promise<uint>;
   };
 
-  // uint public registrationExpiration;
-  registrationExpiration: {
+  // uint public registrationDeadline;
+  registrationDeadline: {
     call(): Promise<uint>;
   };
 
-  // uint public votingExpiration;
-  votingExpiration: {
+  // uint public votingDeadline;
+  votingDeadline: {
     call(): Promise<uint>;
   };
 }

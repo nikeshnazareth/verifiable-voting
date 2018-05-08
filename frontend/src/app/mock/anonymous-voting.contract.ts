@@ -17,11 +17,11 @@ export class AnonymousVotingContract implements AnonymousVotingAPI {
     call: () => Promise.resolve(this.REGISTRATION_PHASE)
   };
 
-  registrationExpiration = {
+  registrationDeadline = {
     call: () => Promise.resolve(new BigNumber(this.REGISTRATION_DEADLINE))
   };
 
-  votingExpiration = {
+  votingDeadline = {
     call: () => Promise.resolve(new BigNumber(this.VOTING_DEADLINE))
   };
 

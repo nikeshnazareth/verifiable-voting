@@ -18,16 +18,16 @@ contract VotePhases {
     Phase public currentPhase;
 
     /// @notice The time when the Registration phase ends
-    uint public registrationExpiration;
+    uint public registrationDeadline;
 
     /// @notice The time when the Voting phase ends
-    uint public votingExpiration;
+    uint public votingDeadline;
 
     /// @notice Modifier to update the phase (when appropriate) before calling the function
     modifier updatePhase() {
-        if (currentPhase != Phase.Complete && now > votingExpiration) {
+        if (currentPhase != Phase.Complete && now > votingDeadline) {
             currentPhase = Phase.Complete;
-        } else if (now > registrationExpiration) {
+        } else if (now > registrationDeadline) {
             currentPhase = Phase.Voting;
         }
         _;
@@ -45,15 +45,15 @@ contract VotePhases {
     /**
         @notice Initialises the phase timings
         @notice Ensures that the phases are ordered correctly
-        @param _registrationExpiration the time when the Registration phase ends
-        @param _votingExpiration the time when the Voting phase ends
+        @param _registrationDeadline the time when the Registration phase ends
+        @param _votingDeadline the time when the Voting phase ends
     */
-    function VotePhases(uint _registrationExpiration, uint _votingExpiration) public {
-        require(_registrationExpiration > now);
-        require(_votingExpiration > _registrationExpiration);
+    function VotePhases(uint _registrationDeadline, uint _votingDeadline) public {
+        require(_registrationDeadline > now);
+        require(_votingDeadline > _registrationDeadline);
 
         currentPhase = Phase.Registration;
-        registrationExpiration = _registrationExpiration;
-        votingExpiration = _votingExpiration;
+        registrationDeadline = _registrationDeadline;
+        votingDeadline = _votingDeadline;
     }
 }

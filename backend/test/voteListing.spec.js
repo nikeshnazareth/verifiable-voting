@@ -44,12 +44,12 @@ describe('Contract: VoteListing', () => {
                 });
 
                 it('should be initialised with the specified registrationExpiration timestamp', async () => {
-                   const time = await votingContract.registrationExpiration.call();
+                   const time = await votingContract.registrationDeadline.call();
                    assert.equal(time, registrationExpiration);
                 });
 
                 it('should be initialised with the specified votingExpiration timestamp', async () => {
-                    const time = await votingContract.votingExpiration.call();
+                    const time = await votingContract.votingDeadline.call();
                     assert.equal(time, votingExpiration);
                 });
 

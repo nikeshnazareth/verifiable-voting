@@ -23,12 +23,12 @@ describe('contract: AnonymousVoting', () => {
             });
 
             it('should set the registrationExpiration time to the specified value', async () => {
-                const time = await instance.registrationExpiration.call();
+                const time = await instance.registrationDeadline.call();
                 assert.equal(time.toNumber(), registrationExpiration);
             });
 
             it('should set the votingExpiration time to the specified value', async () => {
-                const time = await instance.votingExpiration.call();
+                const time = await instance.votingDeadline.call();
                 assert.equal(time.toNumber(), votingExpiration);
             });
 

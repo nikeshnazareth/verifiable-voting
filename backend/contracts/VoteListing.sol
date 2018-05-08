@@ -20,12 +20,12 @@ contract VoteListing {
 
     /**
         @notice Deploys a new AnonymousVote contract with the specified parameters
-        @param _registrationExpiration the time when the Registration phase ends
-        @param _votingExpiration the time when the Voting phase ends
+        @param _registrationDeadline the time when the Registration phase ends
+        @param _votingDeadline the time when the Voting phase ends
         @param _paramsHash the IPFS hash of the vote parameters
     */
-    function deploy(uint _registrationExpiration, uint _votingExpiration, string _paramsHash) external {
-        address addr = new AnonymousVoting(_registrationExpiration, _votingExpiration, _paramsHash);
+    function deploy(uint _registrationDeadline, uint _votingDeadline, string _paramsHash) external {
+        address addr = new AnonymousVoting(_registrationDeadline, _votingDeadline, _paramsHash);
         votingContracts.push(addr);
         emit VoteCreated(addr);
     }

@@ -17,12 +17,12 @@ contract AnonymousVoting is VotePhases {
     /**
         @notice Deploys the AnonymousVoting contract and sets the vote parameters
         @notice (anything all users need to know about the vote)
-        @param _registrationExpiration the time when the Registration phase ends
-        @param _votingExpiration the time when the Voting phase ends
+        @param _registrationDeadline the time when the Registration phase ends
+        @param _votingDeadline the time when the Voting phase ends
         @param _paramsHash the IPFS hash of the vote parameters
     */
-    function AnonymousVoting(uint _registrationExpiration, uint _votingExpiration, string _paramsHash)
-    VotePhases(_registrationExpiration, _votingExpiration) public {
+    function AnonymousVoting(uint _registrationDeadline, uint _votingDeadline, string _paramsHash)
+    VotePhases(_registrationDeadline, _votingDeadline) public {
         parametersHash = _paramsHash;
     }
 }

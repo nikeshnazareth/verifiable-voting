@@ -13,16 +13,16 @@ pragma solidity ^0.4.21;
 contract TestAnonymousVotingPhases is AnonymousVoting {
 
     /// @notice pass all constructor parameters through to the AnonymousVoting constructor
-    function TestAnonymousVotingPhases(uint _registrationExpiration, uint _votingExpiration, string _paramsHash)
-    AnonymousVoting(_registrationExpiration, _votingExpiration, _paramsHash) public {}
+    function TestAnonymousVotingPhases(uint _registrationDeadline, uint _votingDeadline, string _paramsHash)
+    AnonymousVoting(_registrationDeadline, _votingDeadline, _paramsHash) public {}
 
     /**
         @notice Simulate the passage of time by subtracting the specified value from all time-related constants
         @param _nSeconds the number of seconds to advance time
     */
     function advanceTime(uint _nSeconds) public {
-        registrationExpiration -= _nSeconds;
-        votingExpiration -= _nSeconds;
+        registrationDeadline -= _nSeconds;
+        votingDeadline -= _nSeconds;
     }
 
     /**

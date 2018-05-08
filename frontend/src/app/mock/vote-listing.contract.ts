@@ -14,14 +14,14 @@ export class VoteListingContract implements VoteListingAPI {
     call: () => Promise.resolve(new BigNumber(Mock.AnonymousVotingContractCollections.length))
   };
 
-  deploy(_registrationExpiration: uint,
-         _votingExpiration: uint,
+  deploy(_registrationDeadline: uint,
+         _votingDeadline: uint,
          _paramsHash: string, props: ITransactionProperties): Promise<ITransactionReceipt> {
 
     return Promise.resolve(
       Mock.AnonymousVotingContractCollections
-        .filter(collection => collection.timeframes.registrationDeadline === _registrationExpiration)
-        .filter(collection => collection.timeframes.votingDeadline === _votingExpiration)
+        .filter(collection => collection.timeframes.registrationDeadline === _registrationDeadline)
+        .filter(collection => collection.timeframes.votingDeadline === _votingDeadline)
         .filter(collection => collection.params_hash === _paramsHash)[0]
         .deploy_receipt
     );
