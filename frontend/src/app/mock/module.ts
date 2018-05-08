@@ -19,6 +19,7 @@ import { AnonymousVotingContractService } from './anonymous-voting-contract.serv
 import { IVoteParameters } from '../core/vote-manager/vote-manager.service';
 import { IPFSService } from './ipfs.service';
 import { VoteManagerService } from './vote-manager.service';
+import { BigNumber } from './bignumber';
 
 
 export class Mock {
@@ -38,6 +39,8 @@ export class Mock {
   public static VoteCreatedEventStream = new TriggerableEventStream();
 
   // AnonymousVoting contract
+  public static REGISTRATION_PHASE_EXPIRATION: BigNumber = new BigNumber(10100);
+  public static VOTING_PHASE_EXPIRATION: BigNumber = new BigNumber(10200);
   public static AnonymousVotingContractCollections = range(4).map(i => generateMockVoteContract(i));
   public static TruffleAnonymousVotingAbstraction = new TruffleAnonymousVotingAbstraction();
 
