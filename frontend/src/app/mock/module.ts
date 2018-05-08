@@ -19,7 +19,7 @@ import { AnonymousVotingContractService } from './anonymous-voting-contract.serv
 import { IVoteParameters } from '../core/vote-manager/vote-manager.service';
 import { IPFSService } from './ipfs.service';
 import { VoteManagerService } from './vote-manager.service';
-import { BigNumber } from './bignumber';
+import { IVoteTimeframes } from '../core/ethereum/vote-listing-contract/contract.service';
 
 
 export class Mock {
@@ -39,8 +39,6 @@ export class Mock {
   public static VoteCreatedEventStream = new TriggerableEventStream();
 
   // AnonymousVoting contract
-  public static REGISTRATION_PHASE_EXPIRATION: BigNumber = new BigNumber(10100);
-  public static VOTING_PHASE_EXPIRATION: BigNumber = new BigNumber(10200);
   public static AnonymousVotingContractCollections = range(4).map(i => generateMockVoteContract(i));
   public static TruffleAnonymousVotingAbstraction = new TruffleAnonymousVotingAbstraction();
 
@@ -52,23 +50,31 @@ export class Mock {
 export interface IAnonymousVotingContractCollection {
   address: string;
   parameters: IVoteParameters;
+  timeframes: IVoteTimeframes;
   params_hash: string;
   deploy_receipt: ITransactionReceipt;
   instance: AnonymousVotingAPI;
 }
 
-
 function generateMockVoteContract(idx: number): IAnonymousVotingContractCollection {
+  const REGISTRATION_DEADLINE: number = 10100;
+  const VOTING_DEADLINE: number = 10200;
+  const PARAMS_HASH: string = 'MOCK_PARAMETERS_IPFS_HASH_' + idx;
+
   return {
     address: 'MOCK_ADDRESS_' + idx,
     parameters: {
       parameters: 'MOCK_PARAMETERS_' + idx
     },
-    params_hash: 'MOCK_PARAMETERS_IPFS_HASH_' + idx,
+    timeframes: {
+      registrationDeadline: REGISTRATION_DEADLINE,
+      votingDeadline: VOTING_DEADLINE
+    },
+    params_hash: PARAMS_HASH,
     deploy_receipt: {
       tx: 'MOCK_DEPLOY_TX_RECEIPT_' + idx
     },
-    instance: new AnonymousVotingContract('MOCK_PARAMETERS_IPFS_HASH_' + idx)
+    instance: new AnonymousVotingContract(REGISTRATION_DEADLINE, VOTING_DEADLINE, PARAMS_HASH)
   };
 }
 

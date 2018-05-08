@@ -96,7 +96,7 @@ describe('Component: LaunchVoteComponent', () => {
     });
 
     describe('submit button', () => {
-      it('should wrap the parameters in an IVoteParameters object and pass it to VoteManager.deployVote$', () => {
+      xit('should wrap the parameters in an IVoteParameters object and pass it to VoteManager.deployVote$', () => {
         spyOn(page.voteManagerSvc, 'deployVote$').and.callThrough();
         page.submitButton.click();
         expect(page.voteManagerSvc.deployVote$).toHaveBeenCalledWith(VoteDetails.parameters);

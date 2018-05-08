@@ -47,7 +47,7 @@ describe('Service: VoteListingContractService', () => {
     it('should notify the Error Service if web3 is not injected', fakeAsync(() => {
       spyOnProperty(web3Svc, 'isInjected').and.returnValue(false);
       // recreate the service (the constructor in the original has already been called)
-      voteListingContractSvc = new VoteListingContractService(<Web3Service> web3Svc, contractSvc, errSvc);
+      voteListingContractSvc = new VoteListingContractService(web3Svc, contractSvc, errSvc);
       tick(); // wait for the promise to finish
       expect(errSvc.add).toHaveBeenCalledWith(APP_CONFIG.errors.web3);
     }));
@@ -62,18 +62,18 @@ describe('Service: VoteListingContractService', () => {
   });
 
   describe('method: deployVote', () => {
-    const VoteCollection: IAnonymousVotingContractCollection = Mock.AnonymousVotingContractCollections[0];
+    const voteCollection: IAnonymousVotingContractCollection = Mock.AnonymousVotingContractCollections[0];
 
     const init_and_call_deployVote = () => {
-      voteListingContractSvc = new VoteListingContractService(<Web3Service> web3Svc, contractSvc, errSvc);
-      voteListingContractSvc.deployVote$(VoteCollection.params_hash)
+      voteListingContractSvc = new VoteListingContractService(web3Svc, contractSvc, errSvc);
+      voteListingContractSvc.deployVote$(voteCollection.timeframes, voteCollection.params_hash)
         .subscribe(onNext, onError, onCompleted);
       tick();
     };
 
     it('should return an Observable that emits the transaction receipt and completes', fakeAsync(() => {
       init_and_call_deployVote();
-      expect(onNext).toHaveBeenCalledWith(VoteCollection.deploy_receipt);
+      expect(onNext).toHaveBeenCalledWith(voteCollection.deploy_receipt);
       expect(onNext).toHaveBeenCalledTimes(1);
       expect(onCompleted).toHaveBeenCalled();
     }));
@@ -118,7 +118,7 @@ describe('Service: VoteListingContractService', () => {
 
   describe('observable: deployedVotes$', () => {
     const init_and_call_deployedVotes$ = () => {
-      voteListingContractSvc = new VoteListingContractService(<Web3Service> web3Svc, contractSvc, errSvc);
+      voteListingContractSvc = new VoteListingContractService(web3Svc, contractSvc, errSvc);
       voteListingContractSvc.deployedVotes$
         .subscribe(onNext, onError, onCompleted);
       tick();

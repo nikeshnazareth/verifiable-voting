@@ -16,14 +16,14 @@ import { IPFSService } from '../ipfs/ipfs.service';
 import { ErrorService } from '../error-service/error.service';
 import { address } from '../ethereum/type.mappings';
 import { ITransactionReceipt } from '../ethereum/transaction.interface';
-import { VoteListingContractService } from '../ethereum/vote-listing-contract/contract.service';
+import { IVoteTimeframes, VoteListingContractService } from '../ethereum/vote-listing-contract/contract.service';
 
 export interface IVoteParameters {
   parameters: string;
 }
 
 export interface IVoteManagerService {
-  deployVote$(params: IVoteParameters): Observable<ITransactionReceipt>;
+  deployVote$(timeframes: IVoteTimeframes, params: IVoteParameters): Observable<ITransactionReceipt>;
 
   getParameters$(addr: address): Observable<IVoteParameters>;
 }
@@ -50,17 +50,18 @@ export class VoteManagerService implements IVoteManagerService {
 
   /**
    * Adds the parameters to IPFS and deploys a new AnonymousVoting contract with the resulting hash
+   * @param {IVoteTimeframes} timeframes the unix timestamps of the vote phase deadlines
    * @param {IVoteParameters} params the vote parameters to add to IPFS
    * @returns {Observable<ITransactionReceipt>} an observable that emits the deployment transaction receipt</br>
    * or an empty observable if there is an error
    */
-  deployVote$(params: IVoteParameters): Observable<ITransactionReceipt> {
+  deployVote$(timeframes: IVoteTimeframes, params: IVoteParameters): Observable<ITransactionReceipt> {
     return Observable.fromPromise(this.ipfsSvc.addJSON(params))
       .catch(() => {
         this.errSvc.add(VoteManagerServiceErrors.ipfs.addParametersHash(params));
         return <Observable<string>> Observable.empty();
       })
-      .switchMap(hash => this.voteListingSvc.deployVote$(hash));
+      .switchMap(hash => this.voteListingSvc.deployVote$(timeframes, hash));
   }
 
   /**

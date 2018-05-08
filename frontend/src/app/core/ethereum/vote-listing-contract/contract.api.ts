@@ -7,16 +7,20 @@ export interface VoteListingAPI extends IContract {
   votingContracts: {
     call(index: number): Promise<address>;
   };
-   // function numberOfVotingContracts() public constant returns (uint)
+
+  // function numberOfVotingContracts() public constant returns (uint)
   numberOfVotingContracts: {
     call(): Promise<uint>;
   };
-  // function deploy(string _paramsHash) public
-  deploy(_paramsHash: string, props: ITransactionProperties): Promise<ITransactionReceipt>;
+
+  // function deploy(uint _registrationExpiration, uint _votingExpiration, string _paramsHash) external
+  deploy(_registrationExpiration: uint, _votingExpiration: uint, _paramsHash: string,
+         props: ITransactionProperties): Promise<ITransactionReceipt>;
 }
 
 export namespace VoteCreatedEvent {
   export const name: string = 'VoteCreated';
+
   export interface Log extends IContractLog {
     args: {
       contractAddress: address;

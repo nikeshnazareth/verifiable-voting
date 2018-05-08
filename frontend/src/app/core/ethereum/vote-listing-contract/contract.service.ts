@@ -19,11 +19,15 @@ import { ErrorService } from '../../error-service/error.service';
 import { address, uint } from '../type.mappings';
 import { ITransactionReceipt } from '../transaction.interface';
 
+export interface IVoteTimeframes {
+  registrationDeadline: number;
+  votingDeadline: number;
+}
 
 export interface IVoteListingContractService {
   deployedVotes$: Observable<address>;
 
-  deployVote$(paramsHash: string): Observable<ITransactionReceipt>;
+  deployVote$(timeframes: IVoteTimeframes, paramsHash: string): Observable<ITransactionReceipt>;
 }
 
 export const VoteListingContractErrors = {
@@ -51,13 +55,19 @@ export class VoteListingContractService implements IVoteListingContractService {
 
   /**
    * Uses the VoteListing contract to deploy a new vote to the blockchain
+   * @param {IVoteTimeframes} timeframes the unix timestamps of when the vote phases end
    * @param {string} paramsHash the IPFS hash of the vote parameters
    * @returns {Observable<ITransactionReceipt>} An observable that emits the receipt when the contract is deployed</br>
    * or an empty observable if there was an error
    */
-  deployVote$(paramsHash: string): Observable<ITransactionReceipt> {
+  deployVote$(timeframes: IVoteTimeframes, paramsHash: string): Observable<ITransactionReceipt> {
     return this._contract$
-      .map(contract => contract.deploy(paramsHash, {from: this.web3Svc.defaultAccount}))
+      .map(contract => contract.deploy(
+        timeframes.registrationDeadline,
+        timeframes.votingDeadline,
+        paramsHash,
+        {from: this.web3Svc.defaultAccount}
+      ))
       .switchMap(promise => Observable.fromPromise(promise))
       .catch(() => {
         this.errSvc.add(VoteListingContractErrors.deployVote);
