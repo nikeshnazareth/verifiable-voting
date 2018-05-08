@@ -1,6 +1,9 @@
-import * as IPFS from 'ipfs-mini';
+
 import { Injectable } from '@angular/core';
-import { APP_CONFIG } from '../../config';
+import { environment } from '../../../environments/environment';
+import { IPFSService as ProductionSvc} from './production-ipfs.service';
+import { IPFSService as DevelopmentSvc } from './local-ipfs.service';
+
 
 export interface IIPFSService {
   addJSON(data: object): Promise<string>;
@@ -8,49 +11,27 @@ export interface IIPFSService {
   catJSON(hash: string): Promise<object>;
 }
 
-
+/**
+ * This is a pass-through service that users the local or production IPFS service
+ * depending on the environment.
+ * I have not been able to make Angular's Dependency Injection mechanism choose
+ * the service based on a value in the environment object, so instead, it will
+ * always use this service, which performs the selection manually.
+ */
 @Injectable()
 export class IPFSService implements IIPFSService {
-  private _node: IIPFSNode;
+  private svc: IIPFSService;
 
-  /**
-   * Configure the service to use the IPFS node defined in APP_CONFIG
-   */
   constructor() {
-    this._node = new IPFS(APP_CONFIG.ipfs);
+    this.svc = environment.production ? new ProductionSvc() : new DevelopmentSvc();
   }
 
-  /**
-   * Adds the data to this._node
-   * @param data any json object to be published to IPFS
-   * @returns {Promise<string>} the IPFS address (hash) of the data
-   */
   addJSON(data: object): Promise<string> {
-    return new Promise((resolve, reject) => {
-      this._node.addJSON(data, (error, hash) => error ? reject(error) : resolve(hash));
-    });
+    return this.svc.addJSON(data);
   }
 
-  /**
-   * Retrieves the data at the given IPFS address from this._node
-   * @param hash the hash address of the data to be retrieved
-   * @returns {Promise<object>} the json data stored at the given hash
-   */
   catJSON(hash: string): Promise<object> {
-    return new Promise((resolve, reject) => {
-      this._node.catJSON(hash, (error, data) => error ? reject(error) : resolve(data));
-    });
+    return this.svc.catJSON(hash);
   }
-
 }
 
-
-interface IIPFSNode {
-  add(data: string, cb: (error: string, hash: string) => void);
-
-  cat(hash: string, cb: (error: string, data: string) => void);
-
-  addJSON(data: object, cb: (error: string, hash: string) => void);
-
-  catJSON(hash: string, cb: (error: string, data: object) => void);
-}
