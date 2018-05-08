@@ -76,12 +76,14 @@ describe('Service: VoteManagerService', () => {
 
     describe('case: IPFS call fails', () => {
 
-      beforeEach(() => spyOn(ipfsSvc, 'addJSON').and.returnValue(Promise.reject('')));
+      const addError: Error = new Error('IPFS addJSON failed');
+
+      beforeEach(() => spyOn(ipfsSvc, 'addJSON').and.returnValue(Promise.reject(addError)));
 
       it('should notify the error service', fakeAsync(() => {
         init_and_call_deployVote$();
         expect(errSvc.add)
-          .toHaveBeenCalledWith(VoteManagerServiceErrors.ipfs.addParametersHash(voteDetails.parameters));
+          .toHaveBeenCalledWith(VoteManagerServiceErrors.ipfs.addParametersHash(voteDetails.parameters), addError);
       }));
 
       it('should return an empty observable', fakeAsync(() => {
@@ -137,7 +139,7 @@ describe('Service: VoteManagerService', () => {
             it('should notify the Error Service', fakeAsync(() => {
               init_and_call_getParameters$();
               expect(errSvc.add)
-                .toHaveBeenCalledWith(VoteManagerServiceErrors.format.parametersHash(INVALID_VOTE_PARAMETERS));
+                .toHaveBeenCalledWith(VoteManagerServiceErrors.format.parametersHash(INVALID_VOTE_PARAMETERS), null);
             }));
 
             it('should return an empty observable', fakeAsync(() => {
@@ -150,13 +152,16 @@ describe('Service: VoteManagerService', () => {
 
         describe('case: cannot retrieve value from IPFS', () => {
 
-          beforeEach(() => spyOn(ipfsSvc, 'catJSON').and.returnValue(Promise.reject('')));
+          const retrieveError: Error = new Error('Unable to get data from IPFS');
+
+          beforeEach(() => spyOn(ipfsSvc, 'catJSON').and.returnValue(Promise.reject(retrieveError)));
 
           it('should notify the Error Service', fakeAsync(() => {
             init_and_call_getParameters$();
             expect(errSvc.add)
               .toHaveBeenCalledWith(
-                VoteManagerServiceErrors.ipfs.getParametersHash(voteDetails.address, voteDetails.params_hash)
+                VoteManagerServiceErrors.ipfs.getParametersHash(voteDetails.address, voteDetails.params_hash),
+                retrieveError
               );
           }));
 
@@ -170,14 +175,16 @@ describe('Service: VoteManagerService', () => {
 
       describe('case: cannot retrieve parameters hash', () => {
 
+        const retrieveError: Error = new Error('Unable to get parameters hash');
+
         beforeEach(() =>
-          spyOn(voteDetails.instance.parametersHash, 'call').and.returnValue(Promise.reject(''))
+          spyOn(voteDetails.instance.parametersHash, 'call').and.returnValue(Promise.reject(retrieveError))
         );
 
         it('should notify the Error Service', fakeAsync(() => {
           init_and_call_getParameters$();
           expect(errSvc.add)
-            .toHaveBeenCalledWith(AnonymousVotingContractErrors.paramsHash(voteDetails.address));
+            .toHaveBeenCalledWith(AnonymousVotingContractErrors.paramsHash(voteDetails.address), retrieveError);
         }));
 
         it('should return an empty observable', fakeAsync(() => {

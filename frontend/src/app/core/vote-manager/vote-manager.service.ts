@@ -57,8 +57,8 @@ export class VoteManagerService implements IVoteManagerService {
    */
   deployVote$(timeframes: IVoteTimeframes, params: IVoteParameters): Observable<ITransactionReceipt> {
     return Observable.fromPromise(this.ipfsSvc.addJSON(params))
-      .catch(() => {
-        this.errSvc.add(VoteManagerServiceErrors.ipfs.addParametersHash(params));
+      .catch(err => {
+        this.errSvc.add(VoteManagerServiceErrors.ipfs.addParametersHash(params), err);
         return <Observable<string>> Observable.empty();
       })
       .switchMap(hash => this.voteListingSvc.deployVote$(timeframes, hash));
@@ -77,16 +77,16 @@ export class VoteManagerService implements IVoteManagerService {
       .contractAt(addr)
       .switchMap(contract => Observable.fromPromise(
         contract.parametersHash.call()
-          .catch(() => {
-            this.errSvc.add(AnonymousVotingContractErrors.paramsHash(addr));
+          .catch(err => {
+            this.errSvc.add(AnonymousVotingContractErrors.paramsHash(addr), err);
             return null;
           })
       ))
       .filter(hash => hash) // filter out the null value if the hash can't be retrieved from Ethereum
       .switchMap(hash => Observable.fromPromise(
         this.ipfsSvc.catJSON(hash)
-          .catch(() => {
-            this.errSvc.add(VoteManagerServiceErrors.ipfs.getParametersHash(addr, hash));
+          .catch(err => {
+            this.errSvc.add(VoteManagerServiceErrors.ipfs.getParametersHash(addr, hash), err);
             return null;
           })
       ))
@@ -105,7 +105,7 @@ export class VoteManagerService implements IVoteManagerService {
     if (params.hasOwnProperty('parameters')) {
       return <IVoteParameters> params;
     } else {
-      this.errSvc.add(VoteManagerServiceErrors.format.parametersHash(params));
+      this.errSvc.add(VoteManagerServiceErrors.format.parametersHash(params), null);
       return null;
     }
   }

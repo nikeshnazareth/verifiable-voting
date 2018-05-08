@@ -27,7 +27,9 @@ export class AppComponent {
   constructor(private errSvc: ErrorService,
               private snackBar: MatSnackBar) {
     errSvc.error$.subscribe(err => {
-      this.snackBar.open(err);
+      this.snackBar.open(err.friendly);
+      console.log(err.friendly);
+      console.log(err.detailed);
     });
   }
 }

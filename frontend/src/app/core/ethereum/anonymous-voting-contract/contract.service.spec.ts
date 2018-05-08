@@ -44,9 +44,9 @@ describe('Service: AnonymousVotingContractService', () => {
   describe('constructor', () => {
     it('should notify the Error Service if web3 is not injected', fakeAsync(() => {
       spyOnProperty(web3Svc, 'isInjected').and.returnValue(false);
-      anonymousVotingSvc = new AnonymousVotingContractService(<Web3Service> web3Svc, contractSvc, errSvc);
+      anonymousVotingSvc = new AnonymousVotingContractService(web3Svc, contractSvc, errSvc);
       tick(); // wait for the promise to finish
-      expect(errSvc.add).toHaveBeenCalledWith(APP_CONFIG.errors.web3);
+      expect(errSvc.add).toHaveBeenCalledWith(APP_CONFIG.errors.web3, null);
     }));
   });
 
@@ -54,7 +54,7 @@ describe('Service: AnonymousVotingContractService', () => {
     const VoteCollection: IAnonymousVotingContractCollection = Mock.AnonymousVotingContractCollections[0];
 
     const init_svc_and_contractAt_handlers = () => {
-      anonymousVotingSvc = new AnonymousVotingContractService(<Web3Service> web3Svc, contractSvc, errSvc);
+      anonymousVotingSvc = new AnonymousVotingContractService(web3Svc, contractSvc, errSvc);
       anonymousVotingSvc.contractAt(VoteCollection.address)
         .subscribe(onNext, onError, onCompleted);
       tick();
@@ -81,7 +81,10 @@ describe('Service: AnonymousVotingContractService', () => {
         const contractUnavailable: Error = new Error('Cannot find contract at address');
         spyOn(Mock.TruffleAnonymousVotingAbstraction, 'at').and.returnValue(Promise.reject(contractUnavailable));
         init_svc_and_contractAt_handlers();
-        expect(errSvc.add).toHaveBeenCalledWith(AnonymousVotingContractErrors.network(VoteCollection.address));
+        expect(errSvc.add).toHaveBeenCalledWith(
+          AnonymousVotingContractErrors.network(VoteCollection.address),
+          contractUnavailable
+        );
       }));
 
       it('should return an empty observable', fakeAsync(() => {

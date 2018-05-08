@@ -35,6 +35,7 @@ export const VoteListingContractErrors = {
     `Ensure MetaMask (or the web3 provider) is connected to the ${APP_CONFIG.network.name}`),
   voteCreated: new Error('Cannot listen for VoteCreated events on the VoteListing contract. ' +
     'No new contracts will be displayed'),
+  eventError: new Error('Unexpected error in the VoteListing contract event stream'),
   deployVote: new Error('Unable to deploy a new AnonymousVoting contract'),
   deployedVotes: new Error('Unable to obtain AnonymousVoting contracts from the VoteListing contract'),
   contractAddress: (i: uint) => new Error(`Unable to retrieve voting contract ${i} (0-up indexing)`)
@@ -69,8 +70,8 @@ export class VoteListingContractService implements IVoteListingContractService {
         {from: this.web3Svc.defaultAccount}
       ))
       .switchMap(promise => Observable.fromPromise(promise))
-      .catch(() => {
-        this.errSvc.add(VoteListingContractErrors.deployVote);
+      .catch(err => {
+        this.errSvc.add(VoteListingContractErrors.deployVote, err);
         return Observable.empty();
       });
   }
@@ -91,8 +92,8 @@ export class VoteListingContractService implements IVoteListingContractService {
             .then(count => Array(count).fill(0).map((_, idx) => idx)) // produce an array of the numbers up to count
             .then(range => range.map(i =>
               contract.votingContracts.call(i)
-                .catch(() => {
-                  this.errSvc.add(VoteListingContractErrors.contractAddress(i));
+                .catch(err => {
+                  this.errSvc.add(VoteListingContractErrors.contractAddress(i), err);
                   return Promise.resolve(null);
                 })
             ))
@@ -103,8 +104,8 @@ export class VoteListingContractService implements IVoteListingContractService {
           // add new vote contracts as they are deployed
           .concat(this._voteCreated$)
       )
-      .catch(() => {
-        this.errSvc.add(VoteListingContractErrors.deployedVotes);
+      .catch(err => {
+        this.errSvc.add(VoteListingContractErrors.deployedVotes, err);
         return <Observable<string>> Observable.empty();
       });
   }
@@ -127,14 +128,14 @@ export class VoteListingContractService implements IVoteListingContractService {
       return Observable.fromPromise(
         abstraction.deployed()
           .then(contract => <VoteListingAPI> contract)
-          .catch(() => {
-            this.errSvc.add(VoteListingContractErrors.network);
+          .catch(err => {
+            this.errSvc.add(VoteListingContractErrors.network, err);
             return null;
           })
       ).filter(contract => contract); // filter out the null value if the VoteListing contract cannot be found
 
     } else {
-      this.errSvc.add(APP_CONFIG.errors.web3);
+      this.errSvc.add(APP_CONFIG.errors.web3, null);
       return Observable.empty();
     }
   }
@@ -149,13 +150,13 @@ export class VoteListingContractService implements IVoteListingContractService {
       .map(contract => contract.allEvents())
       .map(events => events.watch((err, log) => {
         if (err) {
-          this.errSvc.add(err);
+          this.errSvc.add(VoteListingContractErrors.eventError, err);
         } else {
           log$.emit(log);
         }
       }))
-      .catch(() => {
-        this.errSvc.add(VoteListingContractErrors.voteCreated);
+      .catch(err => {
+        this.errSvc.add(VoteListingContractErrors.voteCreated, err);
         return Observable.empty();
       })
       .subscribe(); // this completes immediately so we don't need to unsubscribe

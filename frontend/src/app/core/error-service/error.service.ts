@@ -1,27 +1,37 @@
-import { EventEmitter } from '@angular/core';
+import { EventEmitter, Injectable } from '@angular/core';
 import { Observable } from 'rxjs/Observable';
 
-export interface IErrorService {
-  error$: Observable<Error>;
+export interface IErrorPair {
+  friendly: Error;
+  detailed: Error;
+}
 
-  add(err: Error): void;
+export interface IErrorService {
+  error$: Observable<IErrorPair>;
+
+  add(friendlyErr: Error, detailedErr: Error): void;
 }
 
 /**
  * A service to aggregate errors that occur throughout the app
  */
+@Injectable()
 export class ErrorService implements IErrorService {
-  public error$: EventEmitter<Error>;
+  public error$: EventEmitter<IErrorPair>;
 
   constructor() {
-    this.error$ = new EventEmitter<Error>();
+    this.error$ = new EventEmitter<IErrorPair>();
   }
 
   /**
    * Emit the error on a global error stream
-   * @param {Error} err the error to be emitted
+   * @param {Error} friendlyErr A simple Error message that can be shown to the user
+   * @param {Error} detailedErr The original error message to help with debugging
    */
-  public add(err: Error) {
-    this.error$.emit(err);
+  public add(friendlyErr: Error, detailedErr: Error) {
+    this.error$.emit({
+      friendly: friendlyErr,
+      detailed: detailedErr
+    });
   }
 }
