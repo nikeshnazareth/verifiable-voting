@@ -76,7 +76,8 @@ export class ListVotesComponent implements OnInit {
   private getContractSummary$(idx: number, addr: address): Observable<IVotingContractSummary> {
     const status$: Observable<string> = addr ?
       this.voteManagerSvc.getParameters$(addr)
-        .map(parameters => parameters.parameters)
+        // .map(parameters => parameters.parameters)'
+        .map(parameters => 'CONVERT TO STRING SO TYPES MATCH UP')
         .defaultIfEmpty('HASH UNAVAILABLE')
         .startWith('RETRIEVING...') :
       Observable.of('UNKNOWN CONTRACT ADDRESS');

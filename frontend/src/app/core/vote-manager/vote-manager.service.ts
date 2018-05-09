@@ -19,7 +19,13 @@ import { ITransactionReceipt } from '../ethereum/transaction.interface';
 import { IVoteTimeframes, VoteListingContractService } from '../ethereum/vote-listing-contract/contract.service';
 
 export interface IVoteParameters {
-  parameters: string;
+  topic: string;
+  candidates: string[];
+  eligibility: address;
+  registration_key: {
+    modulus: string;
+    public_exp: string;
+  };
 }
 
 export interface IVoteManagerService {
@@ -98,11 +104,26 @@ export class VoteManagerService implements IVoteManagerService {
 
   /**
    * Notifies the Error Service if the params object doesn't match the IVoteParameters interface
-   * @param {Object} params the object to check
+   * @param {Object} obj the object to check
    * @returns {IVoteParameters} the parameters object if it matches or null otherwise
    */
-  private confirmParametersFormat(params: object) {
-    if (params.hasOwnProperty('parameters')) {
+  private confirmParametersFormat(obj: object) {
+    const params: IVoteParameters = <IVoteParameters> obj;
+    const valid: boolean =
+      params.topic &&
+      typeof params.topic === 'string' &&
+      params.candidates &&
+      Array.isArray(params.candidates) &&
+      params.candidates.every(el => typeof el === 'string') &&
+      params.eligibility &&
+      typeof params.eligibility === 'string' &&
+      params.registration_key &&
+      params.registration_key.modulus &&
+      typeof params.registration_key.modulus === 'string' &&
+      params.registration_key.public_exp &&
+      typeof params.registration_key.public_exp === 'string';
+
+    if (valid) {
       return <IVoteParameters> params;
     } else {
       this.errSvc.add(VoteManagerServiceErrors.format.parametersHash(params), null);

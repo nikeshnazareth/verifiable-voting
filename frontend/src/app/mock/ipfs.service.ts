@@ -8,10 +8,11 @@ import { IVoteParameters } from '../core/vote-manager/vote-manager.service';
 export class IPFSService implements IIPFSService {
 
   addJSON(data: object): Promise<string> {
-    if (data.hasOwnProperty('parameters')) {
+    // find the particular collection and return the corresponding hash
+    if (data.hasOwnProperty('topic')) {
       return Promise.resolve(
         Mock.AnonymousVotingContractCollections
-          .filter(collection => collection.parameters.parameters === (<IVoteParameters> data).parameters)[0]
+          .filter(collection => collection.parameters.topic === (<IVoteParameters> data).topic)[0]
           .params_hash
       );
     } else {

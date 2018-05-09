@@ -78,7 +78,17 @@ function generateMockVoteContract(idx: number): IAnonymousVotingContractCollecti
   return {
     address: 'MOCK_ADDRESS_' + idx,
     parameters: {
-      parameters: 'MOCK_PARAMETERS_' + idx
+      topic: 'MOCK_TOPIC_' + idx,
+      candidates: [
+        'MOCK_CANDIDATE_A_' + idx,
+        'MOCK_CANDIDATE_B_' + idx,
+        'MOCK_CANDIDATE_C_' + idx
+      ],
+      eligibility: 'MOCK_ELIGIBILITY_ADDRESS_' + idx,
+      registration_key: {
+        modulus: 'MOCK_REGISTRATION_MODULUS_' + idx,
+        public_exp: 'MOCK_REGISTRATION_PUBEXP_' + idx
+      }
     },
     timeframes: {
       registrationDeadline: REGISTRATION_DEADLINE,
