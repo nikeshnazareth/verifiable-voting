@@ -356,10 +356,6 @@ fdescribe('Component: LaunchVoteComponent', () => {
 
     describe('New Candidate input box', () => {
       let candidates: FormArray;
-      const mockCandidates: string[] = [
-        'A new candidate',
-        'A second candidate'
-      ];
 
       beforeEach(() => {
         candidates = <FormArray> page.form.get('candidates');
@@ -381,23 +377,23 @@ fdescribe('Component: LaunchVoteComponent', () => {
         describe('case: the input box is populated', () => {
           it('should create a new formgroup in the "candidates" FormArray', () => {
             expect(candidates.controls.length).toEqual(0);
-            Page.setInput(page.newCandidate, mockCandidates[0]);
+            Page.setInput(page.newCandidate, mockVoteCollection.parameters.candidates[0]);
             Page.pressEnter(page.newCandidate);
             expect(candidates.controls.length).toEqual(1);
-            Page.setInput(page.newCandidate, mockCandidates[1]);
+            Page.setInput(page.newCandidate, mockVoteCollection.parameters.candidates[1]);
             Page.pressEnter(page.newCandidate);
             expect(candidates.controls.length).toEqual(2);
           });
 
           it('should populate the "name" control of the new formgroup with the contents of the input box', () => {
-            Page.setInput(page.newCandidate, mockCandidates[0]);
+            Page.setInput(page.newCandidate, mockVoteCollection.parameters.candidates[0]);
             Page.pressEnter(page.newCandidate);
             const group: FormGroup = <FormGroup> candidates.controls[0];
-            expect(group.get('name').value).toEqual(mockCandidates[0]);
+            expect(group.get('name').value).toEqual(mockVoteCollection.parameters.candidates[0]);
           });
 
           it('should clear the input box', () => {
-            Page.setInput(page.newCandidate, mockCandidates[0]);
+            Page.setInput(page.newCandidate, mockVoteCollection.parameters.candidates[0]);
             Page.pressEnter(page.newCandidate);
             expect(page.newCandidate.nativeElement.value).toBeFalsy();
           });
@@ -405,7 +401,7 @@ fdescribe('Component: LaunchVoteComponent', () => {
 
         describe('case: the input box is empty', () => {
           it('should not affect the "candidates" FormArray', () => {
-            Page.setInput(page.newCandidate, mockCandidates[0]);
+            Page.setInput(page.newCandidate, mockVoteCollection.parameters.candidates[0]);
             Page.pressEnter(page.newCandidate);
             expect(candidates.controls.length).toEqual(1);
             Page.setInput(page.newCandidate, '');
@@ -419,23 +415,23 @@ fdescribe('Component: LaunchVoteComponent', () => {
         describe('case: the input box is populated', () => {
           it('should create a new formgroup in the "candidates" FormArray', () => {
             expect(candidates.controls.length).toEqual(0);
-            Page.setInput(page.newCandidate, mockCandidates[0]);
+            Page.setInput(page.newCandidate, mockVoteCollection.parameters.candidates[0]);
             page.newCandidateButton.nativeElement.click();
             expect(candidates.controls.length).toEqual(1);
-            Page.setInput(page.newCandidate, mockCandidates[1]);
+            Page.setInput(page.newCandidate, mockVoteCollection.parameters.candidates[1]);
             page.newCandidateButton.nativeElement.click();
             expect(candidates.controls.length).toEqual(2);
           });
 
           it('should populate the "name" control of the new formgroup with the contents of the input box', () => {
-            Page.setInput(page.newCandidate, mockCandidates[0]);
+            Page.setInput(page.newCandidate, mockVoteCollection.parameters.candidates[0]);
             page.newCandidateButton.nativeElement.click();
             const group: FormGroup = <FormGroup> candidates.controls[0];
-            expect(group.get('name').value).toEqual(mockCandidates[0]);
+            expect(group.get('name').value).toEqual(mockVoteCollection.parameters.candidates[0]);
           });
 
           it('should clear the input box', () => {
-            Page.setInput(page.newCandidate, mockCandidates[0]);
+            Page.setInput(page.newCandidate, mockVoteCollection.parameters.candidates[0]);
             page.newCandidateButton.nativeElement.click();
             expect(page.newCandidate.nativeElement.value).toBeFalsy();
           });
@@ -443,7 +439,7 @@ fdescribe('Component: LaunchVoteComponent', () => {
 
         describe('case: the input box is empty', () => {
           it('should not affect the "candidates" FormArray', () => {
-            Page.setInput(page.newCandidate, mockCandidates[0]);
+            Page.setInput(page.newCandidate, mockVoteCollection.parameters.candidates[0]);
             page.newCandidateButton.nativeElement.click();
             expect(candidates.controls.length).toEqual(1);
             Page.setInput(page.newCandidate, '');
