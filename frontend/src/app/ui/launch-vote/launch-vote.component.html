@@ -25,6 +25,10 @@
     </mat-form-field>
   </div>
 
+  <mat-form-field>
+    <input matInput placeholder="New Candidate" (keyup.enter)="addCandidate()" formControlName="newCandidate" >
+  </mat-form-field>
+
   <div>
     <button type="submit"
             [disabled]="!launchVoteForm.valid"

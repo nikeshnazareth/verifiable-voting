@@ -1,6 +1,6 @@
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { By } from '@angular/platform-browser';
-import { AbstractControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { AbstractControl, Form, FormArray, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { TestBed, async, ComponentFixture } from '@angular/core/testing';
 import { DebugElement, OnInit } from '@angular/core';
 
@@ -20,6 +20,7 @@ fdescribe('Component: LaunchVoteComponent', () => {
     public voteManagerSvc: VoteManagerService;
     public topicInput: DebugElement;
     public timeframes: DebugElement[];
+    public newCandidate: DebugElement;
     public form: FormGroup;
 
     constructor() {
@@ -27,7 +28,21 @@ fdescribe('Component: LaunchVoteComponent', () => {
       this.voteManagerSvc = compInjector.get(VoteManagerService);
       this.topicInput = fixture.debugElement.query(By.css('input[formControlName="topic"]'));
       this.timeframes = fixture.debugElement.queryAll(By.css('[formGroupName="timeframes"] > mat-form-field'));
+      this.newCandidate = fixture.debugElement.query(By.css('input[formControlName="newCandidate"]'));
       this.form = fixture.componentInstance.form;
+    }
+
+    get candidates(): DebugElement[] {
+      return fixture.debugElement.query(By.css('[formArrayName="candidates"]')).children;
+    }
+
+    static setInput(input: DebugElement, value: string) {
+      input.nativeElement.value = value;
+      input.nativeElement.dispatchEvent(new Event('input')); // trigger change detection
+    }
+
+    static pressEnter(input: DebugElement) {
+      input.nativeElement.dispatchEvent(new KeyboardEvent('keyup', {key: 'Enter'}));
     }
   }
 
@@ -177,20 +192,17 @@ fdescribe('Component: LaunchVoteComponent', () => {
             });
 
             it('should be invalid when set to today', () => {
-              regDeadlineInput.nativeElement.value = now;
-              regDeadlineInput.nativeElement.dispatchEvent(new Event('input')); // trigger change detection
+              Page.setInput(regDeadlineInput, now.toString());
               expect(ctrl.valid).toEqual(false);
             });
 
             it('should be invalid when set to yesterday', () => {
-              regDeadlineInput.nativeElement.value = dayBefore(now);
-              regDeadlineInput.nativeElement.dispatchEvent(new Event('input')); // trigger change detection
+              Page.setInput(regDeadlineInput, dayBefore(now).toString());
               expect(ctrl.valid).toEqual(false);
             });
 
             it('should be valid when set to tomorrow', () => {
-              regDeadlineInput.nativeElement.value = dayAfter(now);
-              regDeadlineInput.nativeElement.dispatchEvent(new Event('input')); // trigger change detection
+              Page.setInput(regDeadlineInput, dayAfter(now).toString());
               expect(ctrl.valid).toEqual(true);
             });
           });
@@ -249,8 +261,7 @@ fdescribe('Component: LaunchVoteComponent', () => {
             describe('case: Registration deadline input box set', () => {
               it('should be the day after the Registration deadline input box', () => {
                 const dayAfterDate: string = dayAfter(registrationDeadline).toISOString().split('T')[0];
-                regDeadlineInput.nativeElement.value = registrationDeadline;
-                regDeadlineInput.nativeElement.dispatchEvent(new Event('input')); // trigger change detection
+                Page.setInput(regDeadlineInput, registrationDeadline.toString());
                 fixture.detectChanges();
                 expect(votingDeadlineInput.attributes.min).toEqual(dayAfterDate);
               });
@@ -284,20 +295,17 @@ fdescribe('Component: LaunchVoteComponent', () => {
             describe('case: Registration Deadline input box set', () => {
 
               beforeEach(() => {
-                regDeadlineInput.nativeElement.value = registrationDeadline;
-                regDeadlineInput.nativeElement.dispatchEvent(new Event('input')); // trigger change detection
+                Page.setInput(regDeadlineInput, registrationDeadline.toString());
                 fixture.detectChanges();
               });
 
               it('should be invalid when set to the registration deadline', () => {
-                votingDeadlineInput.nativeElement.value = registrationDeadline;
-                votingDeadlineInput.nativeElement.dispatchEvent(new Event('input')); // trigger change detection
+                Page.setInput(votingDeadlineInput, registrationDeadline.toString());
                 expect(ctrl.valid).toEqual(false);
               });
 
               it('should be invalid when set to the day after the registration deadline', () => {
-                votingDeadlineInput.nativeElement.value = dayAfter(registrationDeadline);
-                votingDeadlineInput.nativeElement.dispatchEvent(new Event('input')); // trigger change detection
+                Page.setInput(votingDeadlineInput, dayAfter(registrationDeadline).toString());
                 expect(ctrl.valid).toEqual(true);
               });
             });
@@ -310,14 +318,12 @@ fdescribe('Component: LaunchVoteComponent', () => {
               });
 
               it('should be invalid when set to the minimum registration deadline', () => {
-                votingDeadlineInput.nativeElement.value = minRegistrationDeadline;
-                votingDeadlineInput.nativeElement.dispatchEvent(new Event('input')); // trigger change detection
+                Page.setInput(votingDeadlineInput, minRegistrationDeadline.toString());
                 expect(ctrl.valid).toEqual(false);
               });
 
               it('should be invalid when set to the day after the minimum registration deadline', () => {
-                votingDeadlineInput.nativeElement.value = dayAfter(minRegistrationDeadline);
-                votingDeadlineInput.nativeElement.dispatchEvent(new Event('input')); // trigger change detection
+                Page.setInput(votingDeadlineInput, dayAfter(minRegistrationDeadline).toString());
                 expect(ctrl.valid).toEqual(true);
               });
             });
@@ -344,6 +350,56 @@ fdescribe('Component: LaunchVoteComponent', () => {
           });
         });
       });
+    });
+
+    describe('New Candidate input box', () => {
+      it('should exist', () => {
+        expect(page.newCandidate).toBeDefined();
+      });
+
+      it('should start empty', () => {
+        expect(page.newCandidate.nativeElement.value).toBeFalsy();
+      });
+
+      it('should have a placeholder "New Candidate"', () => {
+        expect(page.newCandidate.nativeElement.placeholder).toEqual('New Candidate');
+      });
+
+      describe('Enter is pressed', () => {
+        let candidates: FormArray;
+        const mockCandidates: string[] = [
+          'A new candidate',
+          'A second candidate'
+        ];
+
+        beforeEach(() => {
+          candidates = <FormArray> page.form.get('candidates');
+        });
+
+        it('should create a new formgroup in the "candidates" FormArray', () => {
+          expect(candidates.controls.length).toEqual(0);
+          Page.setInput(page.newCandidate, mockCandidates[0]);
+          Page.pressEnter(page.newCandidate);
+          expect(candidates.controls.length).toEqual(1);
+          Page.setInput(page.newCandidate, mockCandidates[1]);
+          Page.pressEnter(page.newCandidate);
+          expect(candidates.controls.length).toEqual(2);
+        });
+
+        it('should populate the "name" control of the new formgroup with the contents of the input box', () => {
+          Page.setInput(page.newCandidate, mockCandidates[0]);
+          Page.pressEnter(page.newCandidate);
+          const group: FormGroup = <FormGroup> candidates.controls[0];
+          expect(group.get('name').value).toEqual(mockCandidates[0]);
+        });
+
+        it('should clear the input box', () => {
+          Page.setInput(page.newCandidate, mockCandidates[0]);
+          Page.pressEnter(page.newCandidate);
+          expect(page.newCandidate.nativeElement.value).toBeFalsy();
+        });
+      });
+
     });
   });
 
