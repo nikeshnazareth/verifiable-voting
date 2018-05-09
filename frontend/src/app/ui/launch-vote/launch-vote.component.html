@@ -2,6 +2,29 @@
   <mat-form-field>
     <input matInput placeholder="Topic" formControlName="topic">
   </mat-form-field>
+
+  <div formGroupName="timeframes">
+    <mat-form-field>
+      <input matInput matDatepicker placeholder="Registration Opens" formControlName="registrationOpens">
+    </mat-form-field>
+
+    <mat-form-field>
+      <input matInput [matDatepicker]="regClosesPicker"
+             placeholder="Registration Closes" formControlName="registrationCloses"
+             [min]="minRegistrationClosesDate">
+      <mat-datepicker-toggle matSuffix [for]="regClosesPicker"></mat-datepicker-toggle>
+      <mat-datepicker #regClosesPicker></mat-datepicker>
+    </mat-form-field>
+
+    <mat-form-field>
+      <input matInput [matDatepicker]="votingClosesPicker"
+             placeholder="Voting Closes" formControlName="votingCloses"
+             [min]="minVotingClosesDate$ | async">
+      <mat-datepicker-toggle matSuffix [for]="votingClosesPicker"></mat-datepicker-toggle>
+      <mat-datepicker #votingClosesPicker></mat-datepicker>
+    </mat-form-field>
+  </div>
+
   <div>
     <button type="submit"
             [disabled]="!launchVoteForm.valid"

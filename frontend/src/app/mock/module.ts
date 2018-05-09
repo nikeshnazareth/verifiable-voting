@@ -27,6 +27,10 @@ import {
 import { NoRestrictionContract } from './no-restriction.contract';
 
 
+const msPerDay: number = 1000 * 60 * 60 * 24;
+const NOW = new Date();
+const TODAY = new Date(NOW.getFullYear(), NOW.getMonth(), NOW.getDate());
+
 export class Mock {
   // services
   public static Web3Service = Web3Service;
@@ -71,8 +75,8 @@ export interface IAnonymousVotingContractCollection {
 }
 
 function generateMockVoteContract(idx: number): IAnonymousVotingContractCollection {
-  const REGISTRATION_DEADLINE: number = 10100;
-  const VOTING_DEADLINE: number = 10200;
+  const REGISTRATION_DEADLINE: number = TODAY.getTime() + 5 * msPerDay;
+  const VOTING_DEADLINE: number = REGISTRATION_DEADLINE + 7 * msPerDay;
   const PARAMS_HASH: string = 'MOCK_PARAMETERS_IPFS_HASH_' + idx;
 
   return {
