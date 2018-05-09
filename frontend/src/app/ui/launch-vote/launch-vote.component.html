@@ -1,0 +1,16 @@
+<form [formGroup]=launchVoteForm (ngSubmit)="onSubmit()">
+  <mat-form-field>
+        <textarea formControlName="parameters"
+                  placeholder="Vote parameters"
+                  matInput>
+        </textarea>
+  </mat-form-field>
+  <div>
+    <button type="submit"
+            [disabled]="!launchVoteForm.valid"
+            mat-raised-button
+            color="primary">
+      Launch
+    </button>
+  </div>
+</form>

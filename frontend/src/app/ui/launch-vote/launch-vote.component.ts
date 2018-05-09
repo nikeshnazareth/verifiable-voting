@@ -6,24 +6,7 @@ import { IVoteTimeframes } from '../../core/ethereum/vote-listing-contract/contr
 
 @Component({
   selector: 'vv-launch-vote',
-  template: `
-    <form [formGroup]=launchVoteForm (ngSubmit)="onSubmit()">
-      <mat-form-field>
-        <textarea formControlName="parameters"
-                  placeholder="Vote parameters"
-                  matInput>
-        </textarea>
-      </mat-form-field>
-      <div>
-        <button type="submit"
-                [disabled]="!launchVoteForm.valid"
-                mat-raised-button
-                color="primary">
-          Launch
-        </button>
-      </div>
-    </form>
-  `
+  templateUrl: './launch-vote.component.html'
 })
 export class LaunchVoteComponent implements OnInit {
   private launchVoteForm: FormGroup;
