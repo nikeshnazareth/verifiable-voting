@@ -21,7 +21,7 @@ export class LaunchVoteComponent implements OnInit {
 
   private createForm() {
     this.launchVoteForm = this.fb.group({
-      parameters: ['', Validators.required]
+      topic: ['', Validators.required]
     });
   }
 }

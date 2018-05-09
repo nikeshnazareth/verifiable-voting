@@ -1,9 +1,6 @@
 <form [formGroup]=launchVoteForm>
   <mat-form-field>
-        <textarea formControlName="parameters"
-                  placeholder="Vote parameters"
-                  matInput>
-        </textarea>
+    <input matInput placeholder="Topic" formControlName="topic">
   </mat-form-field>
   <div>
     <button type="submit"
