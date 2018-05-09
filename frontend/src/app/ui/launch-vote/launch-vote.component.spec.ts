@@ -10,7 +10,7 @@ import { VoteManagerService } from '../../core/vote-manager/vote-manager.service
 import { IAnonymousVotingContractCollection, Mock } from '../../mock/module';
 
 
-fdescribe('Component: LaunchVoteComponent', () => {
+describe('Component: LaunchVoteComponent', () => {
   let fixture: ComponentFixture<TestLaunchVoteComponent>;
   let page: Page;
   const mockVoteCollection: IAnonymousVotingContractCollection =
@@ -34,17 +34,23 @@ fdescribe('Component: LaunchVoteComponent', () => {
       this.form = fixture.componentInstance.form;
     }
 
-    get candidates(): DebugElement[] {
+    get candidateElements(): DebugElement[] {
       return fixture.debugElement.query(By.css('[formArrayName="candidates"]')).children;
     }
 
     static setInput(input: DebugElement, value: string) {
       input.nativeElement.value = value;
       input.nativeElement.dispatchEvent(new Event('input')); // trigger change detection
+      fixture.detectChanges();
     }
 
     static pressEnter(input: DebugElement) {
       input.nativeElement.dispatchEvent(new KeyboardEvent('keyup', {key: 'Enter'}));
+    }
+
+    static click(button: DebugElement) {
+      button.nativeElement.click();
+      fixture.detectChanges();
     }
   }
 
@@ -74,7 +80,7 @@ fdescribe('Component: LaunchVoteComponent', () => {
   describe('User Interface', () => {
     describe('Topic Input box', () => {
       it('should exist', () => {
-        expect(page.topicInput).toBeDefined();
+        expect(page.topicInput).not.toBeNull();
       });
 
       it('should start empty', () => {
@@ -86,7 +92,7 @@ fdescribe('Component: LaunchVoteComponent', () => {
       });
 
       it('should be a form control', () => {
-        expect(page.topicInput.attributes.formControlName).toBeDefined();
+        expect(page.topicInput.attributes.formControlName).not.toBeNull();
       });
 
       describe('form control validity', () => {
@@ -178,7 +184,7 @@ fdescribe('Component: LaunchVoteComponent', () => {
           });
 
           it('should be a form control', () => {
-            expect(regDeadlineInput.attributes.formControlName).toBeDefined();
+            expect(regDeadlineInput.attributes.formControlName).not.toBeNull();
           });
 
           describe('form control validity', () => {
@@ -279,7 +285,7 @@ fdescribe('Component: LaunchVoteComponent', () => {
           });
 
           it('should be a form control', () => {
-            expect(votingDeadlineInput.attributes.formControlName).toBeDefined();
+            expect(votingDeadlineInput.attributes.formControlName).not.toBeNull();
           });
 
           describe('form control validity', () => {
@@ -362,7 +368,7 @@ fdescribe('Component: LaunchVoteComponent', () => {
       });
 
       it('should exist', () => {
-        expect(page.newCandidate).toBeDefined();
+        expect(page.newCandidate).not.toBeNull();
       });
 
       it('should start empty', () => {
@@ -416,23 +422,23 @@ fdescribe('Component: LaunchVoteComponent', () => {
           it('should create a new formgroup in the "candidates" FormArray', () => {
             expect(candidates.controls.length).toEqual(0);
             Page.setInput(page.newCandidate, mockVoteCollection.parameters.candidates[0]);
-            page.newCandidateButton.nativeElement.click();
+            Page.click(page.newCandidateButton);
             expect(candidates.controls.length).toEqual(1);
             Page.setInput(page.newCandidate, mockVoteCollection.parameters.candidates[1]);
-            page.newCandidateButton.nativeElement.click();
+            Page.click(page.newCandidateButton);
             expect(candidates.controls.length).toEqual(2);
           });
 
           it('should populate the "name" control of the new formgroup with the contents of the input box', () => {
             Page.setInput(page.newCandidate, mockVoteCollection.parameters.candidates[0]);
-            page.newCandidateButton.nativeElement.click();
+            Page.click(page.newCandidateButton);
             const group: FormGroup = <FormGroup> candidates.controls[0];
             expect(group.get('name').value).toEqual(mockVoteCollection.parameters.candidates[0]);
           });
 
           it('should clear the input box', () => {
             Page.setInput(page.newCandidate, mockVoteCollection.parameters.candidates[0]);
-            page.newCandidateButton.nativeElement.click();
+            Page.click(page.newCandidateButton);
             expect(page.newCandidate.nativeElement.value).toBeFalsy();
           });
         });
@@ -440,16 +446,109 @@ fdescribe('Component: LaunchVoteComponent', () => {
         describe('case: the input box is empty', () => {
           it('should not affect the "candidates" FormArray', () => {
             Page.setInput(page.newCandidate, mockVoteCollection.parameters.candidates[0]);
-            page.newCandidateButton.nativeElement.click();
+            Page.click(page.newCandidateButton);
             expect(candidates.controls.length).toEqual(1);
             Page.setInput(page.newCandidate, '');
-            page.newCandidateButton.nativeElement.click();
+            Page.click(page.newCandidateButton);
             expect(candidates.controls.length).toEqual(1);
           });
         });
       });
     });
 
+    describe('Candidate list', () => {
+
+      let candidates: FormArray;
+
+      const initialise_candidates = () => {
+        mockVoteCollection.parameters.candidates.forEach(candidate => {
+          Page.setInput(page.newCandidate, candidate);
+          Page.pressEnter(page.newCandidate);
+          fixture.detectChanges();
+        });
+      };
+
+      beforeEach(() => {
+        candidates = <FormArray> page.form.get('candidates');
+      });
+
+      it('should start empty', () => {
+        expect(page.candidateElements.length).toEqual(0);
+      });
+
+      it('should have an element per item in the candidates FormArray', () => {
+        initialise_candidates();
+        expect(page.candidateElements.length).toEqual(mockVoteCollection.parameters.candidates.length);
+      });
+
+      describe('each element', () => {
+        const mockValues: string[] = mockVoteCollection.parameters.candidates;
+        const removeIdx: number = 1;
+
+        beforeEach(() => {
+          initialise_candidates();
+        });
+
+        it('should have an input box', () => {
+          page.candidateElements.forEach(element => {
+            expect(element.query(By.css('input'))).not.toBeNull();
+          });
+        });
+
+        it('should initialise the input box with the "name" control in the form group', () => {
+          const inputs: DebugElement[] = page.candidateElements.map(element => element.query(By.css('input')));
+          inputs.forEach((input, idx) => {
+            expect(input.nativeElement.value).toEqual(mockValues[idx]);
+          });
+        });
+
+        it('should propogate changes from the input box back to the "name" control', () => {
+          const inputs: DebugElement[] = page.candidateElements.map(element => element.query(By.css('input')));
+          inputs.forEach((input, idx) => {
+            const newValue: string = 'A_NEW_VALUE_' + idx;
+            Page.setInput(input, newValue);
+            expect(input.nativeElement.value).toEqual(newValue);
+            expect(candidates.controls[idx].get('name').value).toEqual(newValue);
+          });
+        });
+
+        it('should remove the element if the value is deleted', () => {
+          Page.setInput(page.candidateElements[removeIdx].query(By.css('input')), '');
+          const remainingValues: string[] =
+            page.candidateElements.map(element => element.query(By.css('input')).nativeElement.value);
+          const expectedValues: string[] = mockValues.slice(0, removeIdx).concat(mockValues.slice(removeIdx + 1));
+          expect(remainingValues).toEqual(expectedValues);
+        });
+
+        it('should remove the corresponding control if the value is deleted', () => {
+          const controls: AbstractControl[] = candidates.controls.map(ctrl => ctrl); // create a shallow copy
+          Page.setInput(page.candidateElements[removeIdx].query(By.css('input')), '');
+          const expected: AbstractControl[] = controls.slice(0, removeIdx).concat(controls.slice(removeIdx + 1));
+          expect(candidates.controls).toEqual(expected);
+        });
+
+        it('should have a button', () => {
+          page.candidateElements.forEach(element => {
+            expect(element.query(By.css('button'))).not.toBeNull();
+          });
+        });
+
+        it('should remove the element when the button is pressed', () => {
+          Page.click(page.candidateElements[removeIdx].query(By.css('button')));
+          const remainingValues: string[] =
+            page.candidateElements.map(element => element.query(By.css('input')).nativeElement.value);
+          const expectedValues: string[] = mockValues.slice(0, removeIdx).concat(mockValues.slice(removeIdx + 1));
+          expect(remainingValues).toEqual(expectedValues);
+        });
+
+        it('should remove the corresponding control in the FormArray when the button is pressed', () => {
+          const controls: AbstractControl[] = candidates.controls.map(ctrl => ctrl); // create a shallow copy
+          Page.click(page.candidateElements[removeIdx].query(By.css('button')));
+          const expected: AbstractControl[] = controls.slice(0, removeIdx).concat(controls.slice(removeIdx + 1));
+          expect(candidates.controls).toEqual(expected);
+        });
+      });
+    });
 
   });
 

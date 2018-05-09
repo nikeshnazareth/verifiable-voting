@@ -25,6 +25,17 @@
     </mat-form-field>
   </div>
 
+  <div formArrayName="candidates">
+    <div *ngFor="let candidate of candidates.controls; let i=index" [formGroupName]="i">
+      <mat-form-field>
+        <input matInput formControlName="name">
+      </mat-form-field>
+      <button type="button" mat-icon-button (click)="candidates.removeAt(i)">
+        <mat-icon>delete</mat-icon>
+      </button>
+    </div>
+  </div>
+
   <mat-form-field>
     <input matInput placeholder="New Candidate" (keyup.enter)="addCandidate()" formControlName="newCandidate">
   </mat-form-field>

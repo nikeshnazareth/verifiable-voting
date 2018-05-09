@@ -30,13 +30,19 @@ export class LaunchVoteComponent implements OnInit {
       newCandidate: ['']
     });
 
-
     this.minRegistrationClosesDate = this.dayAfter(this.launchVoteForm.get('timeframes.registrationOpens').value);
 
     this.minVotingClosesDate$ = this.launchVoteForm.get('timeframes.registrationCloses').valueChanges
       .startWith(null)
       .map(date => date ? date : this.minRegistrationClosesDate)
       .map(this.dayAfter);
+
+    // remove candidate rows when the values become empty
+    this.candidates.valueChanges
+      .map(controls => controls.map(ctrl => ctrl.name))
+      .subscribe(names =>
+        names.forEach((name, idx) => name ? null :  this.candidates.removeAt(idx))
+      );
   }
 
   /**
