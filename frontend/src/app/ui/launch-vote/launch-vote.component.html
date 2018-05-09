@@ -26,8 +26,12 @@
   </div>
 
   <mat-form-field>
-    <input matInput placeholder="New Candidate" (keyup.enter)="addCandidate()" formControlName="newCandidate" >
+    <input matInput placeholder="New Candidate" (keyup.enter)="addCandidate()" formControlName="newCandidate">
   </mat-form-field>
+  <!-- The id is only used in unit tests to locate the button -->
+  <button id="addCandidateButton" type="button" mat-icon-button (click)="addCandidate()">
+    <mat-icon>add</mat-icon>
+  </button>
 
   <div>
     <button type="submit"

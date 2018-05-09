@@ -1,6 +1,6 @@
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { By } from '@angular/platform-browser';
-import { AbstractControl, Form, FormArray, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { AbstractControl, FormArray, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { TestBed, async, ComponentFixture } from '@angular/core/testing';
 import { DebugElement, OnInit } from '@angular/core';
 
@@ -21,6 +21,7 @@ fdescribe('Component: LaunchVoteComponent', () => {
     public topicInput: DebugElement;
     public timeframes: DebugElement[];
     public newCandidate: DebugElement;
+    public newCandidateButton: DebugElement;
     public form: FormGroup;
 
     constructor() {
@@ -29,6 +30,7 @@ fdescribe('Component: LaunchVoteComponent', () => {
       this.topicInput = fixture.debugElement.query(By.css('input[formControlName="topic"]'));
       this.timeframes = fixture.debugElement.queryAll(By.css('[formGroupName="timeframes"] > mat-form-field'));
       this.newCandidate = fixture.debugElement.query(By.css('input[formControlName="newCandidate"]'));
+      this.newCandidateButton = fixture.debugElement.query(By.css('#addCandidateButton'));
       this.form = fixture.componentInstance.form;
     }
 
@@ -353,6 +355,16 @@ fdescribe('Component: LaunchVoteComponent', () => {
     });
 
     describe('New Candidate input box', () => {
+      let candidates: FormArray;
+      const mockCandidates: string[] = [
+        'A new candidate',
+        'A second candidate'
+      ];
+
+      beforeEach(() => {
+        candidates = <FormArray> page.form.get('candidates');
+      });
+
       it('should exist', () => {
         expect(page.newCandidate).toBeDefined();
       });
@@ -366,41 +378,83 @@ fdescribe('Component: LaunchVoteComponent', () => {
       });
 
       describe('Enter is pressed', () => {
-        let candidates: FormArray;
-        const mockCandidates: string[] = [
-          'A new candidate',
-          'A second candidate'
-        ];
+        describe('case: the input box is populated', () => {
+          it('should create a new formgroup in the "candidates" FormArray', () => {
+            expect(candidates.controls.length).toEqual(0);
+            Page.setInput(page.newCandidate, mockCandidates[0]);
+            Page.pressEnter(page.newCandidate);
+            expect(candidates.controls.length).toEqual(1);
+            Page.setInput(page.newCandidate, mockCandidates[1]);
+            Page.pressEnter(page.newCandidate);
+            expect(candidates.controls.length).toEqual(2);
+          });
 
-        beforeEach(() => {
-          candidates = <FormArray> page.form.get('candidates');
+          it('should populate the "name" control of the new formgroup with the contents of the input box', () => {
+            Page.setInput(page.newCandidate, mockCandidates[0]);
+            Page.pressEnter(page.newCandidate);
+            const group: FormGroup = <FormGroup> candidates.controls[0];
+            expect(group.get('name').value).toEqual(mockCandidates[0]);
+          });
+
+          it('should clear the input box', () => {
+            Page.setInput(page.newCandidate, mockCandidates[0]);
+            Page.pressEnter(page.newCandidate);
+            expect(page.newCandidate.nativeElement.value).toBeFalsy();
+          });
         });
 
-        it('should create a new formgroup in the "candidates" FormArray', () => {
-          expect(candidates.controls.length).toEqual(0);
-          Page.setInput(page.newCandidate, mockCandidates[0]);
-          Page.pressEnter(page.newCandidate);
-          expect(candidates.controls.length).toEqual(1);
-          Page.setInput(page.newCandidate, mockCandidates[1]);
-          Page.pressEnter(page.newCandidate);
-          expect(candidates.controls.length).toEqual(2);
-        });
-
-        it('should populate the "name" control of the new formgroup with the contents of the input box', () => {
-          Page.setInput(page.newCandidate, mockCandidates[0]);
-          Page.pressEnter(page.newCandidate);
-          const group: FormGroup = <FormGroup> candidates.controls[0];
-          expect(group.get('name').value).toEqual(mockCandidates[0]);
-        });
-
-        it('should clear the input box', () => {
-          Page.setInput(page.newCandidate, mockCandidates[0]);
-          Page.pressEnter(page.newCandidate);
-          expect(page.newCandidate.nativeElement.value).toBeFalsy();
+        describe('case: the input box is empty', () => {
+          it('should not affect the "candidates" FormArray', () => {
+            Page.setInput(page.newCandidate, mockCandidates[0]);
+            Page.pressEnter(page.newCandidate);
+            expect(candidates.controls.length).toEqual(1);
+            Page.setInput(page.newCandidate, '');
+            Page.pressEnter(page.newCandidate);
+            expect(candidates.controls.length).toEqual(1);
+          });
         });
       });
 
+      describe('New Candidate button (should mirror pressing Enter on the New Candidate input box)', () => {
+        describe('case: the input box is populated', () => {
+          it('should create a new formgroup in the "candidates" FormArray', () => {
+            expect(candidates.controls.length).toEqual(0);
+            Page.setInput(page.newCandidate, mockCandidates[0]);
+            page.newCandidateButton.nativeElement.click();
+            expect(candidates.controls.length).toEqual(1);
+            Page.setInput(page.newCandidate, mockCandidates[1]);
+            page.newCandidateButton.nativeElement.click();
+            expect(candidates.controls.length).toEqual(2);
+          });
+
+          it('should populate the "name" control of the new formgroup with the contents of the input box', () => {
+            Page.setInput(page.newCandidate, mockCandidates[0]);
+            page.newCandidateButton.nativeElement.click();
+            const group: FormGroup = <FormGroup> candidates.controls[0];
+            expect(group.get('name').value).toEqual(mockCandidates[0]);
+          });
+
+          it('should clear the input box', () => {
+            Page.setInput(page.newCandidate, mockCandidates[0]);
+            page.newCandidateButton.nativeElement.click();
+            expect(page.newCandidate.nativeElement.value).toBeFalsy();
+          });
+        });
+
+        describe('case: the input box is empty', () => {
+          it('should not affect the "candidates" FormArray', () => {
+            Page.setInput(page.newCandidate, mockCandidates[0]);
+            page.newCandidateButton.nativeElement.click();
+            expect(candidates.controls.length).toEqual(1);
+            Page.setInput(page.newCandidate, '');
+            page.newCandidateButton.nativeElement.click();
+            expect(candidates.controls.length).toEqual(1);
+          });
+        });
+      });
     });
+
+
   });
 
   describe('Functionality', () => {

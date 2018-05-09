@@ -51,7 +51,6 @@ export class LaunchVoteComponent implements OnInit {
     }
   }
 
-
   /**
    * @param {Date} d the original date
    * @returns {Date} the day after the specified date
