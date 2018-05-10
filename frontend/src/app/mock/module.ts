@@ -24,6 +24,7 @@ TruffleVoteListingWrapperService
 import { VoteListingContract } from './vote-listing-contract/contract';
 import { VoteListingContractService } from './vote-listing-contract/contract.service';
 import { VoteManagerService } from './vote-manager.service';
+import { NoRestrictionContractService } from './no-restriction-contract/contract.service';
 import { Web3Service } from './web3.service';
 
 
@@ -41,6 +42,7 @@ export class Mock {
   // contract service
   public static AnonymousVotingContractService = AnonymousVotingContractService;
   public static VoteListingContractService = VoteListingContractService;
+  public static NoRestrictionContractService = NoRestrictionContractService;
 
   // abstractions and wrappers
   public static TruffleAnonymousVotingAbstraction = new TruffleAnonymousVotingAbstraction();
