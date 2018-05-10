@@ -1,4 +1,4 @@
-import { AbstractControl, FormGroup } from '@angular/forms';
+import { AbstractControl } from '@angular/forms';
 import { ComponentFixture } from '@angular/core/testing';
 import { DebugElement } from '@angular/core';
 import { By } from '@angular/platform-browser';
@@ -15,6 +15,7 @@ export function topic_input_tests(getFixture) {
 
     beforeEach(() => {
       fixture = getFixture();
+      fixture.detectChanges();
       input = fixture.debugElement.query(By.css('input[formControlName="topic"]'));
     });
 

@@ -33,6 +33,10 @@ const NOW = new Date();
 const TODAY = new Date(NOW.getFullYear(), NOW.getMonth(), NOW.getDate());
 
 export class Mock {
+  // constants
+  public static VOTE_LISTING_ADDRESS: address = 'MOCK_VOTE_LISTING_ADDRESS';
+  public static NO_RESTRICTION_ADDRESS: address = 'MOCK_NO_RESTRICTION_ADDRESS';
+
   // generic services
   public static Web3Service = Web3Service;
   public static ErrorService = ErrorService;
@@ -53,17 +57,19 @@ export class Mock {
   public static TruffleVoteListingWrapperService = TruffleVoteListingWrapperService;
 
   // instances
-  public static AnonymousVotingContractCollections = range(4).map(i => generateMockVoteContract(i));
+  public static AnonymousVotingContractCollections = range(4).map(i => generateMockVoteContract(i))
+  // for now, the LaunchVote component gets the eligibility address straight from the NoRestriction contract
+  // so override the values to match. This hack will be fixed when the LaunchVote component introduces options
+    .map(collection => {
+      collection.parameters.eligibility = Mock.NO_RESTRICTION_ADDRESS;
+      return collection;
+    });
   public static NoRestrictionContract = new NoRestrictionContract();
   public static VoteListingContract = new VoteListingContract();
   public static VoteCreatedEventStream = new TriggerableEventStream();
   static get addresses(): address[] {
     return Mock.AnonymousVotingContractCollections.map(collection => collection.address);
   }
-
-  // constants
-  public static VOTE_LISTING_ADDRESS: address = 'MOCK_VOTE_LISTING_ADDRESS';
-  public static NO_RESTRICTION_ADDRESS: address = 'MOCK_NO_RESTRICTION_ADDRESS';
 }
 
 export interface IAnonymousVotingContractCollection {

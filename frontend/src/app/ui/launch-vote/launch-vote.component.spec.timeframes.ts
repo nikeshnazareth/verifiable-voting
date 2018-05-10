@@ -22,6 +22,7 @@ export function timeframe_tests(getFixture) {
 
     beforeEach(() => {
       fixture = getFixture();
+      fixture.detectChanges();
       timeframes = fixture.debugElement.queryAll(By.css('[formGroupName="timeframes"] > mat-form-field')) ;
       formGroup = <FormGroup> fixture.componentInstance.form.get('timeframes');
       now = new Date();

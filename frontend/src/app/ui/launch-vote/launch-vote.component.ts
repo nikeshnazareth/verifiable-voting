@@ -2,6 +2,8 @@ import { Component, OnInit } from '@angular/core';
 import { AbstractControl, FormBuilder, FormGroup, Validators, FormArray } from '@angular/forms';
 import { Observable } from 'rxjs/Observable';
 
+import { NoRestrictionContractService } from '../../core/ethereum/no-restriction-contract/contract.service';
+
 @Component({
   selector: 'vv-launch-vote',
   templateUrl: './launch-vote.component.html'
@@ -11,7 +13,7 @@ export class LaunchVoteComponent implements OnInit {
   private minRegistrationClosesDate: Date;
   private minVotingClosesDate$: Observable<Date>;
 
-  public constructor(private fb: FormBuilder) {
+  public constructor(private fb: FormBuilder, private noRestrictionSvc: NoRestrictionContractService) {
   }
 
   ngOnInit() {
@@ -27,23 +29,52 @@ export class LaunchVoteComponent implements OnInit {
         votingCloses: ['', Validators.required]
       }),
       candidates: this.fb.array([]),
-      newCandidate: ['']
+      newCandidate: [''],
+      eligibility: ['', Validators.required]
     });
 
+    this.setTimeframeRestrictions();
+    this.removeEmptyCandidates();
+    this.populateEligibility();
+  }
+
+  /**
+   * Constrain the timeframes to ensure:
+   *  - the registration phase must end the day after it opens or later
+   *  - the voting phase must end :
+   *    - the day after the registration closes or later if the registration deadline is defined
+   *    - two days after the registration phase opens or later otherwise
+   */
+  private setTimeframeRestrictions() {
     this.minRegistrationClosesDate = this.dayAfter(this.launchVoteForm.get('timeframes.registrationOpens').value);
 
     this.minVotingClosesDate$ = this.launchVoteForm.get('timeframes.registrationCloses').valueChanges
       .startWith(null)
       .map(date => date ? date : this.minRegistrationClosesDate)
       .map(this.dayAfter);
+  }
 
-    // remove candidate rows when the values become empty
+  /**
+   * Whenever a particular candidate name is empty, remove the candidate
+   */
+  private removeEmptyCandidates() {
     this.candidates.valueChanges
       .map(controls => controls.map(ctrl => ctrl.name))
       .subscribe(names =>
-        names.forEach((name, idx) => name ? null :  this.candidates.removeAt(idx))
+        names.forEach((name, idx) => name ? null : this.candidates.removeAt(idx))
       );
   }
+
+  /**
+   * Populate the eligibility input box with the NoRestriction contract address
+   */
+  private populateEligibility() {
+    this.noRestrictionSvc.address
+      .then(addr => this.launchVoteForm.get('eligibility').setValue(addr)) // addr may be null if there was an error
+      .catch(() => null); // do nothing - the NoRestrictionService will notify the error service
+  }
+
+
 
   /**
    * Append a new FormGroup to the candidates FormArray with the contents of the

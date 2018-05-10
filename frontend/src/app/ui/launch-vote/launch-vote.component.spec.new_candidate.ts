@@ -17,6 +17,7 @@ export function new_candidate_tests(getFixture) {
 
     beforeEach(() => {
       fixture = getFixture();
+      fixture.detectChanges();
       input = fixture.debugElement.query(By.css('input[formControlName="newCandidate"]'));
       candidates = <FormArray> fixture.componentInstance.form.get('candidates');
       mockCandidates = Mock.AnonymousVotingContractCollections[0].parameters.candidates;

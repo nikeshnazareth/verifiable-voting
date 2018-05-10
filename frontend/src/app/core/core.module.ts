@@ -7,6 +7,7 @@ import { Web3Service } from './ethereum/web3.service';
 import { ErrorService } from './error-service/error.service';
 import { VoteManagerService } from './vote-manager/vote-manager.service';
 import { AnonymousVotingContractService } from './ethereum/anonymous-voting-contract/contract.service';
+import { NoRestrictionContractService } from './ethereum/no-restriction-contract/contract.service';
 
 @NgModule({
   providers: [
@@ -16,7 +17,8 @@ import { AnonymousVotingContractService } from './ethereum/anonymous-voting-cont
     Web3Service,
     VoteListingContractService,
     AnonymousVotingContractService,
-    VoteManagerService
+    VoteManagerService,
+    NoRestrictionContractService
   ]
 })
 export class CoreModule {

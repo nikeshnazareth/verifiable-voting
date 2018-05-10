@@ -45,6 +45,10 @@
     <mat-icon>add</mat-icon>
   </button>
 
+  <mat-form-field>
+    <input matInput placeholder="Eligibility Contract" formControlName="eligibility" readonly>
+  </mat-form-field>
+
   <div>
     <button type="submit"
             [disabled]="!launchVoteForm.valid"
