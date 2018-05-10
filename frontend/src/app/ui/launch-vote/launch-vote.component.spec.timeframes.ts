@@ -51,8 +51,31 @@ export function timeframe_tests(getFixture) {
           expect(regOpenInput.nativeElement.value).toEqual(now.toLocaleDateString());
         });
 
-        it('should be disabled', () => {
-          expect(regOpenInput.nativeElement.disabled).toEqual(true);
+        it('should be readonly', () => {
+          expect(regOpenInput.attributes.readonly).toBeDefined();
+        });
+
+        it('should be a form control', () => {
+          expect(regOpenInput.attributes.formControlName).toBeDefined();
+        });
+
+        describe('form control validity', () => {
+          let control: AbstractControl;
+
+          beforeEach(() => {
+            control = formGroup.get(regOpenInput.attributes.formControlName);
+          });
+
+          it('should be invalid when set to null', () => {
+            DOMInteractionUtility.setValueOn(regOpenInput, '');
+            fixture.detectChanges();
+            expect(control.valid).toEqual(false);
+          });
+
+          it('should be valid when populated', () => {
+            expect(regOpenInput.nativeElement.value).toBeTruthy();
+            expect(control.valid).toEqual(true);
+          });
         });
       });
     });

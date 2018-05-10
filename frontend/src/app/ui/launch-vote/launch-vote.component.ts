@@ -22,7 +22,7 @@ export class LaunchVoteComponent implements OnInit {
     this.launchVoteForm = this.fb.group({
       topic: ['', Validators.required],
       timeframes: this.fb.group({
-        registrationOpens: [{value: new Date(), disabled: true}, Validators.required],
+        registrationOpens: [new Date(), Validators.required],
         registrationCloses: ['', Validators.required],
         votingCloses: ['', Validators.required]
       }),
