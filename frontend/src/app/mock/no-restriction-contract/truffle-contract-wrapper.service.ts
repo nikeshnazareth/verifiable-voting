@@ -1,12 +1,11 @@
-
 import {
   ITruffleContractAbstraction,
   ITruffleContractWrapperService
-} from '../core/ethereum/truffle-contract-wrapper.service';
-import { IWeb3Provider } from '../core/ethereum/web3.service';
-import { IContract } from '../core/ethereum/contract.interface';
-import { address } from '../core/ethereum/type.mappings';
-import { Mock } from './module';
+} from '../../core/ethereum/truffle-contract-wrapper.service';
+import { IWeb3Provider } from '../../core/ethereum/web3.service';
+import { IContract } from '../../core/ethereum/contract.interface';
+import { address } from '../../core/ethereum/type.mappings';
+import { Mock } from '../module';
 
 export class TruffleNoRestrictionWrapperService implements ITruffleContractWrapperService {
   wrap(definition: object): ITruffleContractAbstraction {

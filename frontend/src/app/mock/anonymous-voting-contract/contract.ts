@@ -1,7 +1,7 @@
-import { AnonymousVotingAPI } from '../core/ethereum/anonymous-voting-contract/contract.api';
-import { address } from '../core/ethereum/type.mappings';
-import { BigNumber } from './bignumber';
-import { Mock } from './module';
+import { AnonymousVotingAPI } from '../../core/ethereum/anonymous-voting-contract/contract.api';
+import { address } from '../../core/ethereum/type.mappings';
+import { BigNumber } from '../bignumber';
+import { Mock } from '../module';
 
 export class AnonymousVotingContract implements AnonymousVotingAPI {
   private REGISTRATION_DEADLINE: number;

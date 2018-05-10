@@ -1,30 +1,30 @@
-import { Web3Service } from './web3.service';
-import { ErrorService } from './error.service';
-import { TriggerableEventStream } from './triggerable-event-stream';
-import { VoteListingContract } from './vote-listing.contract';
-import {
-  TruffleVoteListingAbstraction,
-  TruffleVoteListingWrapperService
-} from './truffle-vote-listing-wrapper.service';
-import {
-  TruffleAnonymousVotingAbstraction,
-  TruffleAnonymousVotingWrapperService
-} from './truffle-anonymous-voting-wrapper.service';
-import { AnonymousVotingContract } from './anonymous-voting.contract';
-import { ITransactionReceipt } from '../core/ethereum/transaction.interface';
-import { AnonymousVotingAPI } from '../core/ethereum/anonymous-voting-contract/contract.api';
 import { address } from '../core/ethereum/type.mappings';
-import { VoteListingContractService } from './vote-listing-contract.service';
-import { AnonymousVotingContractService } from './anonymous-voting-contract.service';
-import { IVoteParameters } from '../core/vote-manager/vote-manager.service';
+import { AnonymousVotingAPI } from '../core/ethereum/anonymous-voting-contract/contract.api';
+import { AnonymousVotingContract } from './anonymous-voting-contract/contract';
+import { AnonymousVotingContractService } from './anonymous-voting-contract/contract.service';
+import { ErrorService } from './error.service';
 import { IPFSService } from './ipfs.service';
-import { VoteManagerService } from './vote-manager.service';
+import { ITransactionReceipt } from '../core/ethereum/transaction.interface';
+import { IVoteParameters } from '../core/vote-manager/vote-manager.service';
 import { IVoteTimeframes } from '../core/ethereum/vote-listing-contract/contract.service';
+import { NoRestrictionContract } from './no-restriction-contract/contract';
+import { TriggerableEventStream } from './triggerable-event-stream';
 import {
-  TruffleNoRestrictionAbstraction,
-  TruffleNoRestrictionWrapperService
-} from './truffle-no-restriction-wrapper.service';
-import { NoRestrictionContract } from './no-restriction.contract';
+TruffleAnonymousVotingAbstraction,
+TruffleAnonymousVotingWrapperService
+} from './anonymous-voting-contract/truffle-contract-wrapper.service';
+import {
+TruffleNoRestrictionAbstraction,
+TruffleNoRestrictionWrapperService
+} from './no-restriction-contract/truffle-contract-wrapper.service';
+import {
+TruffleVoteListingAbstraction,
+TruffleVoteListingWrapperService
+} from './vote-listing-contract/truffle-contract-wrapper.service';
+import { VoteListingContract } from './vote-listing-contract/contract';
+import { VoteListingContractService } from './vote-listing-contract/contract.service';
+import { VoteManagerService } from './vote-manager.service';
+import { Web3Service } from './web3.service';
 
 
 const msPerDay: number = 1000 * 60 * 60 * 24;
@@ -32,37 +32,36 @@ const NOW = new Date();
 const TODAY = new Date(NOW.getFullYear(), NOW.getMonth(), NOW.getDate());
 
 export class Mock {
-  // services
+  // generic services
   public static Web3Service = Web3Service;
   public static ErrorService = ErrorService;
   public static IPFSService = IPFSService;
-
-  public static TruffleVoteListingWrapperService = TruffleVoteListingWrapperService;
-  public static TruffleAnonymousVotingWrapperService = TruffleAnonymousVotingWrapperService;
-  public static TruffleNoRestrictionWrapperService = TruffleNoRestrictionWrapperService;
-
-  public static VoteListingContractService = VoteListingContractService;
-  public static AnonymousVotingContractService = AnonymousVotingContractService;
   public static VoteManagerService = VoteManagerService;
 
-  // VoteListing contract
-  public static VOTE_LISTING_ADDRESS: address = 'MOCK_VOTE_LISTING_ADDRESS';
+  // contract service
+  public static AnonymousVotingContractService = AnonymousVotingContractService;
+  public static VoteListingContractService = VoteListingContractService;
+
+  // abstractions and wrappers
+  public static TruffleAnonymousVotingAbstraction = new TruffleAnonymousVotingAbstraction();
+  public static TruffleAnonymousVotingWrapperService = TruffleAnonymousVotingWrapperService;
+  public static TruffleNoRestrictionAbstraction = new TruffleNoRestrictionAbstraction();
+  public static TruffleNoRestrictionWrapperService = TruffleNoRestrictionWrapperService;
   public static TruffleVoteListingAbstraction = new TruffleVoteListingAbstraction();
+  public static TruffleVoteListingWrapperService = TruffleVoteListingWrapperService;
+
+  // instances
+  public static AnonymousVotingContractCollections = range(4).map(i => generateMockVoteContract(i));
+  public static NoRestrictionContract = new NoRestrictionContract();
   public static VoteListingContract = new VoteListingContract();
   public static VoteCreatedEventStream = new TriggerableEventStream();
-
-  // AnonymousVoting contract
-  public static AnonymousVotingContractCollections = range(4).map(i => generateMockVoteContract(i));
-  public static TruffleAnonymousVotingAbstraction = new TruffleAnonymousVotingAbstraction();
-
-  // NoRestriction contract
-  public static NO_RESTRICTION_ADDRESS: address = 'MOCK_NO_RESTRICTION_ADDRESS';
-  public static TruffleNoRestrictionAbstraction = new TruffleNoRestrictionAbstraction();
-  public static NoRestrictionContract = new NoRestrictionContract();
-
   static get addresses(): address[] {
     return Mock.AnonymousVotingContractCollections.map(collection => collection.address);
   }
+
+  // constants
+  public static VOTE_LISTING_ADDRESS: address = 'MOCK_VOTE_LISTING_ADDRESS';
+  public static NO_RESTRICTION_ADDRESS: address = 'MOCK_NO_RESTRICTION_ADDRESS';
 }
 
 export interface IAnonymousVotingContractCollection {

@@ -1,9 +1,12 @@
 import { Observable } from 'rxjs/Observable';
 
-import { IVoteListingContractService, IVoteTimeframes } from '../core/ethereum/vote-listing-contract/contract.service';
-import { Mock } from './module';
-import { address } from '../core/ethereum/type.mappings';
-import { ITransactionReceipt } from '../core/ethereum/transaction.interface';
+import {
+  IVoteListingContractService,
+  IVoteTimeframes
+} from '../../core/ethereum/vote-listing-contract/contract.service';
+import { Mock } from '../module';
+import { address } from '../../core/ethereum/type.mappings';
+import { ITransactionReceipt } from '../../core/ethereum/transaction.interface';
 
 export class VoteListingContractService implements IVoteListingContractService {
   get deployedVotes$(): Observable<address> {
