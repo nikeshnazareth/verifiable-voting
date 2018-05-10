@@ -11,10 +11,12 @@ export function rsa_key_tests(getFixture) {
   return () => {
     let fixture: ComponentFixture<TestLaunchVoteComponent>;
     let group: FormGroup;
+    let step: DebugElement;
 
     beforeEach(() => {
       fixture = getFixture();
       fixture.detectChanges();
+      step = fixture.debugElement.queryAll(By.css('.mat-step'))[4];
       group = <FormGroup> fixture.componentInstance.form.get('rsa_key');
     });
 
@@ -22,7 +24,7 @@ export function rsa_key_tests(getFixture) {
       let modulus: DebugElement;
 
       beforeEach(() => {
-        modulus = fixture.debugElement.query(By.css('input[formControlName="modulus"]'));
+        modulus = step.queryAll(By.css('input'))[0];
       });
 
       it('should exist', () => {
@@ -84,7 +86,7 @@ export function rsa_key_tests(getFixture) {
       let exponent: DebugElement;
 
       beforeEach(() => {
-        exponent = fixture.debugElement.query(By.css('input[formControlName="exponent"]'));
+        exponent = step.queryAll(By.css('input'))[1];
       });
 
       it('should exist', () => {

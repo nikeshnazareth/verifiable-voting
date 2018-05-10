@@ -23,7 +23,8 @@ export function timeframe_tests(getFixture) {
     beforeEach(() => {
       fixture = getFixture();
       fixture.detectChanges();
-      timeframes = fixture.debugElement.queryAll(By.css('[formGroupName="timeframes"] > mat-form-field')) ;
+      const step: DebugElement = fixture.debugElement.queryAll(By.css('.mat-step'))[1];
+      timeframes = step.queryAll(By.css('mat-form-field'));
       formGroup = <FormGroup> fixture.componentInstance.form.get('timeframes');
       now = new Date();
     });

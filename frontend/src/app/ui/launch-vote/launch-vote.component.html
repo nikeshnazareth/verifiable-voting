@@ -1,64 +1,82 @@
 <form [formGroup]=launchVoteForm>
-  <mat-form-field>
-    <input matInput placeholder="Topic" formControlName="topic">
-  </mat-form-field>
-
-  <div formGroupName="timeframes">
-    <mat-form-field>
-      <input matInput matDatepicker placeholder="Registration Opens"
-             formControlName="registrationOpens" readonly>
-    </mat-form-field>
-
-    <mat-form-field>
-      <input matInput [matDatepicker]="regClosesPicker"
-             placeholder="Registration Closes" formControlName="registrationCloses"
-             [min]="minRegistrationClosesDate">
-      <mat-datepicker-toggle matSuffix [for]="regClosesPicker"></mat-datepicker-toggle>
-      <mat-datepicker #regClosesPicker></mat-datepicker>
-    </mat-form-field>
-
-    <mat-form-field>
-      <input matInput [matDatepicker]="votingClosesPicker"
-             placeholder="Voting Closes" formControlName="votingCloses"
-             [min]="minVotingClosesDate$ | async">
-      <mat-datepicker-toggle matSuffix [for]="votingClosesPicker"></mat-datepicker-toggle>
-      <mat-datepicker #votingClosesPicker></mat-datepicker>
-    </mat-form-field>
-  </div>
-
-  <div formArrayName="candidates">
-    <div *ngFor="let candidate of candidates.controls; let i=index" [formGroupName]="i">
+  <mat-vertical-stepper>
+    <mat-step label="Topic">
       <mat-form-field>
-        <input matInput formControlName="name">
+        <input matInput placeholder="Topic" formControlName="topic">
       </mat-form-field>
-      <button type="button" mat-icon-button (click)="candidates.removeAt(i)">
-        <mat-icon>delete</mat-icon>
+    </mat-step>
+
+    <mat-step label="Timeframes">
+      <div formGroupName="timeframes">
+        <div>
+          <mat-form-field>
+            <input matInput matDatepicker placeholder="Registration Opens"
+                   formControlName="registrationOpens" readonly>
+          </mat-form-field>
+        </div>
+
+        <div>
+          <mat-form-field>
+            <input matInput [matDatepicker]="regClosesPicker"
+                   placeholder="Registration Closes" formControlName="registrationCloses"
+                   [min]="minRegistrationClosesDate">
+            <mat-datepicker-toggle matSuffix [for]="regClosesPicker"></mat-datepicker-toggle>
+            <mat-datepicker #regClosesPicker></mat-datepicker>
+          </mat-form-field>
+        </div>
+
+        <div>
+          <mat-form-field>
+            <input matInput [matDatepicker]="votingClosesPicker"
+                   placeholder="Voting Closes" formControlName="votingCloses"
+                   [min]="minVotingClosesDate$ | async">
+            <mat-datepicker-toggle matSuffix [for]="votingClosesPicker"></mat-datepicker-toggle>
+            <mat-datepicker #votingClosesPicker></mat-datepicker>
+          </mat-form-field>
+        </div>
+      </div>
+    </mat-step>
+
+    <mat-step label="Candidates">
+      <div formArrayName="candidates">
+        <div *ngFor="let candidate of candidates.controls; let i=index" [formGroupName]="i">
+          <mat-form-field>
+            <input matInput formControlName="name">
+          </mat-form-field>
+          <button type="button" mat-icon-button (click)="candidates.removeAt(i)">
+            <mat-icon>delete</mat-icon>
+          </button>
+        </div>
+      </div>
+
+      <mat-form-field>
+        <input matInput placeholder="New Candidate" (keyup.enter)="addCandidate()" formControlName="newCandidate">
+      </mat-form-field>
+
+      <button type="button" mat-icon-button (click)="addCandidate()">
+        <mat-icon>add</mat-icon>
       </button>
-    </div>
-  </div>
+    </mat-step>
 
-  <mat-form-field>
-    <input matInput placeholder="New Candidate" (keyup.enter)="addCandidate()" formControlName="newCandidate">
-  </mat-form-field>
-  <!-- The id is only used in unit tests to locate the button -->
-  <button id="addCandidateButton" type="button" mat-icon-button (click)="addCandidate()">
-    <mat-icon>add</mat-icon>
-  </button>
+    <mat-step label="Eligibility Criteria">
+      <mat-form-field>
+        <input matInput placeholder="Eligibility Contract" formControlName="eligibility" readonly>
+      </mat-form-field>
+    </mat-step>
 
-  <mat-form-field>
-    <input matInput placeholder="Eligibility Contract" formControlName="eligibility" readonly>
-  </mat-form-field>
-
-  <div formGroupName="rsa_key">
-    <span>Ox</span>
-    <mat-form-field>
-      <input matInput placeholder="Modulus" formControlName="modulus">
-    </mat-form-field>
-    <span>0x</span>
-    <mat-form-field>
-      <input matInput placeholder="Public Exponent" formControlName="exponent">
-    </mat-form-field>
-  </div>
+    <mat-step label="Registration Authority Key">
+      <div formGroupName="rsa_key">
+        <span>Ox</span>
+        <mat-form-field>
+          <input matInput placeholder="Modulus" formControlName="modulus">
+        </mat-form-field>
+        <span>0x</span>
+        <mat-form-field>
+          <input matInput placeholder="Public Exponent" formControlName="exponent">
+        </mat-form-field>
+      </div>
+    </mat-step>
+  </mat-vertical-stepper>
 
   <div>
     <button type="submit"

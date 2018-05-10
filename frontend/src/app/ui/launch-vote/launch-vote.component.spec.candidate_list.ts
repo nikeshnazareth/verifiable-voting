@@ -12,6 +12,7 @@ export function candidate_list_tests(getFixture) {
 
   return () => {
     let fixture: ComponentFixture<TestLaunchVoteComponent>;
+    let step: DebugElement;
     let candidates: FormArray;
     let newCandidateInput: DebugElement;
     let mockCandidates: string[];
@@ -19,8 +20,9 @@ export function candidate_list_tests(getFixture) {
     beforeEach(() => {
       fixture = getFixture();
       fixture.detectChanges();
+      step = fixture.debugElement.queryAll(By.css('.mat-step'))[2];
+      newCandidateInput = step.query(By.css('input'));
       candidates = <FormArray> fixture.componentInstance.form.get('candidates');
-      newCandidateInput = fixture.debugElement.query(By.css('input[formControlName="newCandidate"]'));
       mockCandidates = Mock.AnonymousVotingContractCollections[0].parameters.candidates;
     });
 
@@ -34,7 +36,7 @@ export function candidate_list_tests(getFixture) {
     };
 
     const candidateElements = (): DebugElement[] => {
-      return fixture.debugElement.query(By.css('[formArrayName="candidates"]')).children;
+      return step.query(By.css('[formArrayName]')).children;
     };
 
     it('should start empty', () => {

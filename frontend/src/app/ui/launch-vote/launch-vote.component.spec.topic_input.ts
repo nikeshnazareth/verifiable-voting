@@ -16,7 +16,8 @@ export function topic_input_tests(getFixture) {
     beforeEach(() => {
       fixture = getFixture();
       fixture.detectChanges();
-      input = fixture.debugElement.query(By.css('input[formControlName="topic"]'));
+      const step: DebugElement = fixture.debugElement.queryAll(By.css('.mat-step'))[0];
+      input = step.query(By.css('input'));
     });
 
     it('should exist', () => {
