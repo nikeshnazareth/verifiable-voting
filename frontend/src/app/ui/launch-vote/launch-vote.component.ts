@@ -30,7 +30,11 @@ export class LaunchVoteComponent implements OnInit {
       }),
       candidates: this.fb.array([]),
       newCandidate: [''],
-      eligibility: ['', Validators.required]
+      eligibility: ['', Validators.required],
+      rsa_key: this.fb.group({
+        modulus: ['', [Validators.required, Validators.pattern('^[0-9a-f]+$')]],
+        exponent: ['10001', [Validators.required, Validators.pattern('^[0-9a-f]+$')]]
+      })
     });
 
     this.setTimeframeRestrictions();
@@ -73,8 +77,6 @@ export class LaunchVoteComponent implements OnInit {
       .then(addr => this.launchVoteForm.get('eligibility').setValue(addr)) // addr may be null if there was an error
       .catch(() => null); // do nothing - the NoRestrictionService will notify the error service
   }
-
-
 
   /**
    * Append a new FormGroup to the candidates FormArray with the contents of the

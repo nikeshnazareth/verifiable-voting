@@ -12,6 +12,7 @@ import { timeframe_tests } from './launch-vote.component.spec.timeframes';
 import { new_candidate_tests } from './launch-vote.component.spec.new_candidate';
 import { candidate_list_tests } from './launch-vote.component.spec.candidate_list';
 import { eligibility_tests } from './launch-vote.component.spec.eligibility';
+import { rsa_key_tests } from './launch-vote.component.spec.rsa_key';
 
 describe('Component: LaunchVoteComponent', () => {
   let fixture: ComponentFixture<TestLaunchVoteComponent>;
@@ -48,6 +49,8 @@ describe('Component: LaunchVoteComponent', () => {
     describe('Candidate list', candidate_list_tests(() => fixture));
 
     describe('Eligibility input box', eligibility_tests(() => fixture));
+
+    describe('RSA key', rsa_key_tests(() => fixture));
   });
 
   describe('Functionality', () => {

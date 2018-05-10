@@ -49,6 +49,17 @@
     <input matInput placeholder="Eligibility Contract" formControlName="eligibility" readonly>
   </mat-form-field>
 
+  <div formGroupName="rsa_key">
+    <span>Ox</span>
+    <mat-form-field>
+      <input matInput placeholder="Modulus" formControlName="modulus">
+    </mat-form-field>
+    <span>0x</span>
+    <mat-form-field>
+      <input matInput placeholder="Public Exponent" formControlName="exponent">
+    </mat-form-field>
+  </div>
+
   <div>
     <button type="submit"
             [disabled]="!launchVoteForm.valid"
