@@ -33,7 +33,8 @@ export class LaunchVoteComponent implements OnInit {
       eligibility: ['', Validators.required],
       rsa_key: this.fb.group({
         modulus: ['', [Validators.required, Validators.pattern('^[0-9a-f]+$')]],
-        exponent: ['10001', [Validators.required, Validators.pattern('^[0-9a-f]+$')]]
+        exponent: ['10001', [Validators.required, Validators.pattern('^[0-9a-f]+$')]],
+        registrationAuthority: ['', [Validators.required, Validators.pattern('^[0-9a-fA-F]+$')]]
       })
     });
 

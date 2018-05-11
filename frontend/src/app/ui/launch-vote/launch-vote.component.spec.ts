@@ -81,8 +81,8 @@ describe('Component: LaunchVoteComponent', () => {
           expect(labels[3]).toEqual('Eligibility Criteria');
         });
 
-        it('should label the fifth step "Registration Authority Key"', () => {
-          expect(labels[4]).toEqual('Registration Authority Key');
+        it('should label the fifth step "Registration Authority"', () => {
+          expect(labels[4]).toEqual('Registration Authority');
         });
       });
     });

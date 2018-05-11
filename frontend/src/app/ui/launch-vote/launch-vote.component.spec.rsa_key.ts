@@ -28,7 +28,7 @@ export function rsa_key_tests(getFixture) {
       });
 
       it('should exist', () => {
-        expect(modulus).not.toBeNull();
+        expect(modulus).toBeDefined();
       });
 
       it('should start empty', () => {
@@ -90,7 +90,7 @@ export function rsa_key_tests(getFixture) {
       });
 
       it('should exist', () => {
-        expect(exponent).not.toBeNull();
+        expect(exponent).toBeDefined();
       });
 
       it('should start with value "10001"', () => {
@@ -109,7 +109,7 @@ export function rsa_key_tests(getFixture) {
         let control: AbstractControl;
 
         beforeEach(() => {
-          control = group.get('exponent');
+          control = group.get(exponent.attributes.formControlName);
         });
 
         it('should be invalid when set to null', () => {
@@ -138,6 +138,69 @@ export function rsa_key_tests(getFixture) {
         it('should be valid when containing only lower-case hex characters', () => {
           lowercaseHexValues.map(val => {
             DOMInteractionUtility.setValueOn(exponent, val);
+            fixture.detectChanges();
+            expect(control.valid).toEqual(true);
+          });
+        });
+      });
+    });
+
+    describe('registration authority address', () => {
+      let regAuthAddress: DebugElement;
+
+      beforeEach(() => {
+        regAuthAddress = step.queryAll(By.css('input'))[2];
+      });
+
+      it('should exist', () => {
+        expect(regAuthAddress).toBeDefined();
+      });
+
+      it('should start empty', () => {
+        expect(regAuthAddress.nativeElement.value).toBeFalsy();
+      });
+
+      it('should have placeholder "Registration Authority Address"', () => {
+        expect(regAuthAddress.nativeElement.placeholder).toEqual('Registration Authority Address');
+      });
+
+      it('should be a form control', () => {
+        expect(regAuthAddress.attributes.formControlName).toBeDefined();
+      });
+
+      describe('form control validity', () => {
+        let control: AbstractControl;
+
+        beforeEach(() => {
+          control = group.get(regAuthAddress.attributes.formControlName);
+        });
+
+        it('should be invalid when set to null', () => {
+          DOMInteractionUtility.setValueOn(regAuthAddress, '');
+          fixture.detectChanges();
+          expect(regAuthAddress.nativeElement.value).toBeFalsy();
+          expect(control.valid).toEqual(false);
+        });
+
+        it('should be invalid when containing non-hex characters', () => {
+          nonHexValues.map(val => {
+            DOMInteractionUtility.setValueOn(regAuthAddress, val);
+            fixture.detectChanges();
+            expect(control.valid).toEqual(false);
+          });
+        });
+
+        it('should be VALID when containing upper-case hex characters', () => {
+          uppercaseHexValues.map(val => {
+            DOMInteractionUtility.setValueOn(regAuthAddress, val);
+            fixture.detectChanges();
+            expect(control.valid).toEqual(true);
+          });
+        });
+
+        it('should be valid when containing only lower-case hex characters', () => {
+          lowercaseHexValues.map(val => {
+            DOMInteractionUtility.setValueOn(regAuthAddress, val);
             fixture.detectChanges();
             expect(control.valid).toEqual(true);
           });
