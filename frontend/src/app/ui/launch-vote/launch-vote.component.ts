@@ -63,12 +63,12 @@ export class LaunchVoteComponent implements OnInit {
       topic: voteDetails.topic,
       candidates: voteDetails.candidates.map(candidate => candidate.name),
       registration_key: {
-        modulus: voteDetails.registration_key.modulus,
-        public_exp: voteDetails.registration_key.exponent
+        modulus: '0x' + voteDetails.registration_key.modulus,
+        public_exp: '0x' + voteDetails.registration_key.exponent
       }
     };
     const eligibilityContract: address = voteDetails.eligibility;
-    const registrationAuthority: address = voteDetails.registration_key.registrationAuthority;
+    const registrationAuthority: address = '0x' + voteDetails.registration_key.registrationAuthority;
 
     this.voteManagerSvc.deployVote$(timeframes, params, eligibilityContract, registrationAuthority)
       .map(receipt => this.launchVoteForm.reset())

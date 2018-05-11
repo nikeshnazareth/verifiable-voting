@@ -2,12 +2,12 @@ import { ComponentFixture } from '@angular/core/testing';
 import { DebugElement } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { FormArray, FormBuilder, FormGroup } from '@angular/forms';
+import { Observable } from 'rxjs/Observable';
 
 import { TestLaunchVoteComponent } from './launch-vote.component.spec';
-import { VoteManagerService } from '../../core/vote-manager/vote-manager.service';
+import { IVoteParameters, VoteManagerService } from '../../core/vote-manager/vote-manager.service';
 import { DOMInteractionUtility } from '../dom-interaction-utility';
 import { Mock } from '../../mock/module';
-import { Observable } from "rxjs/Observable";
 
 export function submit_button_tests(getFixture) {
 
@@ -73,40 +73,51 @@ export function submit_button_tests(getFixture) {
 
     describe('form submission', () => {
 
-      beforeEach(() => {
-        populateForm();
-      });
-
-      it('should pass the form details to the VoteManager service', () => {
-        spyOn(voteManagerSvc, 'deployVote$').and.callThrough();
-        DOMInteractionUtility.clickOn(button);
-        expect(voteManagerSvc.deployVote$).toHaveBeenCalledWith(
-          voteDetails.timeframes,
-          voteDetails.parameters,
-          voteDetails.eligibilityContract,
-          voteDetails.registrationAuthority
-        );
-      });
-
-      describe('case: VoteManager service returns a transaction receipt', () => {
-        it('should reset the form', () => {
-          form.markAsDirty();
-          DOMInteractionUtility.clickOn(button);
-          expect(form.pristine).toEqual(true);
-        });
-      });
-
-      describe('case: VoteManager service returns an empty observable', () => {
         beforeEach(() => {
-          spyOn(voteManagerSvc, 'deployVote$').and.returnValue(Observable.empty());
+          populateForm();
         });
 
-        it('should not reset the form', () => {
-          form.markAsDirty();
+        it('should pass the form details to the VoteManager service', () => {
+          spyOn(voteManagerSvc, 'deployVote$').and.callThrough();
           DOMInteractionUtility.clickOn(button);
-          expect(form.pristine).toEqual(false);
+          const params: IVoteParameters = {
+            topic: voteDetails.parameters.topic,
+            candidates: voteDetails.parameters.candidates,
+            registration_key: {
+              modulus: '0x' + voteDetails.parameters.registration_key.modulus,
+              public_exp: '0x' + voteDetails.parameters.registration_key.public_exp
+            }
+          };
+
+          expect(voteManagerSvc.deployVote$).toHaveBeenCalledWith(
+            voteDetails.timeframes,
+            params,
+            voteDetails.eligibilityContract,
+            '0x' + voteDetails.registrationAuthority
+          );
         });
-      });
-    });
-  };
+
+        describe('case: VoteManager service returns a transaction receipt', () => {
+          it('should reset the form', () => {
+            form.markAsDirty();
+            DOMInteractionUtility.clickOn(button);
+            expect(form.pristine).toEqual(true);
+          });
+        });
+
+        describe('case: VoteManager service returns an empty observable', () => {
+          beforeEach(() => {
+            spyOn(voteManagerSvc, 'deployVote$').and.returnValue(Observable.empty());
+          });
+
+          it('should not reset the form', () => {
+            form.markAsDirty();
+            DOMInteractionUtility.clickOn(button);
+            expect(form.pristine).toEqual(false);
+          });
+        });
+      }
+    );
+  }
+    ;
 }
