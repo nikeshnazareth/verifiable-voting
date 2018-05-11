@@ -13,8 +13,20 @@ export interface VoteListingAPI extends IContract {
     call(): Promise<uint>;
   };
 
-  // function deploy(uint _registrationDeadline, uint _votingDeadline, string _paramsHash) external
-  deploy(_registrationDeadline: uint, _votingDeadline: uint, _paramsHash: string,
+  /*
+    function deploy(
+      uint _registrationDeadline,
+      uint _votingDeadline,
+      string _paramsHash,
+      address _eligibilityContract,
+      address _registrationAuthority
+    )
+  */
+  deploy(_registrationDeadline: uint,
+         _votingDeadline: uint,
+         _paramsHash: string,
+         _elibigilityContract: address,
+         _registrationAuthority: address,
          props: ITransactionProperties): Promise<ITransactionReceipt>;
 }
 

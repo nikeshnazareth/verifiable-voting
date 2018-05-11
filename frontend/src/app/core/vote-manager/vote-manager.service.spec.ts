@@ -51,21 +51,31 @@ describe('Service: VoteManagerService', () => {
 
     const init_and_call_deployVote$ = () => {
       voteManagerSvc = new VoteManagerService(voteListingSvc, voteContractSvc, ipfsSvc, errSvc);
-      voteManagerSvc.deployVote$(voteDetails.timeframes, voteDetails.parameters)
+      voteManagerSvc.deployVote$(
+        voteDetails.timeframes,
+        voteDetails.parameters,
+        voteDetails.eligibilityContract,
+        voteDetails.registrationAuthority
+      )
         .subscribe(onNext, onError, onCompleted);
       tick();
     };
 
-    it('should add the hash to IPFS', fakeAsync(() => {
+    it('should add the parameters to IPFS', fakeAsync(() => {
       spyOn(ipfsSvc, 'addJSON').and.callThrough();
       init_and_call_deployVote$();
       expect(ipfsSvc.addJSON).toHaveBeenCalledWith(voteDetails.parameters);
     }));
 
-    it('should pass the timeframes and IPFS hash to VoteListingService.deployVote$', fakeAsync(() => {
+    it('should pass the IPFS hash and other parameters to VoteListingService.deployVote$', fakeAsync(() => {
       spyOn(voteListingSvc, 'deployVote$').and.callThrough();
       init_and_call_deployVote$();
-      expect(voteListingSvc.deployVote$).toHaveBeenCalledWith(voteDetails.timeframes, voteDetails.params_hash);
+      expect(voteListingSvc.deployVote$).toHaveBeenCalledWith(
+        voteDetails.timeframes,
+        voteDetails.params_hash,
+        voteDetails.eligibilityContract,
+        voteDetails.registrationAuthority
+      );
     }));
 
     it('should return an observable that emits the transaction receipt and completes', fakeAsync(() => {

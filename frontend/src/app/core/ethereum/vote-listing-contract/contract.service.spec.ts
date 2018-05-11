@@ -67,7 +67,12 @@ describe('Service: VoteListingContractService', () => {
 
     const init_and_call_deployVote = () => {
       voteListingContractSvc = new VoteListingContractService(web3Svc, contractSvc, errSvc);
-      voteListingContractSvc.deployVote$(voteCollection.timeframes, voteCollection.params_hash)
+      voteListingContractSvc.deployVote$(
+        voteCollection.timeframes,
+        voteCollection.params_hash,
+        voteCollection.eligibilityContract,
+        voteCollection.registrationAuthority
+        )
         .subscribe(onNext, onError, onCompleted);
       tick();
     };

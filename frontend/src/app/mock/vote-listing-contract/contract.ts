@@ -16,12 +16,13 @@ export class VoteListingContract implements VoteListingAPI {
 
   deploy(_registrationDeadline: uint,
          _votingDeadline: uint,
-         _paramsHash: string, props: ITransactionProperties): Promise<ITransactionReceipt> {
+         _paramsHash: string,
+         _eligibilityContract: address,
+         _registrationAuthority: address,
+         props: ITransactionProperties): Promise<ITransactionReceipt> {
 
     return Promise.resolve(
       Mock.AnonymousVotingContractCollections
-        .filter(collection => collection.timeframes.registrationDeadline === _registrationDeadline)
-        .filter(collection => collection.timeframes.votingDeadline === _votingDeadline)
         .filter(collection => collection.params_hash === _paramsHash)[0]
         .deploy_receipt
     );

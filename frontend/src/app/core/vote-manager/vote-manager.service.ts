@@ -29,7 +29,10 @@ export interface IVoteParameters {
 }
 
 export interface IVoteManagerService {
-  deployVote$(timeframes: IVoteTimeframes, params: IVoteParameters): Observable<ITransactionReceipt>;
+  deployVote$(timeframes: IVoteTimeframes,
+              params: IVoteParameters,
+              eligibilityContract: address,
+              registrationAuthority: address): Observable<ITransactionReceipt>;
 
   getParameters$(addr: address): Observable<IVoteParameters>;
 }
@@ -56,18 +59,24 @@ export class VoteManagerService implements IVoteManagerService {
 
   /**
    * Adds the parameters to IPFS and deploys a new AnonymousVoting contract with the resulting hash
+   * and the other specified parameters
    * @param {IVoteTimeframes} timeframes the unix timestamps of the vote phase deadlines
    * @param {IVoteParameters} params the vote parameters to add to IPFS
+   * @param {address} eligibilityContract the contract that determines if an address is eligible to vote
+   * @param {address} registrationAuth the address that can publish the blinded signatures
    * @returns {Observable<ITransactionReceipt>} an observable that emits the deployment transaction receipt</br>
    * or an empty observable if there is an error
    */
-  deployVote$(timeframes: IVoteTimeframes, params: IVoteParameters): Observable<ITransactionReceipt> {
+  deployVote$(timeframes: IVoteTimeframes,
+              params: IVoteParameters,
+              eligibilityContract: address,
+              registrationAuth: address): Observable<ITransactionReceipt> {
     return Observable.fromPromise(this.ipfsSvc.addJSON(params))
       .catch(err => {
         this.errSvc.add(VoteManagerServiceErrors.ipfs.addParametersHash(params), err);
         return <Observable<string>> Observable.empty();
       })
-      .switchMap(hash => this.voteListingSvc.deployVote$(timeframes, hash));
+      .switchMap(hash => this.voteListingSvc.deployVote$(timeframes, hash, eligibilityContract, registrationAuth));
   }
 
   /**

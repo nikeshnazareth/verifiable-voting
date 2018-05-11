@@ -76,6 +76,8 @@ export class Mock {
 export interface IAnonymousVotingContractCollection {
   address: string;
   parameters: IVoteParameters;
+  eligibilityContract: address;
+  registrationAuthority: address;
   timeframes: IVoteTimeframes;
   params_hash: string;
   deploy_receipt: ITransactionReceipt;
@@ -104,6 +106,8 @@ function generateMockVoteContract(idx: number): IAnonymousVotingContractCollecti
         public_exp: 'MOCK_REGISTRATION_PUBEXP_' + idx
       }
     },
+    eligibilityContract: ELIGIBILITY_CONTRACT,
+    registrationAuthority: REGISTRATION_AUTHORITY,
     timeframes: {
       registrationDeadline: REGISTRATION_DEADLINE,
       votingDeadline: VOTING_DEADLINE
