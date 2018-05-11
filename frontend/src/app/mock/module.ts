@@ -61,7 +61,7 @@ export class Mock {
   // for now, the LaunchVote component gets the eligibility address straight from the NoRestriction contract
   // so override the values to match. This hack will be fixed when the LaunchVote component introduces options
     .map(collection => {
-      collection.parameters.eligibility = Mock.NO_RESTRICTION_ADDRESS;
+      collection.eligibilityContract = Mock.NO_RESTRICTION_ADDRESS;
       return collection;
     });
   public static NoRestrictionContract = new NoRestrictionContract();
@@ -100,7 +100,6 @@ function generateMockVoteContract(idx: number): IAnonymousVotingContractCollecti
         'MOCK_CANDIDATE_B_' + idx,
         'MOCK_CANDIDATE_C_' + idx
       ],
-      eligibility: 'MOCK_ELIGIBILITY_ADDRESS_' + idx,
       registration_key: {
         modulus: 'MOCK_REGISTRATION_MODULUS_' + idx,
         public_exp: 'MOCK_REGISTRATION_PUBEXP_' + idx

@@ -16,7 +16,7 @@ export function eligibility_tests(getFixture) {
   return () => {
     let fixture: ComponentFixture<TestLaunchVoteComponent>;
     let input: () => DebugElement;
-    const mockEligibilityAddress: string = Mock.AnonymousVotingContractCollections[0].parameters.eligibility;
+    const mockEligibilityAddress: string = Mock.AnonymousVotingContractCollections[0].eligibilityContract;
 
     beforeEach(() => {
       fixture = getFixture();

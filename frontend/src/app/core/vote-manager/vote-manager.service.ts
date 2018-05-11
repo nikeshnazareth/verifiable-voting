@@ -21,7 +21,6 @@ import { IVoteTimeframes, VoteListingContractService } from '../ethereum/vote-li
 export interface IVoteParameters {
   topic: string;
   candidates: string[];
-  eligibility: address;
   registration_key: {
     modulus: string;
     public_exp: string;
@@ -124,8 +123,6 @@ export class VoteManagerService implements IVoteManagerService {
       params.candidates &&
       Array.isArray(params.candidates) &&
       params.candidates.every(el => typeof el === 'string') &&
-      params.eligibility &&
-      typeof params.eligibility === 'string' &&
       params.registration_key &&
       params.registration_key.modulus &&
       typeof params.registration_key.modulus === 'string' &&
