@@ -1,7 +1,7 @@
 const AnonymousVoting = artifacts.require('AnonymousVoting');
 const AnonymousVotingPhases = artifacts.require('TestAnonymousVotingPhases');
 
-describe('contract: AnonymousVoting', () => {
+describe.only('contract: AnonymousVoting', () => {
     const SUPPRESS_EXPECTED_ERROR = 'SUPPRESS_EXPECTED_ERROR';
 
     let instance;
@@ -10,6 +10,7 @@ describe('contract: AnonymousVoting', () => {
     // arbitrary constants
     const PARAMS_HASH = 'DUMMY_PARAMS_HASH';
     const ELIGIBILITY_CONTRACT = '0x1234567890123456789012345678901234567890';
+    const REGISTRATION_AUTH = '0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef';
     const PHASE_DURATION = 1000;
 
     describe('method: constructor', () => {
@@ -21,7 +22,7 @@ describe('contract: AnonymousVoting', () => {
                 registrationExpiration = now + PHASE_DURATION;
                 votingExpiration = registrationExpiration + PHASE_DURATION;
                 instance = await AnonymousVoting.new(
-                    registrationExpiration, votingExpiration, PARAMS_HASH, ELIGIBILITY_CONTRACT
+                    registrationExpiration, votingExpiration, PARAMS_HASH, ELIGIBILITY_CONTRACT, REGISTRATION_AUTH
                 );
             });
 
@@ -36,8 +37,8 @@ describe('contract: AnonymousVoting', () => {
             });
 
             it('should set currentPhase to Phase.Registration (0)', async () => {
-               const phase = await instance.currentPhase.call();
-               assert.equal(phase.toNumber(), 0);
+                const phase = await instance.currentPhase.call();
+                assert.equal(phase.toNumber(), 0);
             });
 
             it('should set parametersHash to the specified value', async () => {
@@ -49,6 +50,11 @@ describe('contract: AnonymousVoting', () => {
                 const contract = await instance.eligibilityContract.call();
                 assert.equal(contract, ELIGIBILITY_CONTRACT);
             });
+
+            it('should set the registrationAuthority to the specified value', async () => {
+                const regAuth = await instance.registrationAuthority.call();
+                assert.equal(regAuth, REGISTRATION_AUTH);
+            });
         });
 
         describe('case: registration already expired', () => {
@@ -59,7 +65,9 @@ describe('contract: AnonymousVoting', () => {
             });
 
             it('should throw an error during deployment', done => {
-                AnonymousVoting.new(registrationExpiration, votingExpiration, PARAMS_HASH, ELIGIBILITY_CONTRACT)
+                AnonymousVoting.new(
+                    registrationExpiration, votingExpiration, PARAMS_HASH, ELIGIBILITY_CONTRACT, REGISTRATION_AUTH
+                )
                     .catch(() => SUPPRESS_EXPECTED_ERROR)
                     .then(val => val === SUPPRESS_EXPECTED_ERROR ? null :
                         Error('Successfully deployed AnonymousVoting contract with expired Registration phase')
@@ -76,7 +84,9 @@ describe('contract: AnonymousVoting', () => {
             });
 
             it('should throw an error during deployment', done => {
-                AnonymousVoting.new(registrationExpiration, votingExpiration, PARAMS_HASH, ELIGIBILITY_CONTRACT)
+                AnonymousVoting.new(
+                    registrationExpiration, votingExpiration, PARAMS_HASH, ELIGIBILITY_CONTRACT, REGISTRATION_AUTH
+                )
                     .catch(() => SUPPRESS_EXPECTED_ERROR)
                     .then(val => val === SUPPRESS_EXPECTED_ERROR ? null :
                         Error('Successfully deployed AnonymousVoting contract with Voting ending before Registration')
@@ -99,7 +109,7 @@ describe('contract: AnonymousVoting', () => {
             registrationExpiration = now + PHASE_DURATION;
             votingExpiration = registrationExpiration + PHASE_DURATION;
             instance = await AnonymousVotingPhases.new(
-                registrationExpiration, votingExpiration, PARAMS_HASH, ELIGIBILITY_CONTRACT
+                registrationExpiration, votingExpiration, PARAMS_HASH, ELIGIBILITY_CONTRACT, REGISTRATION_AUTH
             );
         });
 

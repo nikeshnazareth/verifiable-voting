@@ -18,6 +18,9 @@ contract AnonymousVoting is VotePhases {
     /// @notice The Gatekeeper contract address that determines if an address is eligible to vote
     Gatekeeper public eligibilityContract;
 
+    /// @notice The address that can publish the blinded signatures
+    address public registrationAuthority;
+
     /**
         @notice Deploys the AnonymousVoting contract and sets the vote parameters
         @notice (anything all users need to know about the vote)
@@ -25,14 +28,17 @@ contract AnonymousVoting is VotePhases {
         @param _votingDeadline the time when the Voting phase ends
         @param _paramsHash the IPFS hash of the vote parameters
         @param _eligibilityContract the contract that determines if an address is eligible to vote
+        @param _registrationAuthority the address that can publish the blinded signatures
     */
     function AnonymousVoting(
         uint _registrationDeadline,
         uint _votingDeadline,
         string _paramsHash,
-        address _eligibilityContract
+        address _eligibilityContract,
+        address _registrationAuthority
     ) VotePhases(_registrationDeadline, _votingDeadline) public {
         parametersHash = _paramsHash;
         eligibilityContract = Gatekeeper(_eligibilityContract);
+        registrationAuthority = _registrationAuthority;
     }
 }

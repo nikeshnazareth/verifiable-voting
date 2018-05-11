@@ -14,8 +14,14 @@ contract TestAnonymousVotingPhases is AnonymousVoting {
 
     /// @notice pass all constructor parameters through to the AnonymousVoting constructor
     function TestAnonymousVotingPhases(
-        uint _registrationDeadline, uint _votingDeadline, string _paramsHash, address _eligibilityContract
-    ) AnonymousVoting(_registrationDeadline, _votingDeadline, _paramsHash, _eligibilityContract) public {}
+        uint _registrationDeadline,
+        uint _votingDeadline,
+        string _paramsHash,
+        address _eligibilityContract,
+        address _registrationAuthority
+    ) AnonymousVoting(
+        _registrationDeadline, _votingDeadline, _paramsHash, _eligibilityContract, _registrationAuthority
+    ) public {}
 
     /**
         @notice Simulate the passage of time by subtracting the specified value from all time-related constants
