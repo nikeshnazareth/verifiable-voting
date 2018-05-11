@@ -1,10 +1,18 @@
 import { IContract } from '../contract.interface';
-import { uint } from '../type.mappings';
+import { address, uint } from '../type.mappings';
 
 export interface AnonymousVotingAPI extends VotePhasesAPI {
   // string public parametersHash;
   parametersHash: {
     call(): Promise<string>;
+  };
+  // Gatekeeper public eligibilityContract;
+  eligibilityContract: {
+    call(): Promise<address>;
+  };
+  // address public registrationAuthority;
+  registrationAuthority: {
+    call(): Promise<address>;
   };
 }
 

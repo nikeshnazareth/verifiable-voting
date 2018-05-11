@@ -7,12 +7,21 @@ export class AnonymousVotingContract implements AnonymousVotingAPI {
   private REGISTRATION_DEADLINE: number;
   private VOTING_DEADLINE: number;
   private PARAMETERS_IPFS_HASH: string;
+  private ELIGIBILITY_CONTRACT: address;
+  private REGISTRATION_AUTHORITY: address;
   private REGISTRATION_PHASE: number = 0;
 
-  constructor(registrationDeadline: number, votingDeadline: number, parameters_hash: string) {
+
+  constructor(registrationDeadline: number,
+              votingDeadline: number,
+              parameters_hash: string,
+              eligibility_contract: address,
+              registration_authority: address) {
     this.REGISTRATION_DEADLINE = registrationDeadline;
     this.VOTING_DEADLINE = votingDeadline;
     this.PARAMETERS_IPFS_HASH = parameters_hash;
+    this.ELIGIBILITY_CONTRACT = eligibility_contract;
+    this.REGISTRATION_AUTHORITY = registration_authority;
   }
 
   currentPhase = {
@@ -29,6 +38,14 @@ export class AnonymousVotingContract implements AnonymousVotingAPI {
 
   parametersHash = {
     call: () => Promise.resolve(this.PARAMETERS_IPFS_HASH)
+  };
+
+  eligibilityContract = {
+    call: () => Promise.resolve(this.ELIGIBILITY_CONTRACT)
+  };
+
+  registrationAuthority = {
+    call: () => Promise.resolve(this.REGISTRATION_AUTHORITY)
   };
 
   // This creates a referential loop.

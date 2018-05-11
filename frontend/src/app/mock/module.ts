@@ -10,16 +10,16 @@ import { IVoteTimeframes } from '../core/ethereum/vote-listing-contract/contract
 import { NoRestrictionContract } from './no-restriction-contract/contract';
 import { TriggerableEventStream } from './triggerable-event-stream';
 import {
-TruffleAnonymousVotingAbstraction,
-TruffleAnonymousVotingWrapperService
+  TruffleAnonymousVotingAbstraction,
+  TruffleAnonymousVotingWrapperService
 } from './anonymous-voting-contract/truffle-contract-wrapper.service';
 import {
-TruffleNoRestrictionAbstraction,
-TruffleNoRestrictionWrapperService
+  TruffleNoRestrictionAbstraction,
+  TruffleNoRestrictionWrapperService
 } from './no-restriction-contract/truffle-contract-wrapper.service';
 import {
-TruffleVoteListingAbstraction,
-TruffleVoteListingWrapperService
+  TruffleVoteListingAbstraction,
+  TruffleVoteListingWrapperService
 } from './vote-listing-contract/truffle-contract-wrapper.service';
 import { VoteListingContract } from './vote-listing-contract/contract';
 import { VoteListingContractService } from './vote-listing-contract/contract.service';
@@ -67,6 +67,7 @@ export class Mock {
   public static NoRestrictionContract = new NoRestrictionContract();
   public static VoteListingContract = new VoteListingContract();
   public static VoteCreatedEventStream = new TriggerableEventStream();
+
   static get addresses(): address[] {
     return Mock.AnonymousVotingContractCollections.map(collection => collection.address);
   }
@@ -85,6 +86,8 @@ function generateMockVoteContract(idx: number): IAnonymousVotingContractCollecti
   const REGISTRATION_DEADLINE: number = TODAY.getTime() + 5 * msPerDay;
   const VOTING_DEADLINE: number = REGISTRATION_DEADLINE + 7 * msPerDay;
   const PARAMS_HASH: string = 'MOCK_PARAMETERS_IPFS_HASH_' + idx;
+  const ELIGIBILITY_CONTRACT: address = 'MOCK_ELIGIBILITY_CONTRACT_' + idx;
+  const REGISTRATION_AUTHORITY: address = 'MOCK_REGISTRATION_AUTHORITY_' + idx;
 
   return {
     address: 'MOCK_ADDRESS_' + idx,
@@ -109,7 +112,9 @@ function generateMockVoteContract(idx: number): IAnonymousVotingContractCollecti
     deploy_receipt: {
       tx: 'MOCK_DEPLOY_TX_RECEIPT_' + idx
     },
-    instance: new AnonymousVotingContract(REGISTRATION_DEADLINE, VOTING_DEADLINE, PARAMS_HASH)
+    instance: new AnonymousVotingContract(
+      REGISTRATION_DEADLINE, VOTING_DEADLINE, PARAMS_HASH, ELIGIBILITY_CONTRACT, REGISTRATION_AUTHORITY
+    )
   };
 }
 
