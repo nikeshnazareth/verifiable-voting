@@ -9,6 +9,7 @@ describe('contract: AnonymousVoting', () => {
     let votingExpiration;
     // arbitrary constants
     const PARAMS_HASH = 'DUMMY_PARAMS_HASH';
+    const ELIGIBILITY_CONTRACT = '0x1234567890123456789012345678901234567890';
     const PHASE_DURATION = 1000;
 
     describe('method: constructor', () => {
@@ -19,7 +20,9 @@ describe('contract: AnonymousVoting', () => {
                 const now = web3.eth.getBlock(web3.eth.blockNumber).timestamp;
                 registrationExpiration = now + PHASE_DURATION;
                 votingExpiration = registrationExpiration + PHASE_DURATION;
-                instance = await AnonymousVoting.new(registrationExpiration, votingExpiration, PARAMS_HASH);
+                instance = await AnonymousVoting.new(
+                    registrationExpiration, votingExpiration, PARAMS_HASH, ELIGIBILITY_CONTRACT
+                );
             });
 
             it('should set the registrationExpiration time to the specified value', async () => {
@@ -41,6 +44,11 @@ describe('contract: AnonymousVoting', () => {
                 const hash = await instance.parametersHash.call();
                 assert.equal(hash, PARAMS_HASH);
             });
+
+            it('should set the eligibilityContract to the specified value', async () => {
+                const contract = await instance.eligibilityContract.call();
+                assert.equal(contract, ELIGIBILITY_CONTRACT);
+            });
         });
 
         describe('case: registration already expired', () => {
@@ -51,7 +59,7 @@ describe('contract: AnonymousVoting', () => {
             });
 
             it('should throw an error during deployment', done => {
-                AnonymousVoting.new(registrationExpiration, votingExpiration, PARAMS_HASH)
+                AnonymousVoting.new(registrationExpiration, votingExpiration, PARAMS_HASH, ELIGIBILITY_CONTRACT)
                     .catch(() => SUPPRESS_EXPECTED_ERROR)
                     .then(val => val === SUPPRESS_EXPECTED_ERROR ? null :
                         Error('Successfully deployed AnonymousVoting contract with expired Registration phase')
@@ -68,7 +76,7 @@ describe('contract: AnonymousVoting', () => {
             });
 
             it('should throw an error during deployment', done => {
-                AnonymousVoting.new(registrationExpiration, votingExpiration, PARAMS_HASH)
+                AnonymousVoting.new(registrationExpiration, votingExpiration, PARAMS_HASH, ELIGIBILITY_CONTRACT)
                     .catch(() => SUPPRESS_EXPECTED_ERROR)
                     .then(val => val === SUPPRESS_EXPECTED_ERROR ? null :
                         Error('Successfully deployed AnonymousVoting contract with Voting ending before Registration')
@@ -90,7 +98,9 @@ describe('contract: AnonymousVoting', () => {
             const now = web3.eth.getBlock(web3.eth.blockNumber).timestamp;
             registrationExpiration = now + PHASE_DURATION;
             votingExpiration = registrationExpiration + PHASE_DURATION;
-            instance = await AnonymousVotingPhases.new(registrationExpiration, votingExpiration, PARAMS_HASH);
+            instance = await AnonymousVotingPhases.new(
+                registrationExpiration, votingExpiration, PARAMS_HASH, ELIGIBILITY_CONTRACT
+            );
         });
 
         it('should start at Phase.Registration', async () => {

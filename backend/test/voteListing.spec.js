@@ -11,6 +11,7 @@ describe('Contract: VoteListing', () => {
         const registrationExpiration = now + phaseDuration;
         const votingExpiration = registrationExpiration + phaseDuration;
         const voteParamsHash = 'DUMMY_PARAMS_HASH';
+        const voteEligibilityContract = '0x1234567890123456789012345678901234567890';
 
         beforeEach(async () => {
             instance = await VoteListing.deployed();
@@ -24,7 +25,9 @@ describe('Contract: VoteListing', () => {
             it('should add an address to the votingContracts array', async () => {
                 let count = await instance.numberOfVotingContracts.call();
                 assert.equal(count, 0);
-                await instance.deploy(registrationExpiration, votingExpiration, voteParamsHash);
+                await instance.deploy(
+                    registrationExpiration, votingExpiration, voteParamsHash, voteEligibilityContract
+                );
                 count = await instance.numberOfVotingContracts.call();
                 assert.equal(count, 1);
             });
@@ -44,8 +47,8 @@ describe('Contract: VoteListing', () => {
                 });
 
                 it('should be initialised with the specified registrationExpiration timestamp', async () => {
-                   const time = await votingContract.registrationDeadline.call();
-                   assert.equal(time, registrationExpiration);
+                    const time = await votingContract.registrationDeadline.call();
+                    assert.equal(time, registrationExpiration);
                 });
 
                 it('should be initialised with the specified votingExpiration timestamp', async () => {
@@ -53,9 +56,14 @@ describe('Contract: VoteListing', () => {
                     assert.equal(time, votingExpiration);
                 });
 
-                it('should initialise the AnonymousVoting contract with the specified hash', async () => {
+                it('should be initialised with the specified hash', async () => {
                     const hash = await votingContract.parametersHash.call();
                     assert.equal(hash, voteParamsHash);
+                });
+
+                it('should be initialised with the specified eligibility contract', async () => {
+                    const contract = await votingContract.eligibilityContract.call();
+                    assert.equal(contract, voteEligibilityContract);
                 });
             });
 
@@ -64,12 +72,14 @@ describe('Contract: VoteListing', () => {
 
         contract('[redeploy]', () => {
             it('should emit a VoteCreated event with the specified address', async () => {
-                const tx = await instance.deploy(registrationExpiration, votingExpiration, voteParamsHash);
+                const tx = await instance.deploy(
+                    registrationExpiration, votingExpiration, voteParamsHash, voteEligibilityContract
+                );
                 const address = await instance.votingContracts.call(0);
                 assert.equal(tx.logs.length, 1);
                 const log = tx.logs[0];
                 assert.equal(log.event, 'VoteCreated');
-                assert.deepEqual(log.args, { contractAddress: address });
+                assert.deepEqual(log.args, {contractAddress: address});
             });
         });
 
