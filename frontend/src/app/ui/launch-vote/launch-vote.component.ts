@@ -3,6 +3,9 @@ import { AbstractControl, FormBuilder, FormGroup, Validators, FormArray } from '
 import { Observable } from 'rxjs/Observable';
 
 import { NoRestrictionContractService } from '../../core/ethereum/no-restriction-contract/contract.service';
+import { IVoteParameters, VoteManagerService } from '../../core/vote-manager/vote-manager.service';
+import { IVoteTimeframes } from '../../core/ethereum/vote-listing-contract/contract.service';
+import { address } from '../../core/ethereum/type.mappings';
 
 @Component({
   selector: 'vv-launch-vote',
@@ -13,7 +16,9 @@ export class LaunchVoteComponent implements OnInit {
   private minRegistrationClosesDate: Date;
   private minVotingClosesDate$: Observable<Date>;
 
-  public constructor(private fb: FormBuilder, private noRestrictionSvc: NoRestrictionContractService) {
+  public constructor(private fb: FormBuilder,
+                     private noRestrictionSvc: NoRestrictionContractService,
+                     private voteManagerSvc: VoteManagerService) {
   }
 
   ngOnInit() {
@@ -31,7 +36,7 @@ export class LaunchVoteComponent implements OnInit {
       candidates: this.fb.array([]),
       newCandidate: [''],
       eligibility: ['', Validators.required],
-      rsa_key: this.fb.group({
+      registration_key: this.fb.group({
         modulus: ['', [Validators.required, Validators.pattern('^[0-9a-f]+$')]],
         exponent: ['10001', [Validators.required, Validators.pattern('^[0-9a-f]+$')]],
         registrationAuthority: ['', [Validators.required, Validators.pattern('^[0-9a-fA-F]+$')]]
@@ -41,6 +46,33 @@ export class LaunchVoteComponent implements OnInit {
     this.setTimeframeRestrictions();
     this.removeEmptyCandidates();
     this.populateEligibility();
+  }
+
+  /**
+   * Pass the form values to the VoteManager service to deploy the vote
+   * If successful, reset the form
+   */
+  private onSubmit() {
+    const voteDetails = this.launchVoteForm.value;
+
+    const timeframes: IVoteTimeframes = {
+      registrationDeadline: new Date(voteDetails.timeframes.registrationCloses).getTime(),
+      votingDeadline: new Date(voteDetails.timeframes.votingCloses).getTime()
+    };
+    const params: IVoteParameters = {
+      topic: voteDetails.topic,
+      candidates: voteDetails.candidates.map(candidate => candidate.name),
+      registration_key: {
+        modulus: voteDetails.registration_key.modulus,
+        public_exp: voteDetails.registration_key.exponent
+      }
+    };
+    const eligibilityContract: address = voteDetails.eligibility;
+    const registrationAuthority: address = voteDetails.registration_key.registrationAuthority;
+
+    this.voteManagerSvc.deployVote$(timeframes, params, eligibilityContract, registrationAuthority)
+      .map(receipt => this.launchVoteForm.reset())
+      .subscribe(); /// this finishes immediately so we don't need to unsubscribe
   }
 
   /**

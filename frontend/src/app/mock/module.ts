@@ -88,8 +88,8 @@ function generateMockVoteContract(idx: number): IAnonymousVotingContractCollecti
   const REGISTRATION_DEADLINE: number = TODAY.getTime() + 5 * msPerDay;
   const VOTING_DEADLINE: number = REGISTRATION_DEADLINE + 7 * msPerDay;
   const PARAMS_HASH: string = 'MOCK_PARAMETERS_IPFS_HASH_' + idx;
-  const ELIGIBILITY_CONTRACT: address = 'MOCK_ELIGIBILITY_CONTRACT_' + idx;
-  const REGISTRATION_AUTHORITY: address = 'MOCK_REGISTRATION_AUTHORITY_' + idx;
+  const ELIGIBILITY_CONTRACT: address = 'deadbeef' + idx;
+  const REGISTRATION_AUTHORITY: address = 'cafebabe' + idx;
 
   return {
     address: 'MOCK_ADDRESS_' + idx,
@@ -101,8 +101,8 @@ function generateMockVoteContract(idx: number): IAnonymousVotingContractCollecti
         'MOCK_CANDIDATE_C_' + idx
       ],
       registration_key: {
-        modulus: 'MOCK_REGISTRATION_MODULUS_' + idx,
-        public_exp: 'MOCK_REGISTRATION_PUBEXP_' + idx
+        modulus: 'deadbabe' + idx,
+        public_exp: '10001' + idx
       }
     },
     eligibilityContract: ELIGIBILITY_CONTRACT,

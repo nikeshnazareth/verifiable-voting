@@ -7,13 +7,16 @@ import { By } from '@angular/platform-browser';
 import { LaunchVoteComponent } from './launch-vote.component';
 import { MaterialModule } from '../../material/material.module';
 import { NoRestrictionContractService } from '../../core/ethereum/no-restriction-contract/contract.service';
+import { VoteManagerService } from '../../core/vote-manager/vote-manager.service';
 import { Mock } from '../../mock/module';
+
 import { topic_input_tests } from './launch-vote.component.spec.topic_input';
 import { timeframe_tests } from './launch-vote.component.spec.timeframes';
 import { new_candidate_tests } from './launch-vote.component.spec.new_candidate';
 import { candidate_list_tests } from './launch-vote.component.spec.candidate_list';
 import { eligibility_tests } from './launch-vote.component.spec.eligibility';
-import { rsa_key_tests } from './launch-vote.component.spec.rsa_key';
+import { registration_key_tests } from './launch-vote.component.spec.registration_key';
+import { submit_button_tests } from './launch-vote-component.spec.submit';
 
 describe('Component: LaunchVoteComponent', () => {
   let fixture: ComponentFixture<TestLaunchVoteComponent>;
@@ -30,7 +33,8 @@ describe('Component: LaunchVoteComponent', () => {
         MaterialModule
       ],
       providers: [
-        {provide: NoRestrictionContractService, useClass: Mock.NoRestrictionContractService}
+        {provide: NoRestrictionContractService, useClass: Mock.NoRestrictionContractService},
+        {provide: VoteManagerService, useClass: Mock.VoteManagerService}
       ]
     })
       .compileComponents()
@@ -97,17 +101,16 @@ describe('Component: LaunchVoteComponent', () => {
 
     describe('Eligibility input box', eligibility_tests(() => fixture));
 
-    describe('RSA key', rsa_key_tests(() => fixture));
+    describe('Registration key', registration_key_tests(() => fixture));
   });
 
   describe('Functionality', () => {
-    xdescribe('submit button', () => {
-    });
+    describe('Submit button', submit_button_tests(() => fixture));
   });
 });
 
 /**
- * Class to expose private values for testing purposes
+ * Class to expose protected values for testing purposes
  * It is more correct to confirm the functionality using only public values
  * but testing form validation is a lot easier if we can see the validators directly
  * (instead of testing their effects, which cannot be isolated,

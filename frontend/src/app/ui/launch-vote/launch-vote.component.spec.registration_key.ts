@@ -6,7 +6,7 @@ import { AbstractControl, FormGroup } from '@angular/forms';
 import { TestLaunchVoteComponent } from './launch-vote.component.spec';
 import { DOMInteractionUtility } from '../dom-interaction-utility';
 
-export function rsa_key_tests(getFixture) {
+export function registration_key_tests(getFixture) {
 
   return () => {
     let fixture: ComponentFixture<TestLaunchVoteComponent>;
@@ -17,7 +17,7 @@ export function rsa_key_tests(getFixture) {
       fixture = getFixture();
       fixture.detectChanges();
       step = fixture.debugElement.queryAll(By.css('.mat-step'))[4];
-      group = <FormGroup> fixture.componentInstance.form.get('rsa_key');
+      group = <FormGroup> fixture.componentInstance.form.get('registration_key');
     });
 
     describe('modulus', () => {
