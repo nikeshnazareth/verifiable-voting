@@ -291,11 +291,11 @@ describe('Service: VoteListingContractService', () => {
 
     describe('case: VoteListing contract is not deployed', () => {
       beforeEach(() => spyOn(Mock.TruffleVoteListingAbstraction, 'deployed').and
-        .returnValue(Promise.reject('Network fail')));
+        .returnValue(Promise.reject(new Error('Network fail'))));
 
       it('should be an empty observable', fakeAsync(() => {
         init_and_call_deployedVotes$();
-        expect(onNext).toHaveBeenCalledTimes(0);
+        expect(onNext).not.toHaveBeenCalled();
         expect(onCompleted).toHaveBeenCalled();
       }));
     });

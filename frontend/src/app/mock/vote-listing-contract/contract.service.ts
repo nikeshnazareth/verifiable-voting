@@ -1,8 +1,9 @@
 import { Observable } from 'rxjs/Observable';
+import 'rxjs/add/observable/from';
 
 import {
-  IVoteListingContractService,
-  IVoteTimeframes
+IVoteListingContractService,
+IVoteTimeframes
 } from '../../core/ethereum/vote-listing-contract/contract.service';
 import { Mock } from '../module';
 import { address } from '../../core/ethereum/type.mappings';

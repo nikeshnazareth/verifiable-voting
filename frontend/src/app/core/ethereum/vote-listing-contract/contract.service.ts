@@ -1,14 +1,14 @@
-import { EventEmitter, Injectable } from '@angular/core';
+import { EventEmitter, Injectable, OnDestroy } from '@angular/core';
 import { Observable } from 'rxjs/Observable';
-import 'rxjs/add/observable/range';
-import 'rxjs/add/operator/map';
-import 'rxjs/add/observable/empty';
+import { Subscription } from 'rxjs/Subscription';
 import 'rxjs/add/observable/fromPromise';
-import 'rxjs/add/operator/filter';
+import 'rxjs/add/observable/empty';
+import 'rxjs/add/observable/range';
 import 'rxjs/add/operator/catch';
+import 'rxjs/add/operator/filter';
+import 'rxjs/add/operator/map';
+import 'rxjs/add/operator/concatMap';
 import 'rxjs/add/operator/concat';
-import 'rxjs/add/observable/from';
-
 
 import { APP_CONFIG } from '../../../config';
 import { VoteCreatedEvent, VoteListingAPI } from './contract.api';
@@ -45,16 +45,30 @@ export const VoteListingContractErrors = {
 };
 
 @Injectable()
-export class VoteListingContractService implements IVoteListingContractService {
+export class VoteListingContractService implements IVoteListingContractService, OnDestroy {
+  public deployedVotes$: EventEmitter<address>;
   private _contractPromise: Promise<VoteListingAPI>;
   private _voteCreated$: Observable<address>;
+  private _deployedVotesSubscription: Subscription;
 
   constructor(private web3Svc: Web3Service,
               private contractSvc: TruffleContractWrapperService,
               private errSvc: ErrorService) {
 
     this._contractPromise = this._initContractPromise();
+
+    this.deployedVotes$ = new EventEmitter<address>();
+    // pass the addresses from a private observable to a public one so they are only
+    // calculated once and all observers receive the cached values
+    this._deployedVotesSubscription = this._initDeployedVotes$()
+      .subscribe(addr => this.deployedVotes$.emit(addr), null, () => this.deployedVotes$.complete()
+      );
+
     this._voteCreated$ = this._initVoteCreated$();
+  }
+
+  ngOnDestroy() {
+    this._deployedVotesSubscription.unsubscribe();
   }
 
   /**
@@ -92,31 +106,27 @@ export class VoteListingContractService implements IVoteListingContractService {
    * with null values wherever a contract could not be retrieved (to maintain the correct index)<br/>
    * or an empty observable if the contract cannot be contacted
    */
-  get deployedVotes$(): Observable<address> {
-    return Observable.fromPromise(
-      this._contractPromise
-        .then(contract =>
-          contract.numberOfVotingContracts.call()
-            .then(countBN => countBN.toNumber())
-            .then(count => Array(count).fill(0).map((_, idx) => idx)) // produce an array of the numbers up to count
-            .then(range => range.map(i =>
-              contract.votingContracts.call(i)
-                .catch(err => {
-                  this.errSvc.add(VoteListingContractErrors.contractAddress(i), err);
-                  return Promise.resolve(null);
-                })
-            ))
-            .then(reqs => Promise.all(reqs))
-            .then(addresses => <address[]> addresses)
-            .catch(err => {
-              this.errSvc.add(VoteListingContractErrors.deployedVotes, err);
-              throw err;
-            })
+  private _initDeployedVotes$(): Observable<address> {
+    const p: Promise<Observable<address>> = this._contractPromise
+      .then(contract => contract.numberOfVotingContracts.call())
+      .then(countBN => countBN.toNumber())
+      .then(count => Observable.range(0, count)
+        .map(i => this._contractPromise
+          .then(contract => contract.votingContracts.call(i))
+          .catch(err => {
+            this.errSvc.add(VoteListingContractErrors.contractAddress(i), err);
+            return Promise.resolve(null);
+          })
         )
-    )
-      .switchMap(addresses => Observable.from(addresses))
-      .concat(this._voteCreated$)
-      .catch(err => <Observable<string>>Observable.empty());
+        .concatMap(promise => Observable.fromPromise(promise))
+        .concat(this._voteCreated$)
+      )
+      .catch(err => {
+        this.errSvc.add(VoteListingContractErrors.deployedVotes, err);
+        return <Observable<address>> Observable.empty();
+      });
+
+    return Observable.fromPromise(p).switch();
   }
 
 
