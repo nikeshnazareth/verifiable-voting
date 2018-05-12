@@ -23,12 +23,20 @@ contract VotePhases {
     /// @notice The time when the Voting phase ends
     uint public votingDeadline;
 
+    /**
+        @notice An event generated whenever the phase is updated
+        @param phase the new phase
+    */
+    event NewPhase(Phase phase);
+
     /// @notice Modifier to update the phase (when appropriate) before calling the function
     modifier updatePhase() {
         if (currentPhase != Phase.Complete && now > votingDeadline) {
             currentPhase = Phase.Complete;
+            emit NewPhase(currentPhase);
         } else if (now > registrationDeadline) {
             currentPhase = Phase.Voting;
+            emit NewPhase(currentPhase);
         }
         _;
     }

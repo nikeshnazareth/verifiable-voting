@@ -148,6 +148,15 @@ describe.only('contract: AnonymousVoting', () => {
                 assert.equal(phase.toNumber(), PHASES.VOTING);
             });
 
+            it('should emit a NewPhase event with Phase.Voting', async () => {
+                const tx = await instance.updatePhaseIfNecessary();
+                assert.equal(tx.logs.length, 1);
+                const log = tx.logs[0];
+                assert.equal(log.event, 'NewPhase');
+                assert.isDefined(log.args.phase);
+                assert.equal(log.args.phase.toNumber(), PHASES.VOTING);
+            });
+
             describe('case: consequently, half the Voting phase duration passes', () => {
                 beforeEach(async () => {
                     await instance.advanceTime(PHASE_DURATION / 2);
@@ -170,6 +179,15 @@ describe.only('contract: AnonymousVoting', () => {
                     const phase = await instance.currentPhase.call();
                     assert.equal(phase.toNumber(), PHASES.COMPLETE);
                 });
+
+                it('should emit a NewPhase event with Phase.Complete', async () => {
+                    const tx = await instance.updatePhaseIfNecessary();
+                    assert.equal(tx.logs.length, 1);
+                    const log = tx.logs[0];
+                    assert.equal(log.event, 'NewPhase');
+                    assert.isDefined(log.args.phase);
+                    assert.equal(log.args.phase.toNumber(), PHASES.COMPLETE);
+                });
             });
         });
 
@@ -182,6 +200,15 @@ describe.only('contract: AnonymousVoting', () => {
                 await instance.updatePhaseIfNecessary();
                 const phase = await instance.currentPhase.call();
                 assert.equal(phase.toNumber(), PHASES.COMPLETE);
+            });
+
+            it('should emit a NewPhase event with Phase.Complete', async () => {
+                const tx = await instance.updatePhaseIfNecessary();
+                assert.equal(tx.logs.length, 1);
+                const log = tx.logs[0];
+                assert.equal(log.event, 'NewPhase');
+                assert.isDefined(log.args.phase);
+                assert.equal(log.args.phase.toNumber(), PHASES.COMPLETE);
             });
         });
     });
