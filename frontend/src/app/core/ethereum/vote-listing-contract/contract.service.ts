@@ -27,12 +27,10 @@ export interface IVoteTimeframes {
 export interface IVoteListingContractService {
   deployedVotes$: Observable<address>;
 
-  deployVote$(
-    timeframes: IVoteTimeframes,
-    paramsHash: string,
-    eligibilityContract: address,
-    registrationAuthority: address
-  ): Observable<ITransactionReceipt>;
+  deployVote$(timeframes: IVoteTimeframes,
+              paramsHash: string,
+              eligibilityContract: address,
+              registrationAuthority: address): Observable<ITransactionReceipt>;
 }
 
 export const VoteListingContractErrors = {
@@ -48,14 +46,14 @@ export const VoteListingContractErrors = {
 
 @Injectable()
 export class VoteListingContractService implements IVoteListingContractService {
-  private _contract$: Observable<VoteListingAPI>;
+  private _contractPromise: Promise<VoteListingAPI>;
   private _voteCreated$: Observable<address>;
 
   constructor(private web3Svc: Web3Service,
               private contractSvc: TruffleContractWrapperService,
               private errSvc: ErrorService) {
 
-    this._contract$ = this._initContract$();
+    this._contractPromise = this._initContractPromise();
     this._voteCreated$ = this._initVoteCreated$();
   }
 
@@ -72,8 +70,8 @@ export class VoteListingContractService implements IVoteListingContractService {
               paramsHash: string,
               eligibilityContract: address,
               registrationAuthority: address): Observable<ITransactionReceipt> {
-    return this._contract$
-      .map(contract => contract.deploy(
+    return Observable.fromPromise(
+      this._contractPromise.then(contract => contract.deploy(
         timeframes.registrationDeadline,
         timeframes.votingDeadline,
         paramsHash,
@@ -81,7 +79,7 @@ export class VoteListingContractService implements IVoteListingContractService {
         registrationAuthority,
         {from: this.web3Svc.defaultAccount}
       ))
-      .switchMap(promise => Observable.fromPromise(promise))
+    )
       .catch(err => {
         this.errSvc.add(VoteListingContractErrors.deployVote, err);
         return Observable.empty();
@@ -95,10 +93,9 @@ export class VoteListingContractService implements IVoteListingContractService {
    * or an empty observable if the contract cannot be contacted
    */
   get deployedVotes$(): Observable<address> {
-    return this._contract$
-    // get the deployed contract addresses
-      .switchMap(contract =>
-        Observable.fromPromise(
+    return Observable.fromPromise(
+      this._contractPromise
+        .then(contract =>
           contract.numberOfVotingContracts.call()
             .then(countBN => countBN.toNumber())
             .then(count => Array(count).fill(0).map((_, idx) => idx)) // produce an array of the numbers up to count
@@ -110,16 +107,16 @@ export class VoteListingContractService implements IVoteListingContractService {
                 })
             ))
             .then(reqs => Promise.all(reqs))
+            .then(addresses => <address[]> addresses)
+            .catch(err => {
+              this.errSvc.add(VoteListingContractErrors.deployedVotes, err);
+              throw err;
+            })
         )
-          .map(addresses => <address[]> addresses)
-          .switchMap(addresses => Observable.from(addresses))
-          // add new vote contracts as they are deployed
-          .concat(this._voteCreated$)
-      )
-      .catch(err => {
-        this.errSvc.add(VoteListingContractErrors.deployedVotes, err);
-        return <Observable<string>> Observable.empty();
-      });
+    )
+      .switchMap(addresses => Observable.from(addresses))
+      .concat(this._voteCreated$)
+      .catch(err => <Observable<string>>Observable.empty());
   }
 
 
@@ -128,27 +125,24 @@ export class VoteListingContractService implements IVoteListingContractService {
    * emits the result on the return observable before completing
    * Notifies the Error Service if web3 is not injected or the VoteListing contract doesn't exist
    * on the blockchain
-   * @returns {Observable<VoteListingAPI>} An observable that emits VoteListing contract and completes  </br>
-   * or simply completes (without emitting anything) if there is an error
+   * @returns {Promise<VoteListingAPI>} A promise of the VoteListing contract </br>
+   * or null if there is an error
    * @private
    */
-  private _initContract$(): Observable<VoteListingAPI> {
+  private _initContractPromise(): Promise<VoteListingAPI> {
     if (this.web3Svc.currentProvider) {
       const abstraction: ITruffleContractAbstraction = this.contractSvc.wrap(APP_CONFIG.contracts.vote_listing);
       abstraction.setProvider(this.web3Svc.currentProvider);
 
-      return Observable.fromPromise(
-        abstraction.deployed()
-          .then(contract => <VoteListingAPI> contract)
-          .catch(err => {
-            this.errSvc.add(VoteListingContractErrors.network, err);
-            return null;
-          })
-      ).filter(contract => contract); // filter out the null value if the VoteListing contract cannot be found
-
+      return abstraction.deployed()
+        .then(contract => <VoteListingAPI> contract)
+        .catch(err => {
+          this.errSvc.add(VoteListingContractErrors.network, err);
+          return null;
+        });
     } else {
       this.errSvc.add(APP_CONFIG.errors.web3, null);
-      return Observable.empty();
+      return Promise.resolve(null);
     }
   }
 
@@ -158,20 +152,16 @@ export class VoteListingContractService implements IVoteListingContractService {
    */
   private _initVoteCreated$(): Observable<address> {
     const log$: EventEmitter<IContractLog> = new EventEmitter<IContractLog>();
-    this._contract$
-      .map(contract => contract.allEvents())
-      .map(events => events.watch((err, log) => {
+    this._contractPromise
+      .then(contract => contract.allEvents())
+      .then(events => events.watch((err, log) => {
         if (err) {
           this.errSvc.add(VoteListingContractErrors.eventError, err);
         } else {
           log$.emit(log);
         }
       }))
-      .catch(err => {
-        this.errSvc.add(VoteListingContractErrors.voteCreated, err);
-        return Observable.empty();
-      })
-      .subscribe(); // this completes immediately so we don't need to unsubscribe
+      .catch(err => this.errSvc.add(VoteListingContractErrors.voteCreated, err));
 
     return log$.filter(log => log.event === VoteCreatedEvent.name)
       .map(log => (<VoteCreatedEvent.Log> log).args.contractAddress);
