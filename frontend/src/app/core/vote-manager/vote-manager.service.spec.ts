@@ -115,7 +115,7 @@ describe('Service: VoteManagerService', () => {
     });
   });
 
-  describe('method: getParameters', () => {
+  xdescribe('TODO: remove method: getParameters', () => {
 
     const init_and_call_getParameters$ = () => {
       voteManagerSvc = new VoteManagerService(voteListingSvc, voteContractSvc, ipfsSvc, errSvc);

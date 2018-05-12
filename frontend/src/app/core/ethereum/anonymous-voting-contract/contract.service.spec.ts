@@ -50,7 +50,7 @@ describe('Service: AnonymousVotingContractService', () => {
     }));
   });
 
-  describe('method: contractAt', () => {
+  xdescribe('TODO: remove method: contractAt', () => {
     const VoteCollection: IAnonymousVotingContractCollection = Mock.AnonymousVotingContractCollections[0];
 
     const init_svc_and_contractAt_handlers = () => {
