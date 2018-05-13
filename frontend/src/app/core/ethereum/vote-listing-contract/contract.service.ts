@@ -57,13 +57,12 @@ export class VoteListingContractService implements IVoteListingContractService, 
 
     this._contractPromise = this._initContractPromise();
 
-    this.deployedVotes$ = new EventEmitter<address>();
     // pass the addresses from a private observable to a public one so they are only
     // calculated once and all observers receive the cached values
-    this._deployedVotesSubscription = this._initDeployedVotes$()
-      .subscribe(addr => this.deployedVotes$.emit(addr), null, () => this.deployedVotes$.complete()
-      );
-
+    this.deployedVotes$ = new EventEmitter<address>();
+    this._deployedVotesSubscription = this._initDeployedVotes$().subscribe(
+      addr => this.deployedVotes$.emit(addr), err => Observable.throw(err), () => this.deployedVotes$.complete()
+    );
     this._voteCreated$ = this._initVoteCreated$();
   }
 
@@ -161,19 +160,22 @@ export class VoteListingContractService implements IVoteListingContractService, 
    * @returns {Observable<address>} an observable of the new VoteContract addresses
    */
   private _initVoteCreated$(): Observable<address> {
-    const log$: EventEmitter<IContractLog> = new EventEmitter<IContractLog>();
-    this._contractPromise
+    const p: Promise<Observable<IContractLog>> = this._contractPromise
       .then(contract => contract.allEvents())
-      .then(events => events.watch((err, log) => {
-        if (err) {
-          this.errSvc.add(VoteListingContractErrors.eventError, err);
-        } else {
-          log$.emit(log);
-        }
+      .then(events => Observable.create(observer => {
+        events.watch((err, log) => err ?
+          this.errSvc.add(VoteListingContractErrors.eventError, err) :
+          observer.next(log)
+        );
+        return () => events.stopWatching();
       }))
-      .catch(err => this.errSvc.add(VoteListingContractErrors.voteCreated, err));
+      .catch(err => {
+        this.errSvc.add(VoteListingContractErrors.voteCreated, err);
+        return Observable.empty();
+      });
 
-    return log$.filter(log => log.event === VoteCreatedEvent.name)
+    return Observable.fromPromise(p).switch()
+      .filter(log => log.event === VoteCreatedEvent.name)
       .map(log => (<VoteCreatedEvent.Log> log).args.contractAddress);
   }
 }

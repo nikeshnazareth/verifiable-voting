@@ -7,6 +7,7 @@ export interface IContract {
 
 export interface IContractEventStream {
   watch(cb: (err: Error, log: IContractLog) => void): void;
+  stopWatching(): void;
 }
 
 export interface IContractLog {
