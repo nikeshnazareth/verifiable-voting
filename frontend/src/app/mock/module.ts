@@ -29,11 +29,14 @@ import { Web3Service } from './web3.service';
 
 
 const msPerDay: number = 1000 * 60 * 60 * 24;
-const NOW = new Date();
-const TODAY = new Date(NOW.getFullYear(), NOW.getMonth(), NOW.getDate());
+// TODO: I've set this to noon because I'm in the +10 timezone, so being earlier than 10am local time
+// is the previous night UTC. The fact that this is relevant implies that the date boundaries
+// are not calculated correctly, which will cause issues with the minimum phase deadlines. Fix this!
+const TODAY = new Date(2018, 6, 28, 12); // Noon Tau Day
 
 export class Mock {
   // constants
+  public static TODAY: Date = TODAY;
   public static VOTE_LISTING_ADDRESS: address = 'MOCK_VOTE_LISTING_ADDRESS';
   public static NO_RESTRICTION_ADDRESS: address = 'MOCK_NO_RESTRICTION_ADDRESS';
 

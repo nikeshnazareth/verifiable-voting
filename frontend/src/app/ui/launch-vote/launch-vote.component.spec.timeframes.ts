@@ -18,15 +18,20 @@ export function timeframe_tests(getFixture) {
     let fixture: ComponentFixture<TestLaunchVoteComponent>;
     let timeframes: DebugElement[];
     let formGroup: FormGroup;
-    let now: Date;
 
     beforeEach(() => {
       fixture = getFixture();
+      jasmine.clock().install();
+      jasmine.clock().mockDate(Mock.TODAY);
+
       fixture.detectChanges();
       const step: DebugElement = fixture.debugElement.queryAll(By.css('.mat-step'))[1];
       timeframes = step.queryAll(By.css('mat-form-field'));
       formGroup = <FormGroup> fixture.componentInstance.form.get('timeframes');
-      now = new Date();
+    });
+
+    afterEach(() => {
+      jasmine.clock().uninstall();
     });
 
     it('should have three fields', () => {
@@ -50,7 +55,7 @@ export function timeframe_tests(getFixture) {
         });
 
         xit('TODO: should be initialised to the current date', () => {
-          expect(regOpenInput.nativeElement.value).toEqual(now.toLocaleDateString());
+          expect(regOpenInput.nativeElement.value).toEqual(Mock.TODAY.toLocaleDateString());
         });
 
         it('should be readonly', () => {
@@ -107,7 +112,7 @@ export function timeframe_tests(getFixture) {
         });
 
         it('should have a minimum value of tomorrow', () => {
-          const tomorrowDate: string = dayAfter(now).toISOString().split('T')[0];
+          const tomorrowDate: string = dayAfter(Mock.TODAY).toISOString().split('T')[0];
           expect(regDeadlineInput.attributes.min).toEqual(tomorrowDate);
         });
 
@@ -128,19 +133,19 @@ export function timeframe_tests(getFixture) {
           });
 
           it('should be invalid when set to today', () => {
-            DOMInteractionUtility.setValueOn(regDeadlineInput, now.toString());
+            DOMInteractionUtility.setValueOn(regDeadlineInput, Mock.TODAY.toString());
             fixture.detectChanges();
             expect(ctrl.valid).toEqual(false);
           });
 
           it('should be invalid when set to yesterday', () => {
-            DOMInteractionUtility.setValueOn(regDeadlineInput, dayBefore(now).toString());
+            DOMInteractionUtility.setValueOn(regDeadlineInput, dayBefore(Mock.TODAY).toString());
             fixture.detectChanges();
             expect(ctrl.valid).toEqual(false);
           });
 
           it('should be valid when set to tomorrow', () => {
-            DOMInteractionUtility.setValueOn(regDeadlineInput, dayAfter(now).toString());
+            DOMInteractionUtility.setValueOn(regDeadlineInput, dayAfter(Mock.TODAY).toString());
             fixture.detectChanges();
             expect(ctrl.valid).toEqual(true);
           });
@@ -264,7 +269,7 @@ export function timeframe_tests(getFixture) {
               expect(ctrl.valid).toEqual(false);
             });
 
-            it('should be invalid when set to the day after the minimum registration deadline', () => {
+            it('should be valid when set to the day after the minimum registration deadline', () => {
               DOMInteractionUtility.setValueOn(votingDeadlineInput, dayAfter(minRegistrationDeadline).toString());
               fixture.detectChanges();
               expect(ctrl.valid).toEqual(true);
