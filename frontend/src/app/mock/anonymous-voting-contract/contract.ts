@@ -1,8 +1,8 @@
 import { AnonymousVotingAPI } from '../../core/ethereum/anonymous-voting-contract/contract.api';
+import { IContractEventStream } from '../../core/ethereum/contract.interface';
 import { address } from '../../core/ethereum/type.mappings';
 import { BigNumber } from '../bignumber';
 import { Mock } from '../module';
-import { IContractEventStream } from "../../core/ethereum/contract.interface";
 
 export class AnonymousVotingContract implements AnonymousVotingAPI {
   private REGISTRATION_DEADLINE: number;
@@ -26,7 +26,7 @@ export class AnonymousVotingContract implements AnonymousVotingAPI {
   }
 
   currentPhase = {
-    call: () => Promise.resolve(this.REGISTRATION_PHASE)
+    call: () => Promise.resolve(new BigNumber(this.REGISTRATION_PHASE))
   };
 
   registrationDeadline = {

@@ -56,7 +56,7 @@ describe('Service: AnonymousVotingContractService', () => {
     }));
   });
 
-  describe('method: newPhaseEventsAt$', () => {
+  describe('method: phaseAt$', () => {
     const newLog = (phase) => ({
       event: NewPhaseEvent.name,
       args: {
@@ -64,42 +64,80 @@ describe('Service: AnonymousVotingContractService', () => {
       }
     });
 
-    let newPhaseSubscription: Subscription;
+    let phaseSubscription: Subscription;
 
-    const init_newPhaseEvent$_and_subscribe = () => {
+    const init_phaseAt$_and_subscribe = fakeAsync(() => {
       anonymousVotingSvc = new AnonymousVotingContractService(web3Svc, contractSvc, errSvc);
-      newPhaseSubscription = anonymousVotingSvc.newPhaseEventsAt$(voteCollection.address)
+      phaseSubscription = anonymousVotingSvc.phaseAt$(voteCollection.address)
         .subscribe(onNext, onError, onCompleted);
       tick();
-    };
+    });
 
-    it('should return a waiting observable', fakeAsync(() => {
-      init_newPhaseEvent$_and_subscribe();
-      expect(onNext).not.toHaveBeenCalled();
-      expect(onCompleted).not.toHaveBeenCalled();
-    }));
+    describe('contract is at phase 0', () => {
+      it('should emit 0 and wait', () => {
+        init_phaseAt$_and_subscribe();
+        expect(onNext).toHaveBeenCalledTimes(1);
+        expect(onNext).toHaveBeenCalledWith(0);
+        expect(onCompleted).not.toHaveBeenCalled();
+      });
+    });
 
-    it('should emit a new event whenever the AnonymousVoting contract emits a NewPhase event', fakeAsync(() => {
-      init_newPhaseEvent$_and_subscribe();
-      voteCollection.eventStream.trigger(null, newLog(1));
+    describe('contract is at phase 1', () => {
+
+      beforeEach(() => spyOn(voteCollection.instance.currentPhase, 'call').and
+        .returnValue(Promise.resolve(new BigNumber(1)))
+      );
+
+      it('should emit 1 and wait', () => {
+        init_phaseAt$_and_subscribe();
+        expect(onNext).toHaveBeenCalledTimes(1);
+        expect(onNext).toHaveBeenCalledWith(1);
+        expect(onCompleted).not.toHaveBeenCalled();
+      });
+    });
+
+    describe('contract is at the final phase', () => {
+      beforeEach(() =>
+        spyOn(voteCollection.instance.currentPhase, 'call').and
+          .returnValue(Promise.resolve(new BigNumber(VotePhases.length - 1)))
+      );
+
+      it('should emit the final phase and complete', () => {
+        init_phaseAt$_and_subscribe();
+        expect(onNext).toHaveBeenCalledTimes(1);
+        expect(onNext).toHaveBeenCalledWith(VotePhases.length - 1);
+        expect(onCompleted).toHaveBeenCalled();
+      });
+    });
+
+    it('should emit a new event whenever the AnonymousVoting contract emits a NewPhase event', () => {
+      init_phaseAt$_and_subscribe();
+
       expect(onNext).toHaveBeenCalledTimes(1);
+
+      voteCollection.eventStream.trigger(null, newLog(1));
+      expect(onNext).toHaveBeenCalledTimes(2);
 
       voteCollection.eventStream.trigger(null, newLog(2));
-      expect(onNext).toHaveBeenCalledTimes(2);
-    }));
+      expect(onNext).toHaveBeenCalledTimes(3);
+    });
 
-    it('should emit the phase as the event', fakeAsync(() => {
-      init_newPhaseEvent$_and_subscribe();
-      voteCollection.eventStream.trigger(null, newLog(1));
+    it('should emit the phase as the event', () => {
+      init_phaseAt$_and_subscribe();
+
       expect(onNext).toHaveBeenCalledTimes(1);
+      expect(onNext).toHaveBeenCalledWith(0);
+
+      voteCollection.eventStream.trigger(null, newLog(1));
+      expect(onNext).toHaveBeenCalledTimes(2);
       expect(onNext.calls.mostRecent().args[0]).toEqual(1);
 
       voteCollection.eventStream.trigger(null, newLog(2));
-      expect(onNext).toHaveBeenCalledTimes(2);
+      expect(onNext).toHaveBeenCalledTimes(3);
       expect(onNext.calls.mostRecent().args[0]).toEqual(2);
-    }));
+    });
 
-    it('should ignore non-NewPhase events', fakeAsync(() => {
+    it('should ignore non-NewPhase events', () => {
       const otherEvent: IContractLog = {
         event: 'Another event',
         args: {
@@ -107,64 +145,77 @@ describe('Service: AnonymousVotingContractService', () => {
           param2: 1
         }
       };
-      init_newPhaseEvent$_and_subscribe();
+      init_phaseAt$_and_subscribe();
+      expect(onNext).toHaveBeenCalledTimes(1);
       voteCollection.eventStream.trigger(null, otherEvent);
-      expect(onNext).not.toHaveBeenCalled();
+      expect(onNext).toHaveBeenCalledTimes(1);
       expect(onCompleted).not.toHaveBeenCalled();
-    }));
+    });
 
-    it('should complete after all the phases are emitted', fakeAsync(() => {
-      init_newPhaseEvent$_and_subscribe();
+    it('should complete after all the phases are emitted', () => {
+      init_phaseAt$_and_subscribe();
       for (let phase = 1; phase < VotePhases.length; phase++) {
         voteCollection.eventStream.trigger(null, newLog(phase));
       }
       expect(onCompleted).toHaveBeenCalled();
-    }));
+    });
 
-    it('should remove the event listener when the observer completes', fakeAsync(() => {
+    it('should complete when the last phase is emitted', () => {
+      const currentPhase: number = 1;
+      spyOn(voteCollection.instance.currentPhase, 'call').and
+        .returnValue(Promise.resolve(new BigNumber(currentPhase)));
+
+      init_phaseAt$_and_subscribe();
+      for (let phase = currentPhase + 1; phase < VotePhases.length; phase++) {
+        voteCollection.eventStream.trigger(null, newLog(phase));
+      }
+      expect(onCompleted).toHaveBeenCalled();
+    });
+
+    it('should remove the event listener when the observer completes', () => {
       spyOn(voteCollection.eventStream, 'stopWatching').and.stub();
-      init_newPhaseEvent$_and_subscribe();
+      init_phaseAt$_and_subscribe();
       for (let phase = 1; phase < VotePhases.length; phase++) {
         voteCollection.eventStream.trigger(null, newLog(phase));
       }
       expect(voteCollection.eventStream.stopWatching).toHaveBeenCalled();
-    }));
+    });
 
-    it('should remove the event listener when the observer unsubscribes', fakeAsync(() => {
+    it('should remove the event listener when the observer unsubscribes', () => {
       spyOn(voteCollection.eventStream, 'stopWatching').and.stub();
-      init_newPhaseEvent$_and_subscribe();
+      init_phaseAt$_and_subscribe();
       expect(voteCollection.eventStream.stopWatching).not.toHaveBeenCalled();
-      newPhaseSubscription.unsubscribe();
+      phaseSubscription.unsubscribe();
       expect(voteCollection.eventStream.stopWatching).toHaveBeenCalled();
-    }));
-
+    });
 
     describe('case: the event stream contains an error', () => {
       const streamError: Error = new Error('Error in event stream');
 
-      it('should notify the Error Service if the contract event stream contains an error', fakeAsync(() => {
-        init_newPhaseEvent$_and_subscribe();
+      it('should notify the Error Service if the contract event stream contains an error', () => {
+        init_phaseAt$_and_subscribe();
         voteCollection.eventStream.trigger(streamError, null);
         expect(errSvc.add).toHaveBeenCalledWith(
           AnonymousVotingContractErrors.events(voteCollection.address), streamError
         );
-      }));
+      });
 
-      it('should not affect the newPhaseEventsAt$ stream', fakeAsync(() => {
-        init_newPhaseEvent$_and_subscribe();
+      it('should not affect the phaseAt$ stream', () => {
+        init_phaseAt$_and_subscribe();
+        expect(onNext).toHaveBeenCalledTimes(1);
         voteCollection.eventStream.trigger(streamError, null);
-        expect(onNext).not.toHaveBeenCalled();
+        expect(onNext).toHaveBeenCalledTimes(1);
         expect(onCompleted).not.toHaveBeenCalled();
-      }));
+      });
 
-      it('should handle interleaved NewPhase and error events', fakeAsync(() => {
+      it('should handle interleaved NewPhase and error events', () => {
         let nEvents: number = 0;
         let nErrors: number = 0;
         const lastPhase = () => nEvents; // the phases map directly to the count
 
         const checkExpectations = () => {
           expect(onNext.calls.mostRecent().args[0]).toEqual(lastPhase());
-          expect(onNext).toHaveBeenCalledTimes(nEvents);
+          expect(onNext).toHaveBeenCalledTimes(nEvents + 1); // there is an emission before the first NewPhase event
           expect(errSvc.add).toHaveBeenCalledTimes(nErrors);
         };
 
@@ -178,7 +229,7 @@ describe('Service: AnonymousVotingContractService', () => {
           nErrors++;
         };
 
-        init_newPhaseEvent$_and_subscribe();
+        init_phaseAt$_and_subscribe();
         logEvent();
         checkExpectations();
         errEvent();
@@ -187,17 +238,17 @@ describe('Service: AnonymousVotingContractService', () => {
         checkExpectations();
         logEvent();
         checkExpectations();
-      }));
+      });
     });
 
     describe('case: web3 is not injected', () => {
       beforeEach(() => spyOnProperty(web3Svc, 'isInjected').and.returnValue(false));
 
-      it('should return an empty observable', fakeAsync(() => {
-        init_newPhaseEvent$_and_subscribe();
+      it('should return an empty observable', () => {
+        init_phaseAt$_and_subscribe();
         expect(onNext).not.toHaveBeenCalled();
         expect(onCompleted).toHaveBeenCalled();
-      }));
+      });
     });
 
     describe('case: there is no AnonymousVoting contract at the specified address', () => {
@@ -205,16 +256,35 @@ describe('Service: AnonymousVotingContractService', () => {
 
       beforeEach(() => spyOn(Mock.TruffleAnonymousVotingAbstraction, 'at').and.returnValue(Promise.reject(error)));
 
-      it('should notify the Error Service', fakeAsync(() => {
-        init_newPhaseEvent$_and_subscribe();
+      it('should notify the Error Service', () => {
+        init_phaseAt$_and_subscribe();
         expect(errSvc.add).toHaveBeenCalledWith(AnonymousVotingContractErrors.network(voteCollection.address), error);
-      }));
+      });
 
-      it('should return an empty observable', fakeAsync(() => {
-        init_newPhaseEvent$_and_subscribe();
+      it('should return an empty observable', () => {
+        init_phaseAt$_and_subscribe();
         expect(onNext).not.toHaveBeenCalled();
         expect(onCompleted).toHaveBeenCalled();
-      }));
+      });
+    });
+
+    describe('case: contract.currentPhase.call() fails', () => {
+      const error: Error = new Error('Unable to retrieve the current phase');
+
+      beforeEach(() => spyOn(voteCollection.instance.currentPhase, 'call').and.returnValue(Promise.reject(error)));
+
+      it('should notify the Error Service', () => {
+        init_phaseAt$_and_subscribe();
+        expect(errSvc.add).toHaveBeenCalledWith(
+          AnonymousVotingContractErrors.phase(voteCollection.address), error
+        );
+      });
+
+      it('should return an empty observable', () => {
+        init_phaseAt$_and_subscribe();
+        expect(onNext).not.toHaveBeenCalled();
+        expect(onCompleted).toHaveBeenCalled();
+      });
     });
 
   });
@@ -286,31 +356,31 @@ describe('Service: AnonymousVotingContractService', () => {
   xdescribe('TODO: remove method: contractAt', () => {
     const VoteCollection: IAnonymousVotingContractCollection = Mock.AnonymousVotingContractCollections[0];
 
-    const init_svc_and_contractAt_handlers = () => {
+    const init_svc_and_contractAt_handlers = fakeAsync(() => {
       anonymousVotingSvc = new AnonymousVotingContractService(web3Svc, contractSvc, errSvc);
       anonymousVotingSvc.contractAt(VoteCollection.address)
         .subscribe(onNext, onError, onCompleted);
       tick();
-    };
+    });
 
-    it('should return an observable that emits the contract and completes', fakeAsync(() => {
+    it('should return an observable that emits the contract and completes', () => {
       init_svc_and_contractAt_handlers();
       expect(onNext).toHaveBeenCalledWith(VoteCollection.instance);
       expect(onNext).toHaveBeenCalledTimes(1);
       expect(onCompleted).toHaveBeenCalledTimes(1);
-    }));
+    });
 
     describe('case: web3 is not injected', () => {
-      it('should return an empty observable', fakeAsync(() => {
+      it('should return an empty observable', () => {
         spyOnProperty(web3Svc, 'isInjected').and.returnValue(false);
         init_svc_and_contractAt_handlers();
         expect(onNext).toHaveBeenCalledTimes(0);
         expect(onCompleted).toHaveBeenCalledTimes(1);
-      }));
+      });
     });
 
     describe('case: AnonymousVoting contract is not deployed at the address', () => {
-      it('should notify the Error Service that contractAt fails', fakeAsync(() => {
+      it('should notify the Error Service that contractAt fails', () => {
         const contractUnavailable: Error = new Error('Cannot find contract at address');
         spyOn(Mock.TruffleAnonymousVotingAbstraction, 'at').and.returnValue(Promise.reject(contractUnavailable));
         init_svc_and_contractAt_handlers();
@@ -318,15 +388,15 @@ describe('Service: AnonymousVotingContractService', () => {
           AnonymousVotingContractErrors.network(VoteCollection.address),
           contractUnavailable
         );
-      }));
+      });
 
-      it('should return an empty observable', fakeAsync(() => {
+      it('should return an empty observable', () => {
         const contractUnavailable: Error = new Error('Cannot find contract at address');
         spyOn(Mock.TruffleAnonymousVotingAbstraction, 'at').and.returnValue(Promise.reject(contractUnavailable));
         init_svc_and_contractAt_handlers();
         expect(onNext).toHaveBeenCalledTimes(0);
         expect(onCompleted).toHaveBeenCalledTimes(1);
-      }));
+      });
     });
   });
 });
