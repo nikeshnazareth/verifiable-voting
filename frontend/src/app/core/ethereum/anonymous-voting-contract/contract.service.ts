@@ -16,6 +16,8 @@ export interface IAnonymousVotingContractService {
   contractAt(addr: address): Observable<AnonymousVotingAPI>;
 
   newPhaseEventsAt$(addr: address): Observable<number>;
+
+  paramsHashAt$(addr: address): Observable<string>;
 }
 
 export const AnonymousVotingContractErrors = {
@@ -47,6 +49,32 @@ export class AnonymousVotingContractService implements IAnonymousVotingContractS
       .filter(log => log.event === NewPhaseEvent.name)
       .map(log => (<NewPhaseEvent.Log> log).args.phase.toNumber())
       .take(VotePhases.length - 1); // stop after the final phase
+  }
+
+  /**
+   * Queries the parameters hash from the specified AnonymousVoting contract.
+   * Notifies the Error Service if there is no contract at the specified address
+   * or if the hash cannot be retrieved
+   * @param {address} addr the address of the AnonymousVoting contract
+   * @returns {Observable<string>} an observable that emits the parameters hash<br/>
+   * or an empty observable if there was an error
+   */
+  paramsHashAt$(addr: address): Observable<string> {
+    return this._abstraction$
+      .map(abstraction => abstraction.at(addr))
+      .switchMap(contractPromise => Observable.fromPromise(contractPromise))
+      .map(contract => <AnonymousVotingAPI> contract)
+      .map(contract => contract.parametersHash.call())
+      .switchMap(hashPromise =>
+        Observable.fromPromise(hashPromise)
+          .catch(err => {
+            this.errSvc.add(AnonymousVotingContractErrors.paramsHash(addr), err);
+            return <Observable<string>> Observable.empty();
+          })
+      ).catch(err => {
+        this.errSvc.add(AnonymousVotingContractErrors.network(addr), err);
+        return <Observable<string>> Observable.empty();
+      });
   }
 
   /**

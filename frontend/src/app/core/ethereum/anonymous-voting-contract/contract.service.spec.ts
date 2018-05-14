@@ -2,8 +2,8 @@ import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { Subscription } from 'rxjs/Subscription';
 
 import {
-AnonymousVotingContractErrors, AnonymousVotingContractService,
-IAnonymousVotingContractService
+  AnonymousVotingContractErrors, AnonymousVotingContractService,
+  IAnonymousVotingContractService
 } from './contract.service';
 import { IWeb3Service, Web3Service } from '../web3.service';
 import { ITruffleContractWrapperService, TruffleContractWrapperService } from '../truffle-contract-wrapper.service';
@@ -20,6 +20,8 @@ describe('Service: AnonymousVotingContractService', () => {
   let web3Svc: IWeb3Service;
   let contractSvc: ITruffleContractWrapperService;
   let errSvc: ErrorService;
+
+  const voteCollection: IAnonymousVotingContractCollection = Mock.AnonymousVotingContractCollections[0];
 
   beforeEach(() => {
     TestBed.configureTestingModule({
@@ -55,8 +57,6 @@ describe('Service: AnonymousVotingContractService', () => {
   });
 
   describe('method: newPhaseEventsAt$', () => {
-    const voteCollection: IAnonymousVotingContractCollection = Mock.AnonymousVotingContractCollections[0];
-
     const newLog = (phase) => ({
       event: NewPhaseEvent.name,
       args: {
@@ -217,6 +217,70 @@ describe('Service: AnonymousVotingContractService', () => {
       }));
     });
 
+  });
+
+  describe('method: paramsHashAt$', () => {
+
+    const init_paramsHashAt$_and_subscribe = fakeAsync(() => {
+      anonymousVotingSvc = new AnonymousVotingContractService(web3Svc, contractSvc, errSvc);
+      anonymousVotingSvc.paramsHashAt$(voteCollection.address)
+        .subscribe(onNext, onError, onCompleted);
+      tick();
+    });
+
+    it('should return an observable that emits the parameters hash and completed', () => {
+      init_paramsHashAt$_and_subscribe();
+      expect(onNext).toHaveBeenCalledTimes(1);
+      expect(onNext).toHaveBeenCalledWith(voteCollection.params_hash);
+      expect(onCompleted).toHaveBeenCalled();
+    });
+
+    describe('case: web3 is not injected', () => {
+      beforeEach(() => spyOnProperty(web3Svc, 'isInjected').and.returnValue(false));
+
+      it('should return an empty observable', () => {
+        init_paramsHashAt$_and_subscribe();
+        expect(onNext).not.toHaveBeenCalled();
+        expect(onCompleted).toHaveBeenCalled();
+      });
+    });
+
+    describe('case: AnonymousVoting contract is not deployed at the address', () => {
+
+      const error: Error = new Error('No contract at the specified address');
+
+      beforeEach(() => spyOn(Mock.TruffleAnonymousVotingAbstraction, 'at').and.returnValue(Promise.reject(error)));
+
+      it('should notify the Error Service', () => {
+        init_paramsHashAt$_and_subscribe();
+        expect(errSvc.add).toHaveBeenCalledWith(AnonymousVotingContractErrors.network(voteCollection.address), error);
+      });
+
+      it('should return an empty observable', () => {
+        init_paramsHashAt$_and_subscribe();
+        expect(onNext).not.toHaveBeenCalled();
+        expect(onCompleted).toHaveBeenCalled();
+      });
+    });
+
+    describe('case: contract.parametersHash.call() fails', () => {
+      const error: Error = new Error('Unable to retrieve parameters hash');
+
+      beforeEach(() => spyOn(voteCollection.instance.parametersHash, 'call').and.returnValue(Promise.reject(error)));
+
+      it('should notify the Error Service', () => {
+        init_paramsHashAt$_and_subscribe();
+        expect(errSvc.add).toHaveBeenCalledWith(
+          AnonymousVotingContractErrors.paramsHash(voteCollection.address), error
+        );
+      });
+
+      it('should return an empty observable', () => {
+        init_paramsHashAt$_and_subscribe();
+        expect(onNext).not.toHaveBeenCalled();
+        expect(onCompleted).toHaveBeenCalled();
+      });
+    });
   });
 
   xdescribe('TODO: remove method: contractAt', () => {

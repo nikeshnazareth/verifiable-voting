@@ -10,6 +10,14 @@ export class AnonymousVotingContractService implements IAnonymousVotingContractS
     return Observable.empty();
   }
 
+  paramsHashAt$(addr: address): Observable<string> {
+    return Observable.of(
+      Mock.AnonymousVotingContractCollections
+        .filter(collection => collection.address === addr)[0]
+        .params_hash
+    );
+  }
+
   contractAt(addr: address): Observable<AnonymousVotingAPI> {
     return Observable.of(
       Mock.AnonymousVotingContractCollections
