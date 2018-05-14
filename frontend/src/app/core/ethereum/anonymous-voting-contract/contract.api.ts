@@ -1,5 +1,7 @@
-import { IContract } from '../contract.interface';
+import { IContract, IContractLog } from '../contract.interface';
 import { address, uint } from '../type.mappings';
+import * as BigNumber from 'bignumber.js';
+
 
 export interface AnonymousVotingAPI extends VotePhasesAPI {
   // string public parametersHash;
@@ -33,3 +35,18 @@ interface VotePhasesAPI extends IContract {
   };
 }
 
+export namespace NewPhaseEvent {
+  export const name: string = 'NewPhase';
+
+  export interface Log extends IContractLog {
+    args: {
+      phase: BigNumber;
+    };
+  }
+}
+
+export const VotePhases = [
+  'REGISTRATION',
+  'VOTING',
+  'COMPLETE'
+];

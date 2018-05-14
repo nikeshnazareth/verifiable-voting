@@ -8,7 +8,7 @@ import { ITransactionReceipt } from '../core/ethereum/transaction.interface';
 import { IVoteParameters } from '../core/vote-manager/vote-manager.service';
 import { IVoteTimeframes } from '../core/ethereum/vote-listing-contract/contract.service';
 import { NoRestrictionContract } from './no-restriction-contract/contract';
-import { TriggerableEventStream } from './triggerable-event-stream';
+import { ITriggerableEventStream, TriggerableEventStream } from './triggerable-event-stream';
 import {
   TruffleAnonymousVotingAbstraction,
   TruffleAnonymousVotingWrapperService
@@ -85,6 +85,7 @@ export interface IAnonymousVotingContractCollection {
   params_hash: string;
   deploy_receipt: ITransactionReceipt;
   instance: AnonymousVotingAPI;
+  eventStream: ITriggerableEventStream;
 }
 
 function generateMockVoteContract(idx: number): IAnonymousVotingContractCollection {
@@ -120,7 +121,8 @@ function generateMockVoteContract(idx: number): IAnonymousVotingContractCollecti
     },
     instance: new AnonymousVotingContract(
       REGISTRATION_DEADLINE, VOTING_DEADLINE, PARAMS_HASH, ELIGIBILITY_CONTRACT, REGISTRATION_AUTHORITY
-    )
+    ),
+    eventStream: new TriggerableEventStream()
   };
 }
 

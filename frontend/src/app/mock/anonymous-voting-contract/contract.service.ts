@@ -6,6 +6,10 @@ import { AnonymousVotingAPI } from '../../core/ethereum/anonymous-voting-contrac
 import { Mock } from '../module';
 
 export class AnonymousVotingContractService implements IAnonymousVotingContractService {
+  newPhaseEventsAt$(addr: address): Observable<number> {
+    return Observable.empty();
+  }
+
   contractAt(addr: address): Observable<AnonymousVotingAPI> {
     return Observable.of(
       Mock.AnonymousVotingContractCollections

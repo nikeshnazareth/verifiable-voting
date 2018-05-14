@@ -2,6 +2,7 @@ import { AnonymousVotingAPI } from '../../core/ethereum/anonymous-voting-contrac
 import { address } from '../../core/ethereum/type.mappings';
 import { BigNumber } from '../bignumber';
 import { Mock } from '../module';
+import { IContractEventStream } from "../../core/ethereum/contract.interface";
 
 export class AnonymousVotingContract implements AnonymousVotingAPI {
   private REGISTRATION_DEADLINE: number;
@@ -48,16 +49,19 @@ export class AnonymousVotingContract implements AnonymousVotingAPI {
     call: () => Promise.resolve(this.REGISTRATION_AUTHORITY)
   };
 
-  // This creates a referential loop.
+  // These functions create self-referential loop.
   // Mock.AnonymousVotingContractCollections is instantiated with instances of AnonymousVotingContract
-  // Luckily, it will already be defined when this getter is called
+  // Luckily, it will already be defined when these get is called
+
   get address(): address {
     return Mock.AnonymousVotingContractCollections
       .filter(collection => collection.params_hash === this.PARAMETERS_IPFS_HASH)[0]
       .address;
   }
 
-  allEvents() {
-    return null; // There are no events on the AnonymousVotingContract (yet)
+  allEvents(): IContractEventStream {
+    return Mock.AnonymousVotingContractCollections
+      .filter(collection => collection.params_hash === this.PARAMETERS_IPFS_HASH)[0]
+      .eventStream;
   }
 }
