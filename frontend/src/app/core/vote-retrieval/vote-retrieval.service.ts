@@ -4,9 +4,10 @@
  * avoid repeating the same data requests whenever the UI components are reloaded
  */
 
-import { EventEmitter, Injectable, OnDestroy } from '@angular/core';
+import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs/Observable';
-import { Subscription } from 'rxjs/Subscription';
+import 'rxjs/add/operator/startWith';
+import 'rxjs/add/operator/shareReplay';
 
 import { VoteListingContractService } from '../ethereum/vote-listing-contract/contract.service';
 import { AnonymousVotingContractService } from '../ethereum/anonymous-voting-contract/contract.service';
@@ -16,15 +17,14 @@ import { IPFSService } from '../ipfs/ipfs.service';
 import { IVoteParameters } from '../vote-manager/vote-manager.service';
 import { ErrorService } from '../error-service/error.service';
 
-
 interface IVoteRetrievalService {
   summaries$: Observable<IVotingContractSummary[]>;
 }
 
 export const VoteRetrievalServiceErrors = {
   ipfs: {
-    getParametersHash: (addr, hash) => new Error('Unable to retrieve the parameters for the AnonymousVoting contract' +
-      ` at ${addr} from the IPFS hash (${hash})`)
+    getParametersHash: (addr) => new Error('Unable to retrieve the parameters for the AnonymousVoting contract' +
+      ` at ${addr} from the IPFS hash`)
   },
   format: {
     parametersHash: (params) => new Error(`Retrieved parameters (${params}) do not match the expected format`)
@@ -37,32 +37,25 @@ export const RETRIEVAL_STATUS = {
 };
 
 @Injectable()
-export class VoteRetrievalService implements IVoteRetrievalService, OnDestroy {
+export class VoteRetrievalService implements IVoteRetrievalService {
   private _voteCache: IVoteCache;
-  private _voteRetrievalSubscription: Subscription;
 
   constructor(private voteListingSvc: VoteListingContractService,
               private anonymousVotingSvc: AnonymousVotingContractService,
               private ipfsSvc: IPFSService,
               private errSvc: ErrorService) {
     this._voteCache = {};
-    this._voteRetrievalSubscription = new Subscription();
   }
 
-  static emptyParameters(status: string): IVoteParameters {
-    return {
-      topic: status,
-      candidates: [],
-      registration_key: {
-        modulus: status,
-        public_exp: status
-      }
-    };
-  }
-
+  /**
+   * Retrieves the vote summary information (from cache if possible) for each deployed
+   * contract in the VoteListingService.
+   * Merges them all into a single array and emits the result
+   * @returns {Observable<IVotingContractSummary[]>} the summary of all deployed voting contracts
+   */
   get summaries$(): Observable<IVotingContractSummary[]> {
     return this.voteListingSvc.deployedVotes$
-      .map((addr, idx) => this._cachedVoteSummaries(addr, idx))
+      .map((addr, idx) => this._cachedVoteSummary(addr, idx))
       .scan(
         (acc, summary$) => acc.combineLatest(summary$, (L, el) => L.concat(el)),
         Observable.of([])
@@ -70,11 +63,16 @@ export class VoteRetrievalService implements IVoteRetrievalService, OnDestroy {
       .switch();
   }
 
-  ngOnDestroy() {
-    this._voteRetrievalSubscription.unsubscribe();
-  }
-
-  private _cachedVoteSummaries(addr: address, idx: number): Observable<IVotingContractSummary> {
+  /**
+   * Obtains the vote details for the specified AnonmyousVoting contract (from cache if possible)
+   * and summarises them
+   * @param {address} addr the address of the contract
+   * @param {number} idx the index of the contract in the VoteListingContract array
+   * @returns {Observable<IVotingContractSummary>} (an observable of) a summary of the vote <br/>
+   * or a placeholder value if the information cannot be retrieved
+   * @private
+   */
+  private _cachedVoteSummary(addr: address, idx: number): Observable<IVotingContractSummary> {
     return this._cachedVoteDetails(addr, idx)
       .map(voteDetails => ({
         index: voteDetails.index,
@@ -83,48 +81,43 @@ export class VoteRetrievalService implements IVoteRetrievalService, OnDestroy {
       }));
   }
 
+  /**
+   * Obtains the vote details for the specified AnonymousVoting contract (from cache if possible)
+   * @param {address} addr the address of the contract
+   * @param {number} idx the index of the contract in the VoteListingContract array
+   * @returns {Observable<IVotingContractDetails>} (an observable of) the vote details <br/>
+   * or a placeholder value if the information cannot be retrieved
+   * @private
+   */
   private _cachedVoteDetails(addr: address, idx: number): Observable<IVotingContractDetails> {
     if (!addr) {
-      const empty: IVoteParameters = VoteRetrievalService.emptyParameters(RETRIEVAL_STATUS.UNAVAILABLE);
-      return Observable.of({
-        index: idx,
-        phase: RETRIEVAL_STATUS.UNAVAILABLE,
-        parameters: empty
-      });
+      return Observable.of(this._placeholderVotingContractDetails(idx, RETRIEVAL_STATUS.UNAVAILABLE));
     }
 
     if (!this._voteCache[addr]) {
-      const phase$: Observable<string> =
-        this.anonymousVotingSvc.newPhaseEventsAt$(addr)
-          .map(phaseIdx => VotePhases[phaseIdx])
-          .defaultIfEmpty(RETRIEVAL_STATUS.UNAVAILABLE)
-          .startWith(RETRIEVAL_STATUS.RETRIEVING);
+      const phase$: Observable<string> = this.anonymousVotingSvc.phaseAt$(addr)
+        .map(phaseIdx => VotePhases[phaseIdx])
+        .defaultIfEmpty(RETRIEVAL_STATUS.UNAVAILABLE)
+        .startWith(RETRIEVAL_STATUS.RETRIEVING);
 
-      const parameters$: Observable<IVoteParameters> =
-        this.anonymousVotingSvc.paramsHashAt$(addr)
-          .map(hash => this.ipfsSvc.catJSON(hash).catch(err =>
-            this.errSvc.add(VoteRetrievalServiceErrors.ipfs.getParametersHash(addr, hash), err)
-          ))
-          .switchMap(paramsPromise => Observable.fromPromise(paramsPromise))
-          .map(params => params ? this.confirmParametersFormat(params) : null)
-          .filter(params => params != null)
-          .defaultIfEmpty(VoteRetrievalService.emptyParameters(RETRIEVAL_STATUS.UNAVAILABLE))
-          .startWith(VoteRetrievalService.emptyParameters(RETRIEVAL_STATUS.RETRIEVING));
 
-      // cache the values by subscribing exactly once and passing the values to a new observable
-      this._voteCache[addr] = new EventEmitter<IVotingContractDetails>();
-      const sub: Subscription = phase$.combineLatest(parameters$, (phase, parameters) => ({
-        index: idx,
-        phase: phase,
-        parameters: parameters
-      }))
-        .map(details => <IVotingContractDetails> details)
-        .subscribe(
-          details => this._voteCache[addr].emit(details),
-          err => Observable.throw(err),
-          () => this._voteCache[addr].complete()
-        );
-      this._voteRetrievalSubscription.add(sub);
+      const parameters$: Observable<IVoteParameters> = this.anonymousVotingSvc.paramsHashAt$(addr)
+        .map(hash => this.ipfsSvc.catJSON(hash))
+        .switchMap(paramsPromise => Observable.fromPromise(paramsPromise))
+        .catch(err => {
+          this.errSvc.add(VoteRetrievalServiceErrors.ipfs.getParametersHash(addr), err);
+          return <Observable<object>> Observable.empty();
+        })
+        .map(params => this._confirmParametersFormat(params))
+        .filter(params => params != null)
+        .defaultIfEmpty(this._placeholderParameters(RETRIEVAL_STATUS.UNAVAILABLE))
+        .startWith(this._placeholderParameters(RETRIEVAL_STATUS.RETRIEVING));
+
+      this._voteCache[addr] = phase$.combineLatest(
+        parameters$,
+        (phase, parameters) => this.newContractDetails(idx, phase, parameters)
+      )
+        .shareReplay(1);
     }
     return this._voteCache[addr];
   }
@@ -134,7 +127,7 @@ export class VoteRetrievalService implements IVoteRetrievalService, OnDestroy {
    * @param {Object} obj the object to check
    * @returns {IVoteParameters} the parameters object if it matches or null otherwise
    */
-  private confirmParametersFormat(obj: object): IVoteParameters {
+  private _confirmParametersFormat(obj: object): IVoteParameters {
     const params: IVoteParameters = <IVoteParameters> obj;
     const valid: boolean =
       params.topic &&
@@ -155,6 +148,47 @@ export class VoteRetrievalService implements IVoteRetrievalService, OnDestroy {
       return null;
     }
   }
+
+  /**
+   * @param {number} idx the index of the contract in the VoteListingContract array
+   * @param {string} placeholder a placeholder value for all string properties
+   * @returns {IVotingContractDetails} a stub IVotingContractDetails object<br/>
+   * to be used when the details are not yet available (or unavailable)
+   */
+  private _placeholderVotingContractDetails(idx: number, placeholder: string): IVotingContractDetails {
+    const params: IVoteParameters = this._placeholderParameters(placeholder);
+    return {
+      index: idx,
+      phase: RETRIEVAL_STATUS.UNAVAILABLE,
+      parameters: params
+    };
+  }
+
+  /**
+   * @param {string} placeholder a placeholder value for all string properties
+   * @returns {IVoteParameters} a stub IVoteParameters object with the placeholder in place of all strings
+   */
+  private _placeholderParameters(placeholder: string): IVoteParameters {
+    return {
+      topic: placeholder,
+      candidates: [],
+      registration_key: {
+        modulus: placeholder,
+        public_exp: placeholder
+      }
+    };
+  }
+
+  /**
+   * @returns {IVotingContractDetails} a new IVotingContractDetails object with the specified values
+   */
+  private newContractDetails(index, phase, parameters): IVotingContractDetails {
+    return {
+      index: index,
+      phase: phase,
+      parameters: parameters
+    };
+  }
 }
 
 interface IVotingContractSummary {
@@ -170,6 +204,6 @@ interface IVotingContractDetails {
 }
 
 interface IVoteCache {
-  [addr: string]: EventEmitter<IVotingContractDetails>;
+  [addr: string]: Observable<IVotingContractDetails>;
 }
 
