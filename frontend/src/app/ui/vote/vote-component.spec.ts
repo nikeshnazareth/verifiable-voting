@@ -49,7 +49,11 @@ fdescribe('Component: VoteComponent', () => {
   });
 
   describe('Title', () => {
-    xit('should state "Vote #[index]" where index is ');
+    it('should state "Vote #[index]"', () => {
+      fixture.componentInstance.index = 2;
+      fixture.detectChanges();
+      expect(page.title.nativeElement.innerText).toEqual('Vote #2');
+    });
   });
 
   describe('Functionality', () => {

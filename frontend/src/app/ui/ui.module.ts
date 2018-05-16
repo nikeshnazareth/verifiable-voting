@@ -4,12 +4,14 @@ import { CommonModule } from '@angular/common';
 
 import { LaunchVoteComponent } from './launch-vote/launch-vote.component';
 import { ListVotesComponent } from './list-votes/list-votes.component';
+import { VoteComponent } from './vote/vote-component';
 import { MaterialModule } from '../material/material.module';
 
 @NgModule({
   declarations: [
     LaunchVoteComponent,
-    ListVotesComponent
+    ListVotesComponent,
+    VoteComponent
   ],
   imports: [
     ReactiveFormsModule,
@@ -18,7 +20,8 @@ import { MaterialModule } from '../material/material.module';
   ],
   exports: [
     LaunchVoteComponent,
-    ListVotesComponent
+    ListVotesComponent,
+    VoteComponent
   ]
 })
 export class UiModule {
