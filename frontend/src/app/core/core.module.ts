@@ -8,11 +8,13 @@ import { ErrorService } from './error-service/error.service';
 import { VoteManagerService } from './vote-manager/vote-manager.service';
 import { AnonymousVotingContractService } from './ethereum/anonymous-voting-contract/contract.service';
 import { NoRestrictionContractService } from './ethereum/no-restriction-contract/contract.service';
+import { VoteRetrievalService } from './vote-retrieval/vote-retrieval.service';
 
 @NgModule({
   providers: [
     ErrorService,
     IPFSService,
+    VoteRetrievalService,
     TruffleContractWrapperService,
     Web3Service,
     VoteListingContractService,

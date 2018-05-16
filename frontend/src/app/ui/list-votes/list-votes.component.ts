@@ -6,9 +6,7 @@ import 'rxjs/add/operator/defaultIfEmpty';
 import 'rxjs/add/operator/startWith';
 import 'rxjs/add/operator/combineLatest';
 
-import { address, uint } from '../../core/ethereum/type.mappings';
-import { VoteListingContractService } from '../../core/ethereum/vote-listing-contract/contract.service';
-import { VoteManagerService } from '../../core/vote-manager/vote-manager.service';
+import { IVotingContractSummary, VoteRetrievalService } from '../../core/vote-retrieval/vote-retrieval.service';
 
 
 @Component({
@@ -21,10 +19,16 @@ import { VoteManagerService } from '../../core/vote-manager/vote-manager.service
         <mat-cell *matCellDef="let contract">{{ contract.index }}</mat-cell>
       </ng-container>
 
-      <!-- Parameters column -->
-      <ng-container matColumnDef="parameters">
-        <mat-header-cell *matHeaderCellDef>Parameters</mat-header-cell>
-        <mat-cell *matCellDef="let contract"> {{ contract.parameters }}</mat-cell>
+      <!-- Phase column -->
+      <ng-container matColumnDef="phase">
+        <mat-header-cell *matHeaderCellDef>Phase</mat-header-cell>
+        <mat-cell *matCellDef="let contract">{{ contract.phase }}</mat-cell>
+      </ng-container>
+
+      <!-- Topic column -->
+      <ng-container matColumnDef="topic">
+        <mat-header-cell *matHeaderCellDef>Topic</mat-header-cell>
+        <mat-cell *matCellDef="let contract">{{ contract.topic }}</mat-cell>
       </ng-container>
 
       <mat-header-row *matHeaderRowDef="_displayedColumns"></mat-header-row>
@@ -34,62 +38,12 @@ import { VoteManagerService } from '../../core/vote-manager/vote-manager.service
 })
 export class ListVotesComponent implements OnInit {
   private _contractsSummary$: Observable<IVotingContractSummary[]>;
-  private _displayedColumns: string[] = ['index', 'parameters'];
+  private _displayedColumns: string[] = ['index', 'phase', 'topic'];
 
-  constructor(private voteListingSvc: VoteListingContractService,
-              private voteManagerSvc: VoteManagerService) {
+  constructor(private voteRetrievalSvc: VoteRetrievalService) {
   }
 
   ngOnInit() {
-    this._contractsSummary$ = this.initContractSummary$();
+    this._contractsSummary$ = this.voteRetrievalSvc.summaries$;
   }
-
-  /**
-   * Create an observable that retrieves the deployed vote addresses (from the VoteListingContract service)
-   * and maps them to contract summary objects.
-   * @returns {Observable<IVotingContractSummary[]>} A stream of contract summaries for all deployed votes<br/>
-   * or error messages if they could not be retrieved
-   */
-  private initContractSummary$(): Observable<IVotingContractSummary[]> {
-    return this.voteListingSvc
-      .deployedVotes$
-      .map((addr, idx) => this.getContractSummary$(idx, addr))
-      // create an observable that takes the latest IVotingContractSummary element per summary stream
-      // and emits an array of the results (one element per contract address)
-      .scan(
-        (acc, summary$) => acc.combineLatest(summary$, (L, el) => L.concat(el)),
-        Observable.of([])
-      )
-      // flatten the observable of observable
-      .switch();
-  }
-
-  /**
-   * Creates an IVotingContract with parameters initialised to 'RETRIEVING...' before being replaced
-   * by the actual parameters when they are retrieved. It may be replaced with 'HASH UNAVAILABLE' or
-   * 'UNKNOWN CONTRACT ADDRESS' if an error occurs.
-   * @param {number} idx the index of the contract
-   * @param {address} addr the address of the contract
-   * @returns {Observable<IVotingContractSummary>} an Observable that emits an IVotingContract where<br/>
-   * the parameters reflect the status until they are retrieved.
-   */
-  private getContractSummary$(idx: number, addr: address): Observable<IVotingContractSummary> {
-    const status$: Observable<string> = addr ?
-      this.voteManagerSvc.getParameters$(addr)
-        // .map(parameters => parameters.parameters)'
-        .map(parameters => 'CONVERT TO STRING SO TYPES MATCH UP')
-        .defaultIfEmpty('HASH UNAVAILABLE')
-        .startWith('RETRIEVING...') :
-      Observable.of('UNKNOWN CONTRACT ADDRESS');
-
-    return status$.map(params => ({
-      index: idx,
-      parameters: params
-    }));
-  }
-}
-
-interface IVotingContractSummary {
-  index: uint;
-  parameters: string;
 }
