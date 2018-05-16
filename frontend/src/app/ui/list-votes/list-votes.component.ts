@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, EventEmitter, OnInit, Output } from '@angular/core';
 import { Observable } from 'rxjs/Observable';
 import 'rxjs/add/operator/scan';
 import 'rxjs/add/operator/switch';
@@ -7,6 +7,7 @@ import 'rxjs/add/operator/startWith';
 import 'rxjs/add/operator/combineLatest';
 
 import { IVotingContractSummary, VoteRetrievalService } from '../../core/vote-retrieval/vote-retrieval.service';
+import { address } from '../../core/ethereum/type.mappings';
 
 
 @Component({
@@ -32,17 +33,24 @@ import { IVotingContractSummary, VoteRetrievalService } from '../../core/vote-re
       </ng-container>
 
       <mat-header-row *matHeaderRowDef="_displayedColumns"></mat-header-row>
-      <mat-row *matRowDef="let row; let i = index; columns: _displayedColumns"></mat-row>
+      <mat-row *matRowDef="let row; columns: _displayedColumns" (click)="selectedContract$.emit(row.index)"></mat-row>
     </mat-table>
-  `
+  `,
+  styleUrls: ['./list-votes.component.scss']
 })
 export class ListVotesComponent implements OnInit {
+  @Output() selectedContract$: EventEmitter<number>;
+
   private _contractsSummary$: Observable<IVotingContractSummary[]>;
   private _displayedColumns: string[] = ['index', 'phase', 'topic'];
 
   constructor(private voteRetrievalSvc: VoteRetrievalService) {
+    this.selectedContract$ = new EventEmitter<number>();
   }
 
+  /**
+   * Initialise the table data source
+   */
   ngOnInit() {
     this._contractsSummary$ = this.voteRetrievalSvc.summaries$;
   }

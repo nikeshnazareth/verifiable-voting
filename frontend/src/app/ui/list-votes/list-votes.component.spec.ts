@@ -5,7 +5,9 @@ import { By } from '@angular/platform-browser';
 import { ListVotesComponent } from './list-votes.component';
 import { IVoteRetrievalService, VoteRetrievalService } from '../../core/vote-retrieval/vote-retrieval.service';
 import { MaterialModule } from '../../material/material.module';
+import { DOMInteractionUtility } from '../dom-interaction-utility';
 import { Mock } from '../../mock/module';
+import Spy = jasmine.Spy;
 
 describe('Component: ListVotesComponent', () => {
   let fixture: ComponentFixture<ListVotesComponent>;
@@ -130,11 +132,47 @@ describe('Component: ListVotesComponent', () => {
 
   describe('User Interface', () => {
     describe('selected contract', () => {
-      xit('it should start empty');
+      let onNext: Spy;
+      const onError = err => fail(err);
+      let onCompleted: Spy;
 
-      xit('it should emit the contract address when a table row is selected');
+      beforeEach(fakeAsync(() => {
+        onNext = jasmine.createSpy('onNext');
+        onCompleted = jasmine.createSpy('onCompleted');
 
-      xit('it should continue to emit addresses for every selection');
+        fixture.detectChanges();
+        fixture.componentInstance.selectedContract$.subscribe(onNext, onError, onCompleted);
+        tick();
+      }));
+
+      it('it should start empty', () => {
+        expect(onNext).not.toHaveBeenCalled();
+        expect(onCompleted).not.toHaveBeenCalled();
+      });
+
+      it('it should emit the contract index when a table row is selected', () => {
+        DOMInteractionUtility.clickOn(Page.getRows()[2]);
+        expect(onNext).toHaveBeenCalledTimes(1);
+        expect(onNext).toHaveBeenCalledWith(2);
+      });
+
+      it('it should continue to emit indices when table rows are selected', () => {
+        DOMInteractionUtility.clickOn(Page.getRows()[2]);
+        expect(onNext).toHaveBeenCalledTimes(1);
+        expect(onNext).toHaveBeenCalledWith(2);
+
+        DOMInteractionUtility.clickOn(Page.getRows()[0]);
+        expect(onNext).toHaveBeenCalledTimes(2);
+        expect(onNext.calls.mostRecent().args[0]).toEqual(0);
+
+        DOMInteractionUtility.clickOn(Page.getRows()[3]);
+        expect(onNext).toHaveBeenCalledTimes(3);
+        expect(onNext.calls.mostRecent().args[0]).toEqual(3);
+
+        DOMInteractionUtility.clickOn(Page.getRows()[2]);
+        expect(onNext).toHaveBeenCalledTimes(4);
+        expect(onNext.calls.mostRecent().args[0]).toEqual(2);
+      });
     });
   });
 });
