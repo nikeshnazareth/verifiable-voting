@@ -11,6 +11,10 @@ export class TriggerableEventStream implements ITriggerableEventStream {
     this.callback = cb;
   }
 
+  stopWatching() {
+    this.callback = null;
+  }
+
   trigger(err: Error, log: IContractLog): void {
     this.callback(err, log);
   }

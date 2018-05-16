@@ -1,42 +1,30 @@
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { By } from '@angular/platform-browser';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { TestBed, async, ComponentFixture } from '@angular/core/testing';
+import { DebugElement, OnInit } from '@angular/core';
+import { By } from '@angular/platform-browser';
 
 import { LaunchVoteComponent } from './launch-vote.component';
 import { MaterialModule } from '../../material/material.module';
+import { NoRestrictionContractService } from '../../core/ethereum/no-restriction-contract/contract.service';
 import { VoteManagerService } from '../../core/vote-manager/vote-manager.service';
-import { IAnonymousVotingContractCollection, Mock } from '../../mock/module';
+import { Mock } from '../../mock/module';
 
+import { topic_input_tests } from './launch-vote.component.spec.topic_input';
+import { timeframe_tests } from './launch-vote.component.spec.timeframes';
+import { new_candidate_tests } from './launch-vote.component.spec.new_candidate';
+import { candidate_list_tests } from './launch-vote.component.spec.candidate_list';
+import { eligibility_tests } from './launch-vote.component.spec.eligibility';
+import { registration_key_tests } from './launch-vote.component.spec.registration_key';
+import { submit_button_tests } from './launch-vote-component.spec.submit';
 
 describe('Component: LaunchVoteComponent', () => {
-  let fixture: ComponentFixture<LaunchVoteComponent>;
-  let page: Page;
-
-  class Page {
-    public voteManagerSvc: VoteManagerService;
-    public textArea: HTMLTextAreaElement;
-    public submitButton: HTMLButtonElement;
-
-    constructor() {
-      const compInjector = fixture.debugElement.injector;
-      this.voteManagerSvc = compInjector.get(VoteManagerService);
-      this.textArea = fixture.debugElement.query(By.css('textarea')).nativeElement;
-      this.submitButton = fixture.debugElement.query(By.css('button')).nativeElement;
-    }
-
-    setTextValue(value: string) {
-      this.textArea.value = value;
-      // trigger an event so Angular knows about the update
-      this.textArea.dispatchEvent(new Event('input'));
-      fixture.detectChanges();
-    }
-  }
+  let fixture: ComponentFixture<TestLaunchVoteComponent>;
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
       declarations: [
-        LaunchVoteComponent
+        TestLaunchVoteComponent
       ],
       imports: [
         BrowserAnimationsModule,
@@ -45,64 +33,94 @@ describe('Component: LaunchVoteComponent', () => {
         MaterialModule
       ],
       providers: [
+        {provide: NoRestrictionContractService, useClass: Mock.NoRestrictionContractService},
         {provide: VoteManagerService, useClass: Mock.VoteManagerService}
       ]
     })
       .compileComponents()
       .then(() => {
-        fixture = TestBed.createComponent(LaunchVoteComponent);
-        page = new Page();
-        fixture.detectChanges();
+        fixture = TestBed.createComponent(TestLaunchVoteComponent);
       });
   }));
 
-  describe('Structure', () => {
-    it('should have an empty text area to enter the vote parameters', () => {
-      expect(page.textArea).toBeDefined();
-      expect(page.textArea.value).toBe('');
-    });
-
-    it('should have a button to submit the form', () => {
-      expect(page.submitButton).toBeDefined();
-    });
-  });
-
   describe('User Interface', () => {
-    it('should start with the submit button disabled', () => {
-      expect(page.submitButton.disabled).toBe(true);
+
+    describe('Vertical Stepper', () => {
+      let stepper: DebugElement;
+
+      beforeEach(() => {
+        fixture.detectChanges();
+        stepper = fixture.debugElement.query(By.css('mat-vertical-stepper'));
+      });
+
+      it('should exist', () => {
+        expect(stepper).not.toBeNull();
+      });
+
+      describe('steps', () => {
+        let labels: string[];
+
+        beforeEach(() => {
+          const steps: DebugElement[] = stepper.queryAll(By.css('.mat-step'));
+          labels = steps.map(step => step.query(By.css('.mat-step-text-label')).nativeElement.innerText);
+        });
+
+        it('should have five steps', () => {
+          expect(labels.length).toEqual(5);
+        });
+
+        it('should label the first step "Topic"', () => {
+          expect(labels[0]).toEqual('Topic');
+        });
+
+        it('should label the second step "Timeframes"', () => {
+          expect(labels[1]).toEqual('Timeframes');
+        });
+
+        it('should label the third step "Candidates"', () => {
+          expect(labels[2]).toEqual('Candidates');
+        });
+
+        it('should label the fourth step "Eligibility Criteria"', () => {
+          expect(labels[3]).toEqual('Eligibility Criteria');
+        });
+
+        it('should label the fifth step "Registration Authority"', () => {
+          expect(labels[4]).toEqual('Registration Authority');
+        });
+      });
     });
 
-    it('should enable the submit button when the text area has content', () => {
-      expect(page.submitButton.disabled).toBe(true);
-      page.setTextValue('Some value');
-      expect(page.submitButton.disabled).toBe(false);
-    });
+    describe('Topic Input box', topic_input_tests(() => fixture));
 
-    it('should disable the submit button if the text area is cleared', () => {
-      expect(page.submitButton.disabled).toBe(true);
-      page.setTextValue('Some value');
-      expect(page.submitButton.disabled).toBe(false);
-      page.setTextValue('');
-      expect(page.submitButton.disabled).toBe(true);
-    });
+    describe('Timeframe control group', timeframe_tests(() => fixture));
+
+    describe('New Candidate components', new_candidate_tests(() => fixture));
+
+    describe('Candidate list', candidate_list_tests(() => fixture));
+
+    describe('Eligibility input box', eligibility_tests(() => fixture));
+
+    describe('Registration key', registration_key_tests(() => fixture));
   });
 
   describe('Functionality', () => {
-
-    const VoteDetails: IAnonymousVotingContractCollection = Mock.AnonymousVotingContractCollections[0];
-
-    beforeEach(() => {
-      page.setTextValue(VoteDetails.parameters.parameters);
-    });
-
-    describe('submit button', () => {
-      it('should wrap the parameters in an IVoteParameters object and pass it to VoteManager.deployVote$', () => {
-        spyOn(page.voteManagerSvc, 'deployVote$').and.callThrough();
-        page.submitButton.click();
-        expect(page.voteManagerSvc.deployVote$).toHaveBeenCalledWith(VoteDetails.parameters);
-      });
-    });
+    describe('Submit button', submit_button_tests(() => fixture));
   });
 });
 
+/**
+ * Class to expose protected values for testing purposes
+ * It is more correct to confirm the functionality using only public values
+ * but testing form validation is a lot easier if we can see the validators directly
+ * (instead of testing their effects, which cannot be isolated,
+ *  since they relevant affects are synthesised across many components )
+ */
+export class TestLaunchVoteComponent extends LaunchVoteComponent implements OnInit {
+  public form: FormGroup;
 
+  ngOnInit() {
+    super.ngOnInit();
+    this.form = this.launchVoteForm;
+  }
+}

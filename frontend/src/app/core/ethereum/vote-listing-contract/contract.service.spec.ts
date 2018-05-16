@@ -1,6 +1,7 @@
 import { fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { OnDestroy } from '@angular/core';
 
-import { IVoteListingContractService, VoteListingContractErrors, VoteListingContractService } from './contract.service';
+import { VoteListingContractErrors, VoteListingContractService } from './contract.service';
 import { ITruffleContractWrapperService, TruffleContractWrapperService } from '../truffle-contract-wrapper.service';
 import { IWeb3Service, Web3Service } from '../web3.service';
 import { VoteCreatedEvent } from './contract.api';
@@ -13,7 +14,7 @@ import * as BigNumber from 'bignumber.js';
 import Spy = jasmine.Spy;
 
 describe('Service: VoteListingContractService', () => {
-  let voteListingContractSvc: IVoteListingContractService;
+  let voteListingContractSvc: TestVoteListingContractService;
   let web3Svc: IWeb3Service;
   let contractSvc: ITruffleContractWrapperService;
   let errSvc: ErrorService;
@@ -21,7 +22,7 @@ describe('Service: VoteListingContractService', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
       providers: [
-        VoteListingContractService,
+        {provide: VoteListingContractService, useClass: TestVoteListingContractService},
         {provide: ErrorService, useClass: Mock.ErrorService},
         {provide: Web3Service, useClass: Mock.Web3Service},
         {provide: TruffleContractWrapperService, useClass: Mock.TruffleVoteListingWrapperService},
@@ -47,33 +48,39 @@ describe('Service: VoteListingContractService', () => {
     it('should notify the Error Service if web3 is not injected', fakeAsync(() => {
       spyOnProperty(web3Svc, 'isInjected').and.returnValue(false);
       // recreate the service (the constructor in the original has already been called)
-      voteListingContractSvc = new VoteListingContractService(<Web3Service> web3Svc, contractSvc, errSvc);
+      voteListingContractSvc = new VoteListingContractService(web3Svc, contractSvc, errSvc);
       tick(); // wait for the promise to finish
-      expect(errSvc.add).toHaveBeenCalledWith(APP_CONFIG.errors.web3);
+      expect(errSvc.add).toHaveBeenCalledWith(APP_CONFIG.errors.web3, null);
     }));
 
     it('should notify the Error Service if the contract is not deployed', fakeAsync(() => {
-      spyOn(Mock.TruffleVoteListingAbstraction, 'deployed').and.returnValue(Promise.reject('Network fail'));
+      const deployError: Error = new Error('Network fail');
+      spyOn(Mock.TruffleVoteListingAbstraction, 'deployed').and.returnValue(Promise.reject(deployError));
       // recreate the service (the constructor in the original has already been called)
       voteListingContractSvc = new VoteListingContractService(<Web3Service> web3Svc, contractSvc, errSvc);
       tick(); // wait for the promise to finish
-      expect(errSvc.add).toHaveBeenCalledWith(VoteListingContractErrors.network);
+      expect(errSvc.add).toHaveBeenCalledWith(VoteListingContractErrors.network, deployError);
     }));
   });
 
   describe('method: deployVote', () => {
-    const VoteCollection: IAnonymousVotingContractCollection = Mock.AnonymousVotingContractCollections[0];
+    const voteCollection: IAnonymousVotingContractCollection = Mock.AnonymousVotingContractCollections[0];
 
     const init_and_call_deployVote = () => {
-      voteListingContractSvc = new VoteListingContractService(<Web3Service> web3Svc, contractSvc, errSvc);
-      voteListingContractSvc.deployVote$(VoteCollection.params_hash)
+      voteListingContractSvc = new VoteListingContractService(web3Svc, contractSvc, errSvc);
+      voteListingContractSvc.deployVote$(
+        voteCollection.timeframes,
+        voteCollection.params_hash,
+        voteCollection.eligibilityContract,
+        voteCollection.registrationAuthority
+        )
         .subscribe(onNext, onError, onCompleted);
       tick();
     };
 
     it('should return an Observable that emits the transaction receipt and completes', fakeAsync(() => {
       init_and_call_deployVote();
-      expect(onNext).toHaveBeenCalledWith(VoteCollection.deploy_receipt);
+      expect(onNext).toHaveBeenCalledWith(voteCollection.deploy_receipt);
       expect(onNext).toHaveBeenCalledTimes(1);
       expect(onCompleted).toHaveBeenCalled();
     }));
@@ -89,8 +96,10 @@ describe('Service: VoteListingContractService', () => {
     });
 
     describe('case: VoteListing contract is not deployed', () => {
-      beforeEach(() => spyOn(Mock.TruffleVoteListingAbstraction, 'deployed').and
-        .returnValue(Promise.reject('Network fail')));
+      beforeEach(() =>
+        spyOn(Mock.TruffleVoteListingAbstraction, 'deployed').and
+          .returnValue(Promise.reject(new Error('VoteListing contract not deployed')))
+      );
 
       it('should return an empty observable', fakeAsync(() => {
         init_and_call_deployVote();
@@ -100,12 +109,14 @@ describe('Service: VoteListingContractService', () => {
     });
 
     describe('case: contract.deploy fails', () => {
+      const deployError: Error = new Error('Deploy vote failed');
+
       beforeEach(() => spyOn(Mock.VoteListingContract, 'deploy').and
-        .returnValue(Promise.reject('Deploy vote failed')));
+        .returnValue(Promise.reject(deployError)));
 
       it('should notify the Error Service that deployVote fails', fakeAsync(() => {
         init_and_call_deployVote();
-        expect(errSvc.add).toHaveBeenCalledWith(VoteListingContractErrors.deployVote);
+        expect(errSvc.add).toHaveBeenCalledWith(VoteListingContractErrors.deployVote, deployError);
       }));
 
       it('should return an empty observable', fakeAsync(() => {
@@ -118,7 +129,7 @@ describe('Service: VoteListingContractService', () => {
 
   describe('observable: deployedVotes$', () => {
     const init_and_call_deployedVotes$ = () => {
-      voteListingContractSvc = new VoteListingContractService(<Web3Service> web3Svc, contractSvc, errSvc);
+      voteListingContractSvc = new VoteListingContractService(web3Svc, contractSvc, errSvc);
       voteListingContractSvc.deployedVotes$
         .subscribe(onNext, onError, onCompleted);
       tick();
@@ -145,17 +156,17 @@ describe('Service: VoteListingContractService', () => {
             if (idx === 0 || idx === 3) {
               return Promise.resolve(Mock.addresses[idx]);
             } else {
-              return Promise.reject(`Failed to retrieve contract ${idx}`);
+              return Promise.reject(new Error(`Failed to retrieve contract ${idx}`));
             }
           });
         });
 
         it('should notify the Error Service for every unavailable contract', fakeAsync(() => {
           init_and_call_deployedVotes$();
-          expect(errSvc.add).not.toHaveBeenCalledWith(VoteListingContractErrors.contractAddress(0));
-          expect(errSvc.add).toHaveBeenCalledWith(VoteListingContractErrors.contractAddress(1));
-          expect(errSvc.add).toHaveBeenCalledWith(VoteListingContractErrors.contractAddress(2));
-          expect(errSvc.add).not.toHaveBeenCalledWith(VoteListingContractErrors.contractAddress(3));
+          expect(errSvc.add).not.toHaveBeenCalledWith(VoteListingContractErrors.contractAddress(0), jasmine.any(Error));
+          expect(errSvc.add).toHaveBeenCalledWith(VoteListingContractErrors.contractAddress(1), jasmine.any(Error));
+          expect(errSvc.add).toHaveBeenCalledWith(VoteListingContractErrors.contractAddress(2), jasmine.any(Error));
+          expect(errSvc.add).not.toHaveBeenCalledWith(VoteListingContractErrors.contractAddress(3), jasmine.any(Error));
         }));
 
         it('should start with the list of available contracts', fakeAsync(() => {
@@ -199,13 +210,21 @@ describe('Service: VoteListingContractService', () => {
         expect(onNext.calls.mostRecent().args[0]).toEqual(newLog(2).args.contractAddress);
       }));
 
+      it('should remove the event listener when the service is destroyed', fakeAsync(() => {
+        spyOn(Mock.VoteCreatedEventStream, 'stopWatching').and.stub();
+        init_and_check_inital_values();
+        expect(Mock.VoteCreatedEventStream.stopWatching).not.toHaveBeenCalled();
+        voteListingContractSvc.ngOnDestroy();
+        expect(Mock.VoteCreatedEventStream.stopWatching).toHaveBeenCalled();
+      }));
+
       describe('case: the event stream contains an error', () => {
         const streamError: Error = new Error('Error in event stream');
 
         it('should notify the Error Service if the contract event stream contains an error', fakeAsync(() => {
           init_and_check_inital_values();
           Mock.VoteCreatedEventStream.trigger(streamError, null);
-          expect(errSvc.add).toHaveBeenCalledWith(streamError);
+          expect(errSvc.add).toHaveBeenCalledWith(VoteListingContractErrors.eventError, streamError);
         }));
 
         it('should not affect the deployedVotes$ stream', fakeAsync(() => {
@@ -281,24 +300,26 @@ describe('Service: VoteListingContractService', () => {
 
     describe('case: VoteListing contract is not deployed', () => {
       beforeEach(() => spyOn(Mock.TruffleVoteListingAbstraction, 'deployed').and
-        .returnValue(Promise.reject('Network fail')));
+        .returnValue(Promise.reject(new Error('Network fail'))));
 
       it('should be an empty observable', fakeAsync(() => {
         init_and_call_deployedVotes$();
-        expect(onNext).toHaveBeenCalledTimes(0);
+        expect(onNext).not.toHaveBeenCalled();
         expect(onCompleted).toHaveBeenCalled();
       }));
     });
 
     describe('case: contract.numberOfVotingContracts fails', () => {
+      const callError: Error = new Error('Call failed');
+
       beforeEach(() => {
         spyOn(Mock.VoteListingContract.numberOfVotingContracts, 'call').and
-          .returnValue(Promise.reject('call fail'));
+          .returnValue(Promise.reject(callError));
       });
 
       it('should notify the Error Service that deployedVotes$ does not contain existing contracts', fakeAsync(() => {
         init_and_call_deployedVotes$();
-        expect(errSvc.add).toHaveBeenCalledWith(VoteListingContractErrors.deployedVotes);
+        expect(errSvc.add).toHaveBeenCalledWith(VoteListingContractErrors.deployedVotes, callError);
       }));
 
       it('should be an empty observable', fakeAsync(() => {
@@ -310,4 +331,15 @@ describe('Service: VoteListingContractService', () => {
 
   });
 });
+
+
+/**
+ * Class to expose lifecycle hook for testing purposes
+ */
+export class TestVoteListingContractService extends VoteListingContractService implements OnDestroy {
+
+  ngOnDestroy() {
+    super.ngOnDestroy();
+  }
+}
 

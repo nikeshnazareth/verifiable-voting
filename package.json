@@ -5,7 +5,9 @@
   "main": "index.js",
   "scripts": {
     "serve": "cd frontend; npm run start",
-    "test-frontend": "cd frontend; npm run test"
+    "test-frontend": "cd frontend; npm run test",
+    "truffle": "cd backend; truffle develop",
+    "truffle-reset": "rm -r backend/build; npm run truffle"
   },
   "repository": {
     "type": "git",

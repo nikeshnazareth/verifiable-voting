@@ -1,0 +1,100 @@
+<form (ngSubmit)="onSubmit()" [formGroup]=launchVoteForm>
+  <mat-vertical-stepper>
+    <mat-step label="Topic">
+      <mat-form-field>
+        <input matInput placeholder="Topic" formControlName="topic">
+      </mat-form-field>
+    </mat-step>
+
+    <mat-step label="Timeframes">
+      <div formGroupName="timeframes">
+        <div>
+          <mat-form-field>
+            <input matInput matDatepicker placeholder="Registration Opens"
+                   formControlName="registrationOpens" readonly>
+          </mat-form-field>
+        </div>
+
+        <div>
+          <mat-form-field>
+            <input matInput [matDatepicker]="regClosesPicker"
+                   placeholder="Registration Closes" formControlName="registrationCloses"
+                   [min]="minRegistrationClosesDate">
+            <mat-datepicker-toggle matSuffix [for]="regClosesPicker"></mat-datepicker-toggle>
+            <mat-datepicker #regClosesPicker></mat-datepicker>
+          </mat-form-field>
+        </div>
+
+        <div>
+          <mat-form-field>
+            <input matInput [matDatepicker]="votingClosesPicker"
+                   placeholder="Voting Closes" formControlName="votingCloses"
+                   [min]="minVotingClosesDate$ | async">
+            <mat-datepicker-toggle matSuffix [for]="votingClosesPicker"></mat-datepicker-toggle>
+            <mat-datepicker #votingClosesPicker></mat-datepicker>
+          </mat-form-field>
+        </div>
+      </div>
+    </mat-step>
+
+    <mat-step label="Candidates">
+      <div formArrayName="candidates">
+        <div *ngFor="let candidate of candidates.controls; let i=index" [formGroupName]="i">
+          <mat-form-field>
+            <input matInput formControlName="name">
+          </mat-form-field>
+          <button type="button" mat-icon-button (click)="candidates.removeAt(i)">
+            <mat-icon>delete</mat-icon>
+          </button>
+        </div>
+      </div>
+
+      <mat-form-field>
+        <input matInput placeholder="New Candidate" (keyup.enter)="addCandidate()" formControlName="newCandidate">
+      </mat-form-field>
+
+      <button type="button" mat-icon-button (click)="addCandidate()">
+        <mat-icon>add</mat-icon>
+      </button>
+    </mat-step>
+
+    <mat-step label="Eligibility Criteria">
+      <mat-form-field>
+        <input matInput placeholder="Eligibility Contract" formControlName="eligibility" readonly>
+      </mat-form-field>
+    </mat-step>
+
+    <mat-step label="Registration Authority">
+      <div formGroupName="registration_key">
+        <div>
+          <span>0x</span>
+          <mat-form-field>
+            <input matInput placeholder="Modulus" formControlName="modulus">
+          </mat-form-field>
+        </div>
+        <div>
+          <span>0x</span>
+          <mat-form-field>
+            <input matInput placeholder="Public Exponent" formControlName="exponent">
+          </mat-form-field>
+        </div>
+        <div>
+          <span>0x</span>
+          <mat-form-field>
+            <input matInput placeholder="Registration Authority Address" formControlName="registrationAuthority">
+          </mat-form-field>
+        </div>
+      </div>
+    </mat-step>
+  </mat-vertical-stepper>
+
+  <div>
+    <button type="submit"
+            [disabled]="!launchVoteForm.valid"
+            mat-raised-button
+            color="primary"
+            #submit>
+      Launch
+    </button>
+  </div>
+</form>

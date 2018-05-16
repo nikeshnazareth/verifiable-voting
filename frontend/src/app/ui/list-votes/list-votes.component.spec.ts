@@ -1,30 +1,25 @@
-import { async, ComponentFixture, TestBed } from '@angular/core/testing';
-import { DebugElement, EventEmitter } from '@angular/core';
+import { async, ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { DebugElement } from '@angular/core';
 import { By } from '@angular/platform-browser';
 
 import { ListVotesComponent } from './list-votes.component';
-import {
-  IVoteListingContractService,
-  VoteListingContractService
-} from '../../core/ethereum/vote-listing-contract/contract.service';
-import { IVoteManagerService, VoteManagerService } from '../../core/vote-manager/vote-manager.service';
+import { IVoteRetrievalService, VoteRetrievalService } from '../../core/vote-retrieval/vote-retrieval.service';
 import { MaterialModule } from '../../material/material.module';
-import { address } from '../../core/ethereum/type.mappings';
+import { DOMInteractionUtility } from '../dom-interaction-utility';
 import { Mock } from '../../mock/module';
+import Spy = jasmine.Spy;
 
 describe('Component: ListVotesComponent', () => {
   let fixture: ComponentFixture<ListVotesComponent>;
   let page: Page;
 
   class Page {
-    public voteListingSvc: IVoteListingContractService;
-    public voteManagerSvc: IVoteManagerService;
+    public voteRetrievalSvc: IVoteRetrievalService;
     public table: DebugElement;
 
     constructor() {
       const compInjector = fixture.debugElement.injector;
-      this.voteListingSvc = compInjector.get(VoteListingContractService);
-      this.voteManagerSvc = compInjector.get(VoteManagerService);
+      this.voteRetrievalSvc = compInjector.get(VoteRetrievalService);
       this.table = fixture.debugElement.query(By.css('mat-table'));
     }
 
@@ -53,8 +48,7 @@ describe('Component: ListVotesComponent', () => {
         MaterialModule
       ],
       providers: [
-        {provide: VoteListingContractService, useClass: Mock.VoteListingContractService},
-        {provide: VoteManagerService, useClass: Mock.VoteManagerService}
+        {provide: VoteRetrievalService, useClass: Mock.VoteRetrievalService}
       ]
     })
       .compileComponents()
@@ -66,18 +60,20 @@ describe('Component: ListVotesComponent', () => {
 
   describe('Structure', () => {
     it('should have a table to house the vote contract interfaces', () => {
+      fixture.detectChanges();
       expect(page.table).toBeTruthy();
     });
 
-    it('should have two columns in the table', () => {
+    it('should have three columns in the table', () => {
+      fixture.detectChanges();
       Page.getRows().forEach(row => {
-        expect(row.queryAll(By.css('mat-cell')).length).toEqual(2);
+        expect(row.queryAll(By.css('mat-cell')).length).toEqual(3);
       });
     });
 
-    it('should have a heading row with the values [#, Parameters]', () => {
+    it('should have a heading row with the values [#, Phase, Topic]', () => {
       fixture.detectChanges();
-      const EXPECTED_HEADERS: string[] = ['#', 'Parameters'];
+      const EXPECTED_HEADERS: string[] = ['#', 'Phase', 'Topic'];
       const headerRows: DebugElement[] = page.table.queryAll(By.css('mat-header-row'));
       expect(headerRows.length).toEqual(1);
       const headerRow: DebugElement = headerRows[0];
@@ -86,64 +82,97 @@ describe('Component: ListVotesComponent', () => {
       expect(headers).toEqual(EXPECTED_HEADERS);
     });
 
-    it('should start with a table row for each contract address', () => {
+    it('should have a table row for each contract', () => {
       fixture.detectChanges(); // onInit
-      expect(Page.getRows().length).toEqual(Mock.addresses.length);
-    });
-
-    it('should add a new row every time a new vote is deployed', () => {
-      const newVote$: EventEmitter<address> = new EventEmitter<address>();
-      spyOnProperty(page.voteListingSvc, 'deployedVotes$').and.returnValue(newVote$);
-
-      fixture.detectChanges(); // onInit
-      expect(Page.getRows().length).toEqual(0);
-
-      newVote$.emit(Mock.addresses[0]);
-      fixture.detectChanges();
-      expect(Page.getRows().length).toEqual(1);
-
-      newVote$.emit(Mock.addresses[1]);
-      fixture.detectChanges();
-      expect(Page.getRows().length).toEqual(2);
+      expect(Page.getRows().length).toEqual(Mock.AnonymousVotingContractCollections.length);
     });
   });
 
-  describe('Functionality', () => {
+  describe('Content', () => {
 
     describe('Index column', () => {
-      it('it should display the contract index (0-up indexing)', () => {
+      it('it should display the "index" value in the vote summaries', fakeAsync(() => {
         fixture.detectChanges();
+        let expectedIndices: number[];
+        page.voteRetrievalSvc.summaries$.subscribe(summaries => {
+          expectedIndices = summaries.map(summary => summary.index);
+        });
+        tick();
         const displayedIndices: Number[] = Page.getColumn(0).map(str => Number(str));
-        expect(displayedIndices).toEqual(Page.range(Mock.addresses.length));
-      });
+        expect(displayedIndices).toEqual(expectedIndices);
+      }));
     });
 
-    describe('Parameters column', () => {
-      it('should display the parameters once they are retrieved', () => {
+    describe('Phase column', () => {
+      it('it should display the "phase" value in the vote summaries', fakeAsync(() => {
         fixture.detectChanges();
-        const displayedParameters: string[] = Page.getColumn(1);
-        const expectedParameters: string[] =
-          Mock.AnonymousVotingContractCollections.map(collection => collection.parameters.parameters);
-        expect(displayedParameters).toEqual(expectedParameters);
-      });
+        let expectedStatuses: string[];
+        page.voteRetrievalSvc.summaries$.subscribe(summaries => {
+          expectedStatuses = summaries.map(summary => summary.phase);
+        });
+        tick();
+        const displayedStatuses: string[] = Page.getColumn(1);
+        expect(displayedStatuses).toEqual(expectedStatuses);
+      }));
+    });
 
-      xit('should display "UNKNOWN CONTRACT ADDRESS" for each unknown address');
-
-      xit('should initially display "RETRIEVING..." for each known address');
-
-      xit('should display "HASH UNAVAILABLE" if the parameters cannot be retrieved');
-
-      xit('should allow different contracts to occupy the different states independently');
+    describe('Topic column', () => {
+      it('it should display the "topic" value in the vote summaries', fakeAsync(() => {
+        fixture.detectChanges();
+        let expectedTopics: string[];
+        page.voteRetrievalSvc.summaries$.subscribe(summaries => {
+          expectedTopics = summaries.map(summary => summary.topic);
+        });
+        tick();
+        const displayedTopics: string[] = Page.getColumn(2);
+        expect(displayedTopics).toEqual(expectedTopics);
+      }));
     });
   });
 
   describe('User Interface', () => {
     describe('selected contract', () => {
-      xit('it should start empty');
+      let onNext: Spy;
+      const onError = err => fail(err);
+      let onCompleted: Spy;
 
-      xit('it should emit the contract address when a table row is selected');
+      beforeEach(fakeAsync(() => {
+        onNext = jasmine.createSpy('onNext');
+        onCompleted = jasmine.createSpy('onCompleted');
 
-      xit('it should continue to emit addresses for every selection');
+        fixture.detectChanges();
+        fixture.componentInstance.selectedContract$.subscribe(onNext, onError, onCompleted);
+        tick();
+      }));
+
+      it('it should start empty', () => {
+        expect(onNext).not.toHaveBeenCalled();
+        expect(onCompleted).not.toHaveBeenCalled();
+      });
+
+      it('it should emit the contract index when a table row is selected', () => {
+        DOMInteractionUtility.clickOn(Page.getRows()[2]);
+        expect(onNext).toHaveBeenCalledTimes(1);
+        expect(onNext).toHaveBeenCalledWith(2);
+      });
+
+      it('it should continue to emit indices when table rows are selected', () => {
+        DOMInteractionUtility.clickOn(Page.getRows()[2]);
+        expect(onNext).toHaveBeenCalledTimes(1);
+        expect(onNext).toHaveBeenCalledWith(2);
+
+        DOMInteractionUtility.clickOn(Page.getRows()[0]);
+        expect(onNext).toHaveBeenCalledTimes(2);
+        expect(onNext.calls.mostRecent().args[0]).toEqual(0);
+
+        DOMInteractionUtility.clickOn(Page.getRows()[3]);
+        expect(onNext).toHaveBeenCalledTimes(3);
+        expect(onNext.calls.mostRecent().args[0]).toEqual(3);
+
+        DOMInteractionUtility.clickOn(Page.getRows()[2]);
+        expect(onNext).toHaveBeenCalledTimes(4);
+        expect(onNext.calls.mostRecent().args[0]).toEqual(2);
+      });
     });
   });
 });
