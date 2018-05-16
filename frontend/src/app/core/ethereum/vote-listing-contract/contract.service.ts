@@ -1,6 +1,5 @@
-import { EventEmitter, Injectable, OnDestroy } from '@angular/core';
+import { Injectable} from '@angular/core';
 import { Observable } from 'rxjs/Observable';
-import { Subscription } from 'rxjs/Subscription';
 import 'rxjs/add/observable/fromPromise';
 import 'rxjs/add/observable/empty';
 import 'rxjs/add/observable/range';
@@ -45,11 +44,10 @@ export const VoteListingContractErrors = {
 };
 
 @Injectable()
-export class VoteListingContractService implements IVoteListingContractService, OnDestroy {
-  public deployedVotes$: EventEmitter<address>;
+export class VoteListingContractService implements IVoteListingContractService {
+  public deployedVotes$: Observable<address>;
   private _contractPromise: Promise<VoteListingAPI>;
   private _voteCreated$: Observable<address>;
-  private _deployedVotesSubscription: Subscription;
 
   constructor(private web3Svc: Web3Service,
               private contractSvc: TruffleContractWrapperService,
@@ -57,17 +55,8 @@ export class VoteListingContractService implements IVoteListingContractService, 
 
     this._contractPromise = this._initContractPromise();
 
-    // pass the addresses from a private observable to a public one so they are only
-    // calculated once and all observers receive the cached values
-    this.deployedVotes$ = new EventEmitter<address>();
-    this._deployedVotesSubscription = this._initDeployedVotes$().subscribe(
-      addr => this.deployedVotes$.emit(addr), err => Observable.throw(err), () => this.deployedVotes$.complete()
-    );
     this._voteCreated$ = this._initVoteCreated$();
-  }
-
-  ngOnDestroy() {
-    this._deployedVotesSubscription.unsubscribe();
+    this.deployedVotes$ = this._initDeployedVotes$().shareReplay(1);
   }
 
   /**

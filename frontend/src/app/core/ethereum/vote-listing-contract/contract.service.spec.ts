@@ -1,6 +1,4 @@
 import { fakeAsync, TestBed, tick } from '@angular/core/testing';
-import { OnDestroy } from '@angular/core';
-
 import { VoteListingContractErrors, VoteListingContractService } from './contract.service';
 import { ITruffleContractWrapperService, TruffleContractWrapperService } from '../truffle-contract-wrapper.service';
 import { IWeb3Service, Web3Service } from '../web3.service';
@@ -14,7 +12,7 @@ import * as BigNumber from 'bignumber.js';
 import Spy = jasmine.Spy;
 
 describe('Service: VoteListingContractService', () => {
-  let voteListingContractSvc: TestVoteListingContractService;
+  let voteListingContractSvc: VoteListingContractService;
   let web3Svc: IWeb3Service;
   let contractSvc: ITruffleContractWrapperService;
   let errSvc: ErrorService;
@@ -22,7 +20,7 @@ describe('Service: VoteListingContractService', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
       providers: [
-        {provide: VoteListingContractService, useClass: TestVoteListingContractService},
+        VoteListingContractService,
         {provide: ErrorService, useClass: Mock.ErrorService},
         {provide: Web3Service, useClass: Mock.Web3Service},
         {provide: TruffleContractWrapperService, useClass: Mock.TruffleVoteListingWrapperService},
@@ -210,14 +208,6 @@ describe('Service: VoteListingContractService', () => {
         expect(onNext.calls.mostRecent().args[0]).toEqual(newLog(2).args.contractAddress);
       }));
 
-      it('should remove the event listener when the service is destroyed', fakeAsync(() => {
-        spyOn(Mock.VoteCreatedEventStream, 'stopWatching').and.stub();
-        init_and_check_inital_values();
-        expect(Mock.VoteCreatedEventStream.stopWatching).not.toHaveBeenCalled();
-        voteListingContractSvc.ngOnDestroy();
-        expect(Mock.VoteCreatedEventStream.stopWatching).toHaveBeenCalled();
-      }));
-
       describe('case: the event stream contains an error', () => {
         const streamError: Error = new Error('Error in event stream');
 
@@ -331,15 +321,3 @@ describe('Service: VoteListingContractService', () => {
 
   });
 });
-
-
-/**
- * Class to expose lifecycle hook for testing purposes
- */
-export class TestVoteListingContractService extends VoteListingContractService implements OnDestroy {
-
-  ngOnDestroy() {
-    super.ngOnDestroy();
-  }
-}
-
