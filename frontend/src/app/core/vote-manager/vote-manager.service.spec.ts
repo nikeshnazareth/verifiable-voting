@@ -2,10 +2,6 @@ import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { Observable } from 'rxjs/Observable';
 
 import { VoteManagerService, VoteManagerServiceErrors } from './vote-manager.service';
-import {
-  AnonymousVotingContractErrors,
-  AnonymousVotingContractService
-} from '../ethereum/anonymous-voting-contract/contract.service';
 import { IPFSService } from '../ipfs/ipfs.service';
 import { ErrorService } from '../error-service/error.service';
 import { VoteListingContractService } from '../ethereum/vote-listing-contract/contract.service';
@@ -15,7 +11,6 @@ import Spy = jasmine.Spy;
 describe('Service: VoteManagerService', () => {
   let voteManagerSvc: VoteManagerService;
   let voteListingSvc: VoteListingContractService;
-  let voteContractSvc: AnonymousVotingContractService;
   let ipfsSvc: IPFSService;
   let errSvc: ErrorService;
 
@@ -25,13 +20,11 @@ describe('Service: VoteManagerService', () => {
         VoteManagerService,
         {provide: ErrorService, useClass: Mock.ErrorService},
         {provide: VoteListingContractService, useClass: Mock.VoteListingContractService},
-        {provide: AnonymousVotingContractService, useClass: Mock.AnonymousVotingContractService},
         {provide: IPFSService, useClass: Mock.IPFSService},
       ]
     });
 
     voteListingSvc = TestBed.get(VoteListingContractService);
-    voteContractSvc = TestBed.get(AnonymousVotingContractService);
     ipfsSvc = TestBed.get(IPFSService);
     errSvc = TestBed.get(ErrorService);
   });
@@ -50,7 +43,7 @@ describe('Service: VoteManagerService', () => {
   describe('method: deployVote$', () => {
 
     const init_and_call_deployVote$ = () => {
-      voteManagerSvc = new VoteManagerService(voteListingSvc, voteContractSvc, ipfsSvc, errSvc);
+      voteManagerSvc = new VoteManagerService(voteListingSvc, ipfsSvc, errSvc);
       voteManagerSvc.deployVote$(
         voteDetails.timeframes,
         voteDetails.parameters,
@@ -109,108 +102,6 @@ describe('Service: VoteManagerService', () => {
 
       it('should return an empty observable', fakeAsync(() => {
         init_and_call_deployVote$();
-        expect(onNext).not.toHaveBeenCalled();
-        expect(onCompleted).toHaveBeenCalled();
-      }));
-    });
-  });
-
-  xdescribe('TODO: remove method: getParameters', () => {
-
-    const init_and_call_getParameters$ = () => {
-      voteManagerSvc = new VoteManagerService(voteListingSvc, voteContractSvc, ipfsSvc, errSvc);
-      voteManagerSvc.getParameters$(voteDetails.address)
-        .subscribe(onNext, onError, onCompleted);
-      tick();
-    };
-
-    describe('case: contract exists', () => {
-
-      describe('case: successfully retrieved parameters hash', () => {
-
-        describe('case: successfully retrieved value from IPFS', () => {
-
-          describe('case: value matches IVoteParameters interface', () => {
-            it('should return an observable that emits the parameters object and completes', fakeAsync(() => {
-              init_and_call_getParameters$();
-              expect(onNext).toHaveBeenCalledWith(voteDetails.parameters);
-              expect(onNext).toHaveBeenCalledTimes(1);
-              expect(onCompleted).toHaveBeenCalled();
-            }));
-          });
-
-          describe('case: value does not match IVoteParameters interface', () => {
-            const INVALID_VOTE_PARAMETERS = {
-              invalid: 'INVALID'
-            };
-
-            beforeEach(() => spyOn(ipfsSvc, 'catJSON').and.returnValue(Promise.resolve(INVALID_VOTE_PARAMETERS)));
-
-            it('should notify the Error Service', fakeAsync(() => {
-              init_and_call_getParameters$();
-              expect(errSvc.add)
-                .toHaveBeenCalledWith(VoteManagerServiceErrors.format.parametersHash(INVALID_VOTE_PARAMETERS), null);
-            }));
-
-            it('should return an empty observable', fakeAsync(() => {
-              init_and_call_getParameters$();
-              expect(onNext).not.toHaveBeenCalled();
-              expect(onCompleted).toHaveBeenCalled();
-            }));
-          });
-        });
-
-        describe('case: cannot retrieve value from IPFS', () => {
-
-          const retrieveError: Error = new Error('Unable to get data from IPFS');
-
-          beforeEach(() => spyOn(ipfsSvc, 'catJSON').and.returnValue(Promise.reject(retrieveError)));
-
-          it('should notify the Error Service', fakeAsync(() => {
-            init_and_call_getParameters$();
-            expect(errSvc.add)
-              .toHaveBeenCalledWith(
-                VoteManagerServiceErrors.ipfs.getParametersHash(voteDetails.address, voteDetails.params_hash),
-                retrieveError
-              );
-          }));
-
-          it('should return an empty observable', fakeAsync(() => {
-            init_and_call_getParameters$();
-            expect(onNext).not.toHaveBeenCalled();
-            expect(onCompleted).toHaveBeenCalled();
-          }));
-        });
-      });
-
-      describe('case: cannot retrieve parameters hash', () => {
-
-        const retrieveError: Error = new Error('Unable to get parameters hash');
-
-        beforeEach(() =>
-          spyOn(voteDetails.instance.parametersHash, 'call').and.returnValue(Promise.reject(retrieveError))
-        );
-
-        it('should notify the Error Service', fakeAsync(() => {
-          init_and_call_getParameters$();
-          expect(errSvc.add)
-            .toHaveBeenCalledWith(AnonymousVotingContractErrors.paramsHash(voteDetails.address), retrieveError);
-        }));
-
-        it('should return an empty observable', fakeAsync(() => {
-          init_and_call_getParameters$();
-          expect(onNext).not.toHaveBeenCalled();
-          expect(onCompleted).toHaveBeenCalled();
-        }));
-      });
-    });
-
-    describe('case: contract does not exist', () => {
-
-      beforeEach(() => spyOn(voteContractSvc, 'contractAt').and.returnValue(Observable.empty()));
-
-      it('should return an empty observable', fakeAsync(() => {
-        init_and_call_getParameters$();
         expect(onNext).not.toHaveBeenCalled();
         expect(onCompleted).toHaveBeenCalled();
       }));
