@@ -26,6 +26,7 @@ import { VoteListingContractService } from './vote-listing-contract/contract.ser
 import { VoteManagerService } from './vote-manager.service';
 import { NoRestrictionContractService } from './no-restriction-contract/contract.service';
 import { Web3Service } from './web3.service';
+import { VoteRetrievalService } from './vote-retrieval.service';
 
 
 const msPerDay: number = 1000 * 60 * 60 * 24;
@@ -45,6 +46,7 @@ export class Mock {
   public static ErrorService = ErrorService;
   public static IPFSService = IPFSService;
   public static VoteManagerService = VoteManagerService;
+  public static VoteRetrievalService = VoteRetrievalService;
 
   // contract service
   public static AnonymousVotingContractService = AnonymousVotingContractService;

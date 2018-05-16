@@ -17,8 +17,14 @@ import { IPFSService } from '../ipfs/ipfs.service';
 import { IVoteParameters } from '../vote-manager/vote-manager.service';
 import { ErrorService } from '../error-service/error.service';
 
-interface IVoteRetrievalService {
+export interface IVoteRetrievalService {
   summaries$: Observable<IVotingContractSummary[]>;
+}
+
+export interface IVotingContractSummary {
+  index: number;
+  phase: string;
+  topic: string;
 }
 
 export const VoteRetrievalServiceErrors = {
@@ -191,11 +197,7 @@ export class VoteRetrievalService implements IVoteRetrievalService {
   }
 }
 
-interface IVotingContractSummary {
-  index: number;
-  phase: string;
-  topic: string;
-}
+
 
 interface IVotingContractDetails {
   index: number;
