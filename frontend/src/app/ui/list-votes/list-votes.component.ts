@@ -7,8 +7,6 @@ import 'rxjs/add/operator/startWith';
 import 'rxjs/add/operator/combineLatest';
 
 import { IVotingContractSummary, VoteRetrievalService } from '../../core/vote-retrieval/vote-retrieval.service';
-import { address } from '../../core/ethereum/type.mappings';
-
 
 @Component({
   selector: 'vv-list-votes',
