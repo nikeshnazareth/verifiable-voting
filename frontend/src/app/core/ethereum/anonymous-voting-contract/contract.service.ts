@@ -15,8 +15,6 @@ import { IContractLog } from '../contract.interface';
 
 
 export interface IAnonymousVotingContractService {
-  contractAt(addr: address): Observable<AnonymousVotingAPI>;
-
   phaseAt$(addr: address): Observable<number>;
 
   paramsHashAt$(addr: address): Observable<string>;
@@ -122,27 +120,6 @@ export class AnonymousVotingContractService implements IAnonymousVotingContractS
         this.errSvc.add(AnonymousVotingContractErrors.network(addr), err);
         return <Observable<AnonymousVotingAPI>> Observable.empty();
       });
-  }
-
-  /**
-   * Finds the AnonymousVoting contract at the specified address and returns an AnonymousVotingContract
-   * object to interact with it
-   * It notifies the Error Service if there is no AnonymousVoting contract at the specified address
-   * @param {address} addr the address of the contract
-   * @returns {Observable<AnonymousVotingContract>} An observable of the contract object<br/>
-   * or the equivalent of Observable.empty() if the contract cannot be found
-   */
-  contractAt(addr: address): Observable<AnonymousVotingAPI> {
-    return this._abstraction$
-      .switchMap(abstraction => Observable.fromPromise(
-        abstraction.at(addr)
-          .then(contract => <AnonymousVotingAPI> contract)
-          .catch(err => {
-            this.errSvc.add(AnonymousVotingContractErrors.network(addr), err);
-            return null;
-          })
-      ))
-      .filter(abstraction => abstraction); // filter out the null value (if the contract could not be found)
   }
 
   /**
