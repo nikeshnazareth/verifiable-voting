@@ -1,14 +1,17 @@
 
 import { IVoteParameters } from '../vote-manager/vote-manager.service';
+import { address } from '../ethereum/type.mappings';
 
 export interface IVotingContractDetails {
   index: number;
+  address: address;
   phase: string;
   parameters: IVoteParameters;
 }
 
 export interface IVotingContractSummary {
   index: number;
+  address: address;
   phase: string;
   topic: string;
 }

@@ -108,7 +108,33 @@ describe('Service: VoteRetrievalService', () => {
         });
       });
 
-      describe('parameters: phase', () => {
+      describe('parameter: address', () => {
+        describe('case: VoteListingService.deployedVotes$ has null addresses', () => {
+          const nullAddressIdx: number = 2;
+
+          beforeEach(() => {
+            const addresses = Mock.addresses.map(v => v); // make a shallow copy
+            addresses[nullAddressIdx] = null;
+            spyOnProperty(voteListingSvc, 'deployedVotes$').and.returnValue(Observable.from(addresses));
+            init_individual_summaries_and_subscribe();
+          });
+
+          it('should set the null address to "UNAVAILABLE"', () => {
+            expect(individualNextHandler[nullAddressIdx].calls.mostRecent().args[0].address)
+              .toEqual(RETRIEVAL_STATUS.UNAVAILABLE);
+          });
+
+          it('should not affect the other addresses', () => {
+            individualNextHandler.map((handler, idx) => {
+              if (idx !== nullAddressIdx) {
+                expect(handler.calls.mostRecent().args[0].address).toEqual(Mock.addresses[idx]);
+              }
+            });
+          });
+        });
+      });
+
+      describe('parameter: phase', () => {
         const mockPhases = [0, 2, 1, 1];
 
         describe('case: before phases are retrieved', () => {
@@ -132,6 +158,34 @@ describe('Service: VoteRetrievalService', () => {
           it('should emit the current phase', () => {
             individualNextHandler.map((handler, idx) => {
               expect(handler.calls.mostRecent().args[0].phase).toEqual(VotePhases[mockPhases[idx]]);
+            });
+          });
+        });
+
+        describe('case: VoteListingService.deployedVotes$ has null addresses', () => {
+          const nullAddressIdx: number = 2;
+
+          beforeEach(() => {
+            const addresses = Mock.addresses.map(v => v); // make a shallow copy
+            addresses[nullAddressIdx] = null;
+            spyOnProperty(voteListingSvc, 'deployedVotes$').and.returnValue(Observable.from(addresses));
+            spyOn(anonymousVotingSvc, 'phaseAt$').and.callFake(addr => {
+              const idx: number = Mock.addresses.findIndex(el => el === addr);
+              return Observable.of(mockPhases[idx]);
+            });
+            init_individual_summaries_and_subscribe();
+          });
+
+          it('should set the phase to "UNAVAILABLE"', () => {
+            expect(individualNextHandler[nullAddressIdx].calls.mostRecent().args[0].phase)
+              .toEqual(RETRIEVAL_STATUS.UNAVAILABLE);
+          });
+
+          it('should not affect the other phases', () => {
+            individualNextHandler.map((handler, idx) => {
+              if (idx !== nullAddressIdx) {
+                expect(handler.calls.mostRecent().args[0].phase).toEqual(VotePhases[mockPhases[idx]]);
+              }
             });
           });
         });
@@ -212,10 +266,9 @@ describe('Service: VoteRetrievalService', () => {
             });
           });
         });
-
       });
 
-      describe('parameters: topic', () => {
+      describe('parameter: topic', () => {
 
         const topics: string[] = Mock.AnonymousVotingContractCollections.map(contract => contract.parameters.topic);
         const mockHashes: string[] = Mock.AnonymousVotingContractCollections.map(contract => contract.params_hash);
@@ -256,6 +309,31 @@ describe('Service: VoteRetrievalService', () => {
             });
           });
         });
+
+        describe('case: VoteListingService.deployedVotes$ has null addresses', () => {
+          const nullAddressIdx: number = 2;
+
+          beforeEach(() => {
+            const addresses = Mock.addresses.map(v => v); // make a shallow copy
+            addresses[nullAddressIdx] = null;
+            spyOnProperty(voteListingSvc, 'deployedVotes$').and.returnValue(Observable.from(addresses));
+            init_individual_summaries_and_subscribe();
+          });
+
+          xit('should set the topic to "UNAVAILABLE"', () => {
+            expect(individualNextHandler[nullAddressIdx].calls.mostRecent().args[0].topic)
+              .toEqual(RETRIEVAL_STATUS.UNAVAILABLE);
+          });
+
+          it('should not affect the other topics', () => {
+            individualNextHandler.map((handler, idx) => {
+              if (idx !== nullAddressIdx) {
+                expect(handler.calls.mostRecent().args[0].topic).toEqual(topics[idx]);
+              }
+            });
+          });
+        });
+
 
         describe('case: AnonymousVotingService.paramsHashAt$ returns an empty observable for one address', () => {
           const emptyIndex: number = 1;

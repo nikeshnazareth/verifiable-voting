@@ -5,7 +5,7 @@ import { By } from '@angular/platform-browser';
 import { VoteComponent } from './vote-component';
 import { MaterialModule } from '../../material/material.module';
 
-fdescribe('Component: VoteComponent', () => {
+describe('Component: VoteComponent', () => {
   let fixture: ComponentFixture<VoteComponent>;
   let page: Page;
 

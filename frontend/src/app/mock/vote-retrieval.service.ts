@@ -11,6 +11,7 @@ export class VoteRetrievalService implements IVoteRetrievalService {
     return Observable.of(
       Mock.AnonymousVotingContractCollections.map((collection, idx) => ({
         index: idx,
+        address: collection.address,
         phase: VotePhases[0],
         topic: collection.parameters.topic
       }))

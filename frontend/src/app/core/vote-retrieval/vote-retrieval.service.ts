@@ -63,11 +63,7 @@ export class VoteRetrievalService implements IVoteRetrievalService {
    */
   private _cachedVoteSummary(addr: address, idx: number): Observable<IVotingContractSummary> {
     return this._cachedVoteDetails(addr, idx)
-      .map(voteDetails => ({
-        index: voteDetails.index,
-        phase: voteDetails.phase,
-        topic: voteDetails.parameters.topic
-      }));
+      .map(voteDetails => this.summarise(voteDetails));
   }
 
   /**
@@ -104,7 +100,7 @@ export class VoteRetrievalService implements IVoteRetrievalService {
 
       this._voteCache[addr] = phase$.combineLatest(
         parameters$,
-        (phase, parameters) => this.newContractDetails(idx, phase, parameters)
+        (phase, parameters) => this.newContractDetails(idx, addr, phase, parameters)
       )
         .shareReplay(1);
     }
@@ -148,7 +144,8 @@ export class VoteRetrievalService implements IVoteRetrievalService {
     const params: IVoteParameters = this._placeholderParameters(placeholder);
     return {
       index: idx,
-      phase: RETRIEVAL_STATUS.UNAVAILABLE,
+      address: placeholder,
+      phase: placeholder,
       parameters: params
     };
   }
@@ -171,15 +168,28 @@ export class VoteRetrievalService implements IVoteRetrievalService {
   /**
    * @returns {IVotingContractDetails} a new IVotingContractDetails object with the specified values
    */
-  private newContractDetails(index, phase, parameters): IVotingContractDetails {
+  private newContractDetails(index, addr, phase, parameters): IVotingContractDetails {
     return {
       index: index,
+      address: addr,
       phase: phase,
       parameters: parameters
     };
   }
-}
 
+  /**
+   * @param {IVotingContractDetails} details the details of a vote
+   * @returns {IVotingContractSummary} a summarised version that can be displayed in an aggregate list
+   */
+  private summarise(details: IVotingContractDetails): IVotingContractSummary {
+    return {
+      index: details.index,
+      address: details.address,
+      phase: details.phase,
+      topic: details.parameters.topic
+    };
+  }
+}
 
 interface IVoteCache {
   [addr: string]: Observable<IVotingContractDetails>;
