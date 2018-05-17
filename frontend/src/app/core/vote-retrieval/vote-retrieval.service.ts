@@ -19,12 +19,14 @@ import { IPFSService } from '../ipfs/ipfs.service';
 import { IVoteParameters } from '../vote-manager/vote-manager.service';
 import { ErrorService } from '../error-service/error.service';
 import {
-IVotingContractDetails, IVotingContractSummary, RETRIEVAL_STATUS,
-VoteRetrievalServiceErrors
+  IVotingContractDetails, IVotingContractSummary, RETRIEVAL_STATUS,
+  VoteRetrievalServiceErrors
 } from './vote-retreival.service.constants';
 
 export interface IVoteRetrievalService {
   summaries$: Observable<IVotingContractSummary[]>;
+
+  detailsAtIndex$(idx: number): Observable<IVotingContractDetails>;
 }
 
 @Injectable()
@@ -42,16 +44,30 @@ export class VoteRetrievalService implements IVoteRetrievalService {
    * Retrieves the vote summary information (from cache if possible) for each deployed
    * contract in the VoteListingService.
    * Merges them all into a single array and emits the result
-   * @returns {Observable<IVotingContractSummary[]>} the summary of all deployed voting contracts
+   * @returns {Observable<IVotingContractSummary[]>} the summary of all deployed voting contracts<br/>
+   * including intermediate and error states
    */
   get summaries$(): Observable<IVotingContractSummary[]> {
     return this.voteListingSvc.deployedVotes$
-      .map((addr, idx) => this._cachedVoteSummary(addr, idx))
+      .map((addr, idx) => this._getVoteSummary(addr, idx))
       .scan(
         (acc, summary$) => acc.combineLatest(summary$, (L, el) => L.concat(el)),
         Observable.of([])
       )
       .switch();
+  }
+
+  /**
+   * Retrieves the vote information (from cache if possible) for the specified contract
+   * @param {number} idx the index of the AnonymousVoting contract in the VoteListingContract
+   * @returns {Observable<IVotingContractDetails>} an observable of the vote details <br/>
+   * including intermediate and error states
+   */
+  detailsAtIndex$(idx: number): Observable<IVotingContractDetails> {
+    return this.voteListingSvc.deployedVotes$
+      .filter((addr, _idx) => _idx === idx)
+      .defaultIfEmpty(null)
+      .switchMap(addr => this._getVoteDetails(addr, idx));
   }
 
   /**
@@ -63,8 +79,8 @@ export class VoteRetrievalService implements IVoteRetrievalService {
    * or a placeholder value if the information cannot be retrieved
    * @private
    */
-  private _cachedVoteSummary(addr: address, idx: number): Observable<IVotingContractSummary> {
-    return this._cachedVoteDetails(addr, idx)
+  private _getVoteSummary(addr: address, idx: number): Observable<IVotingContractSummary> {
+    return this._getVoteDetails(addr, idx)
       .map(voteDetails => this.summarise(voteDetails));
   }
 
@@ -76,7 +92,7 @@ export class VoteRetrievalService implements IVoteRetrievalService {
    * or a placeholder value if the information cannot be retrieved
    * @private
    */
-  private _cachedVoteDetails(addr: address, idx: number): Observable<IVotingContractDetails> {
+  private _getVoteDetails(addr: address, idx: number): Observable<IVotingContractDetails> {
     if (!addr) {
       return Observable.of(this._placeholderVotingContractDetails(idx, RETRIEVAL_STATUS.UNAVAILABLE));
     }

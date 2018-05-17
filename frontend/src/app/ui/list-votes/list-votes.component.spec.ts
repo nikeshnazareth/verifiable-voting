@@ -7,10 +7,10 @@ import { IVoteRetrievalService, VoteRetrievalService } from '../../core/vote-ret
 import { MaterialModule } from '../../material/material.module';
 import { DOMInteractionUtility } from '../dom-interaction-utility';
 import { Mock } from '../../mock/module';
+import { Observable } from 'rxjs/Observable';
+import { IVotingContractSummary, RETRIEVAL_STATUS } from '../../core/vote-retrieval/vote-retreival.service.constants';
+import { VotePhases } from '../../core/ethereum/anonymous-voting-contract/contract.api';
 import Spy = jasmine.Spy;
-import { Observable } from "rxjs/Observable";
-import { IVotingContractSummary, RETRIEVAL_STATUS } from "../../core/vote-retrieval/vote-retreival.service.constants";
-import { VotePhases } from "../../core/ethereum/anonymous-voting-contract/contract.api";
 
 describe('Component: ListVotesComponent', () => {
   let fixture: ComponentFixture<ListVotesComponent>;
