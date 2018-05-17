@@ -216,6 +216,7 @@ describe('Component: ListVotesComponent', () => {
             spyOnProperty(page.voteRetrievalSvc, 'summaries$').and.returnValue(
               Observable.of(setPhase(incompleteIndex, RETRIEVAL_STATUS.RETRIEVING))
             );
+            fixture = TestBed.createComponent(ListVotesComponent);
             fixture.detectChanges();
             fixture.componentInstance.selectedContract$.subscribe(onNext, onError, onCompleted);
 
@@ -227,6 +228,7 @@ describe('Component: ListVotesComponent', () => {
             spyOnProperty(page.voteRetrievalSvc, 'summaries$').and.returnValue(
               Observable.of(setPhase(incompleteIndex, RETRIEVAL_STATUS.RETRIEVING))
             );
+            fixture = TestBed.createComponent(ListVotesComponent);
             fixture.detectChanges();
             fixture.componentInstance.selectedContract$.subscribe(onNext, onError, onCompleted);
 
@@ -243,6 +245,7 @@ describe('Component: ListVotesComponent', () => {
               Observable.of(setPhase(incompleteIndex, RETRIEVAL_STATUS.RETRIEVING))
                 .concat(Observable.of(completeSummaries))
             );
+            fixture = TestBed.createComponent(ListVotesComponent);
             fixture.detectChanges();
             fixture.componentInstance.selectedContract$.subscribe(onNext, onError, onCompleted);
 
@@ -258,6 +261,7 @@ describe('Component: ListVotesComponent', () => {
             spyOnProperty(page.voteRetrievalSvc, 'summaries$').and.returnValue(
               Observable.of(setPhase(incompleteIndex, RETRIEVAL_STATUS.UNAVAILABLE))
             );
+            fixture = TestBed.createComponent(ListVotesComponent);
             fixture.detectChanges();
             fixture.componentInstance.selectedContract$.subscribe(onNext, onError, onCompleted);
           });
@@ -283,6 +287,7 @@ describe('Component: ListVotesComponent', () => {
             spyOnProperty(page.voteRetrievalSvc, 'summaries$').and.returnValue(
               Observable.of(setTopic(incompleteIndex, RETRIEVAL_STATUS.RETRIEVING))
             );
+            fixture = TestBed.createComponent(ListVotesComponent);
             fixture.detectChanges();
             fixture.componentInstance.selectedContract$.subscribe(onNext, onError, onCompleted);
 
@@ -294,6 +299,7 @@ describe('Component: ListVotesComponent', () => {
             spyOnProperty(page.voteRetrievalSvc, 'summaries$').and.returnValue(
               Observable.of(setTopic(incompleteIndex, RETRIEVAL_STATUS.RETRIEVING))
             );
+            fixture = TestBed.createComponent(ListVotesComponent);
             fixture.detectChanges();
             fixture.componentInstance.selectedContract$.subscribe(onNext, onError, onCompleted);
 
@@ -310,6 +316,7 @@ describe('Component: ListVotesComponent', () => {
               Observable.of(setTopic(incompleteIndex, RETRIEVAL_STATUS.RETRIEVING))
                 .concat(Observable.of(completeSummaries))
             );
+            fixture = TestBed.createComponent(ListVotesComponent);
             fixture.detectChanges();
             fixture.componentInstance.selectedContract$.subscribe(onNext, onError, onCompleted);
 
@@ -325,6 +332,7 @@ describe('Component: ListVotesComponent', () => {
             spyOnProperty(page.voteRetrievalSvc, 'summaries$').and.returnValue(
               Observable.of(setTopic(incompleteIndex, RETRIEVAL_STATUS.UNAVAILABLE))
             );
+            fixture = TestBed.createComponent(ListVotesComponent);
             fixture.detectChanges();
             fixture.componentInstance.selectedContract$.subscribe(onNext, onError, onCompleted);
           });

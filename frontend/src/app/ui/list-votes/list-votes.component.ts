@@ -1,4 +1,4 @@
-import { Component, EventEmitter, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Output } from '@angular/core';
 import { Observable } from 'rxjs/Observable';
 
 import { VoteRetrievalService } from '../../core/vote-retrieval/vote-retrieval.service';
@@ -33,7 +33,7 @@ import 'rxjs/add/operator/withLatestFrom';
   `,
   styleUrls: ['./list-votes.component.scss']
 })
-export class ListVotesComponent implements OnInit {
+export class ListVotesComponent {
   @Output() selectedContract$: Observable<number>;
 
   private _contractsSummary$: Observable<IVotingContractSummary[]>;
@@ -42,12 +42,6 @@ export class ListVotesComponent implements OnInit {
 
   constructor(private voteRetrievalSvc: VoteRetrievalService) {
     this._rowClicked$ = new EventEmitter<number>();
-  }
-
-  /**
-   * Initialise the table data source
-   */
-  ngOnInit() {
     this._contractsSummary$ = this.voteRetrievalSvc.summaries$;
     this.selectedContract$ = this._initialiseSelectedContract$();
   }
