@@ -3,7 +3,8 @@ import { Observable } from 'rxjs/Observable';
 import { Subscription } from 'rxjs/Subscription';
 import 'rxjs/add/operator/distinctUntilChanged';
 
-import { RETRIEVAL_STATUS, VoteRetrievalService, VoteRetrievalServiceErrors } from './vote-retrieval.service';
+import { VoteRetrievalService } from './vote-retrieval.service';
+import { RETRIEVAL_STATUS, VoteRetrievalServiceErrors } from './vote-retreival.service.constants';
 import { VoteListingContractService } from '../ethereum/vote-listing-contract/contract.service';
 import { AnonymousVotingContractService } from '../ethereum/anonymous-voting-contract/contract.service';
 import { IPFSService } from '../ipfs/ipfs.service';

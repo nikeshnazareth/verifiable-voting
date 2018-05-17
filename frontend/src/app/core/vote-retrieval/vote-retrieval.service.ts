@@ -16,31 +16,14 @@ import { address } from '../ethereum/type.mappings';
 import { IPFSService } from '../ipfs/ipfs.service';
 import { IVoteParameters } from '../vote-manager/vote-manager.service';
 import { ErrorService } from '../error-service/error.service';
+import {
+  IVotingContractDetails, IVotingContractSummary, RETRIEVAL_STATUS,
+  VoteRetrievalServiceErrors
+} from './vote-retreival.service.constants';
 
 export interface IVoteRetrievalService {
   summaries$: Observable<IVotingContractSummary[]>;
 }
-
-export interface IVotingContractSummary {
-  index: number;
-  phase: string;
-  topic: string;
-}
-
-export const VoteRetrievalServiceErrors = {
-  ipfs: {
-    getParametersHash: (addr) => new Error('Unable to retrieve the parameters for the AnonymousVoting contract' +
-      ` at ${addr} from the IPFS hash`)
-  },
-  format: {
-    parametersHash: (params) => new Error(`Retrieved parameters (${params}) do not match the expected format`)
-  }
-};
-
-export const RETRIEVAL_STATUS = {
-  UNAVAILABLE: 'UNAVAILABLE',
-  RETRIEVING: 'RETRIEVING'
-};
 
 @Injectable()
 export class VoteRetrievalService implements IVoteRetrievalService {
@@ -197,13 +180,6 @@ export class VoteRetrievalService implements IVoteRetrievalService {
   }
 }
 
-
-
-interface IVotingContractDetails {
-  index: number;
-  phase: string;
-  parameters: IVoteParameters;
-}
 
 interface IVoteCache {
   [addr: string]: Observable<IVotingContractDetails>;

@@ -1,6 +1,8 @@
-import { IVoteRetrievalService, IVotingContractSummary } from '../core/vote-retrieval/vote-retrieval.service';
 import { Observable } from 'rxjs/Observable';
+
+import { IVoteRetrievalService } from '../core/vote-retrieval/vote-retrieval.service';
 import { VotePhases } from '../core/ethereum/anonymous-voting-contract/contract.api';
+import { IVotingContractSummary } from '../core/vote-retrieval/vote-retreival.service.constants';
 import { Mock } from './module';
 
 

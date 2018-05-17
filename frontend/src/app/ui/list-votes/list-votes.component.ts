@@ -6,7 +6,8 @@ import 'rxjs/add/operator/defaultIfEmpty';
 import 'rxjs/add/operator/startWith';
 import 'rxjs/add/operator/combineLatest';
 
-import { IVotingContractSummary, VoteRetrievalService } from '../../core/vote-retrieval/vote-retrieval.service';
+import { VoteRetrievalService } from '../../core/vote-retrieval/vote-retrieval.service';
+import { IVotingContractSummary } from '../../core/vote-retrieval/vote-retreival.service.constants';
 
 @Component({
   selector: 'vv-list-votes',
