@@ -4,6 +4,7 @@ import 'rxjs/add/observable/of';
 import 'rxjs/add/operator/takeWhile';
 import 'rxjs/add/operator/share';
 import 'rxjs/add/operator/do';
+import 'rxjs/add/operator/defaultIfEmpty';
 
 import { APP_CONFIG } from '../../../config';
 import { Web3Service } from '../web3.service';

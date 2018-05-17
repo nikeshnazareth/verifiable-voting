@@ -8,6 +8,8 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs/Observable';
 import 'rxjs/add/operator/startWith';
 import 'rxjs/add/operator/shareReplay';
+import 'rxjs/add/operator/scan';
+import 'rxjs/add/operator/combineLatest';
 
 import { VoteListingContractService } from '../ethereum/vote-listing-contract/contract.service';
 import { AnonymousVotingContractService } from '../ethereum/anonymous-voting-contract/contract.service';
@@ -17,8 +19,8 @@ import { IPFSService } from '../ipfs/ipfs.service';
 import { IVoteParameters } from '../vote-manager/vote-manager.service';
 import { ErrorService } from '../error-service/error.service';
 import {
-  IVotingContractDetails, IVotingContractSummary, RETRIEVAL_STATUS,
-  VoteRetrievalServiceErrors
+IVotingContractDetails, IVotingContractSummary, RETRIEVAL_STATUS,
+VoteRetrievalServiceErrors
 } from './vote-retreival.service.constants';
 
 export interface IVoteRetrievalService {

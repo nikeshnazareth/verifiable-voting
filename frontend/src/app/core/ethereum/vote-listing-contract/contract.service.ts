@@ -8,6 +8,7 @@ import 'rxjs/add/operator/filter';
 import 'rxjs/add/operator/map';
 import 'rxjs/add/operator/concatMap';
 import 'rxjs/add/operator/concat';
+import 'rxjs/add/operator/switch';
 
 import { APP_CONFIG } from '../../../config';
 import { VoteCreatedEvent, VoteListingAPI } from './contract.api';
