@@ -1,5 +1,6 @@
 import { Injectable} from '@angular/core';
 import { Observable } from 'rxjs/Observable';
+import { ReplaySubject } from 'rxjs/ReplaySubject';
 import 'rxjs/add/observable/fromPromise';
 import 'rxjs/add/observable/empty';
 import 'rxjs/add/observable/range';
@@ -46,7 +47,7 @@ export const VoteListingContractErrors = {
 
 @Injectable()
 export class VoteListingContractService implements IVoteListingContractService {
-  public deployedVotes$: Observable<address>;
+  public deployedVotes$: ReplaySubject<address>;
   private _contractPromise: Promise<VoteListingAPI>;
   private _voteCreated$: Observable<address>;
 
@@ -57,7 +58,8 @@ export class VoteListingContractService implements IVoteListingContractService {
     this._contractPromise = this._initContractPromise();
 
     this._voteCreated$ = this._initVoteCreated$();
-    this.deployedVotes$ = this._initDeployedVotes$().shareReplay(1);
+    this.deployedVotes$ = new ReplaySubject<address>();
+    this._initDeployedVotes$().subscribe(this.deployedVotes$);
   }
 
   /**
