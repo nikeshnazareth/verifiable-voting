@@ -10,8 +10,6 @@ export class AnonymousVotingContract implements AnonymousVotingAPI {
   private PARAMETERS_IPFS_HASH: string;
   private ELIGIBILITY_CONTRACT: address;
   private REGISTRATION_AUTHORITY: address;
-  private REGISTRATION_PHASE: number = 0;
-
 
   constructor(registrationDeadline: number,
               votingDeadline: number,
@@ -26,7 +24,11 @@ export class AnonymousVotingContract implements AnonymousVotingAPI {
   }
 
   currentPhase = {
-    call: () => Promise.resolve(new BigNumber(this.REGISTRATION_PHASE))
+    call: () => Promise.resolve(new BigNumber(
+      Mock.AnonymousVotingContractCollections
+        .filter(collection => collection.params_hash === this.PARAMETERS_IPFS_HASH)[0]
+        .currentPhase
+    ))
   };
 
   registrationDeadline = {

@@ -74,6 +74,10 @@ describe('Service: AnonymousVotingContractService', () => {
     });
 
     describe('contract is at phase 0', () => {
+      beforeEach(() => spyOn(voteCollection.instance.currentPhase, 'call').and
+        .returnValue(Promise.resolve(new BigNumber(0)))
+      );
+
       it('should emit 0 and wait', () => {
         init_phaseAt$_and_subscribe();
         expect(onNext).toHaveBeenCalledTimes(1);
@@ -111,6 +115,8 @@ describe('Service: AnonymousVotingContractService', () => {
     });
 
     it('should emit a new event whenever the AnonymousVoting contract emits a NewPhase event', () => {
+     spyOn(voteCollection.instance.currentPhase, 'call').and
+        .returnValue(Promise.resolve(new BigNumber(0)));
       init_phaseAt$_and_subscribe();
 
       expect(onNext).toHaveBeenCalledTimes(1);
@@ -123,6 +129,8 @@ describe('Service: AnonymousVotingContractService', () => {
     });
 
     it('should emit the phase as the event', () => {
+      spyOn(voteCollection.instance.currentPhase, 'call').and
+        .returnValue(Promise.resolve(new BigNumber(0)));
       init_phaseAt$_and_subscribe();
 
       expect(onNext).toHaveBeenCalledTimes(1);

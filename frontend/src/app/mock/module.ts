@@ -1,5 +1,5 @@
 import { address } from '../core/ethereum/type.mappings';
-import { AnonymousVotingAPI } from '../core/ethereum/anonymous-voting-contract/contract.api';
+import { AnonymousVotingAPI, VotePhases } from '../core/ethereum/anonymous-voting-contract/contract.api';
 import { AnonymousVotingContract } from './anonymous-voting-contract/contract';
 import { AnonymousVotingContractService } from './anonymous-voting-contract/contract.service';
 import { ErrorService } from './error.service';
@@ -86,6 +86,7 @@ export interface IAnonymousVotingContractCollection {
   timeframes: IVoteTimeframes;
   params_hash: string;
   deploy_receipt: ITransactionReceipt;
+  currentPhase: number;
   instance: AnonymousVotingAPI;
   eventStream: ITriggerableEventStream;
 }
@@ -124,6 +125,7 @@ function generateMockVoteContract(idx: number): IAnonymousVotingContractCollecti
     instance: new AnonymousVotingContract(
       REGISTRATION_DEADLINE, VOTING_DEADLINE, PARAMS_HASH, ELIGIBILITY_CONTRACT, REGISTRATION_AUTHORITY
     ),
+    currentPhase: (idx + 11) * 11 % VotePhases.length,
     eventStream: new TriggerableEventStream()
   };
 }
