@@ -7,11 +7,11 @@ import { BigNumber } from '../bignumber';
 
 export class VoteListingContract implements VoteListingAPI {
   public votingContracts = {
-    call: (index: number) => Promise.resolve(Mock.AnonymousVotingContractCollections[index].address)
+    call: (index: number) => Promise.resolve(Mock.addresses[index])
   };
 
   public numberOfVotingContracts = {
-    call: () => Promise.resolve(new BigNumber(Mock.AnonymousVotingContractCollections.length))
+    call: () => Promise.resolve(new BigNumber(Mock.addresses.length))
   };
 
   deploy(_registrationDeadline: uint,

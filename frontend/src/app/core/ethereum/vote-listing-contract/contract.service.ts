@@ -1,4 +1,4 @@
-import { Injectable} from '@angular/core';
+import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs/Observable';
 import { ReplaySubject } from 'rxjs/ReplaySubject';
 import 'rxjs/add/observable/fromPromise';
@@ -10,6 +10,7 @@ import 'rxjs/add/operator/map';
 import 'rxjs/add/operator/concatMap';
 import 'rxjs/add/operator/concat';
 import 'rxjs/add/operator/switch';
+import 'rxjs/add/operator/bufferCount';
 
 import { APP_CONFIG } from '../../../config';
 import { VoteCreatedEvent, VoteListingAPI } from './contract.api';
@@ -19,6 +20,7 @@ import { IContractLog } from '../contract.interface';
 import { ErrorService } from '../../error-service/error.service';
 import { address, uint } from '../type.mappings';
 import { ITransactionReceipt } from '../transaction.interface';
+
 
 export interface IVoteTimeframes {
   registrationDeadline: number;
@@ -98,26 +100,29 @@ export class VoteListingContractService implements IVoteListingContractService {
    * or an empty observable if the contract cannot be contacted
    */
   private _initDeployedVotes$(): Observable<address> {
-    const p: Promise<Observable<address>> = this._contractPromise
-      .then(contract => contract.numberOfVotingContracts.call())
-      .then(countBN => countBN.toNumber())
-      .then(count => Observable.range(0, count)
-        .map(i => this._contractPromise
-          .then(contract => contract.votingContracts.call(i))
+    return this._voteCreated$
+      .startWith(null)
+      // get the number of votes every time a VoteCreated event is emitted
+      .map(() => this._contractPromise.then(contract => contract.numberOfVotingContracts.call()))
+      .switchMap(promise => Observable.fromPromise(promise))
+      // produce an observable with all the indices not yet processed
+      .map(countBN => countBN.toNumber())
+      .startWith(0)
+      .bufferCount(2, 1)
+      .concatMap(bounds => Observable.range(bounds[0], bounds[1] - bounds[0]))
+      // get the contract address at the index or null if there is an error
+      .map(contractIdx => this._contractPromise
+          .then(contract => contract.votingContracts.call(contractIdx))
           .catch(err => {
-            this.errSvc.add(VoteListingContractErrors.contractAddress(i), err);
+            this.errSvc.add(VoteListingContractErrors.contractAddress(contractIdx), err);
             return Promise.resolve(null);
           })
-        )
-        .concatMap(promise => Observable.fromPromise(promise))
-        .concat(this._voteCreated$)
       )
+      .concatMap(promise => Observable.fromPromise(promise))
       .catch(err => {
         this.errSvc.add(VoteListingContractErrors.deployedVotes, err);
         return <Observable<address>> Observable.empty();
       });
-
-    return Observable.fromPromise(p).switch();
   }
 
 
