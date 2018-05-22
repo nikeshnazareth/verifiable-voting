@@ -10,9 +10,19 @@ import { BehaviorSubject } from 'rxjs/BehaviorSubject';
   selector: 'vv-vote',
   template: `
     <div class="container" [hidden]="!_voteIsSelected">
-      <h2>Vote #{{_index$ | async}}</h2>
-      <div class="topic">{{_topic$ | async}}</div>
-      <div class="phase">{{_phase$ | async}}</div>
+      <h2>{{_heading$ | async}}</h2>
+      <mat-expansion-panel>
+        <mat-expansion-panel-header>REGISTER</mat-expansion-panel-header>
+        <vv-registration-phase index="{{_index$ | async}}"></vv-registration-phase>
+      </mat-expansion-panel>
+      <mat-expansion-panel>
+        <mat-expansion-panel-header>VOTE</mat-expansion-panel-header>
+        <vv-voting-phase index="{{_index$ | async}}"></vv-voting-phase>
+      </mat-expansion-panel>
+      <mat-expansion-panel>
+        <mat-expansion-panel-header>RESULTS</mat-expansion-panel-header>
+        <vv-complete-phase index="{{_index$ | async}}"></vv-complete-phase>
+      </mat-expansion-panel>
     </div>
   `,
 })
@@ -20,9 +30,7 @@ export class VoteComponent implements OnInit {
   private _voteIsSelected: boolean;
   private _index$: BehaviorSubject<number>;
   private _voteDetails$: Observable<IVotingContractDetails>;
-  private _topic$: Observable<string>;
-  private _phase$: Observable<string>;
-
+  private _heading$: Observable<string>;
 
   constructor(private voteRetrievalSvc: VoteRetrievalService) {
     this._index$ = new BehaviorSubject<number>(null);
@@ -36,8 +44,7 @@ export class VoteComponent implements OnInit {
     this._voteDetails$ = this._index$
       .switchMap(idx => this.voteRetrievalSvc.detailsAtIndex$(idx));
 
-    this._topic$ = this._voteDetails$.pluck('parameters').pluck('topic');
-    this._phase$ = this._voteDetails$.pluck('phase');
+    this._heading$ = this._voteDetails$.map(details => `${details.index}. ${details.parameters.topic}`);
   }
 
   /**
