@@ -19,6 +19,10 @@ export interface IAnonymousVotingContractService {
   phaseAt$(addr: address): Observable<number>;
 
   paramsHashAt$(addr: address): Observable<string>;
+
+  registrationDeadlineAt$(addr: address): Observable<Date>;
+
+  votingDeadlineAt$(addr: address): Observable<Date>;
 }
 
 export const AnonymousVotingContractErrors = {
@@ -27,7 +31,11 @@ export const AnonymousVotingContractErrors = {
     `and MetaMask (or the web3 provider) is connected to the ${APP_CONFIG.network.name}`),
   events: (addr) => new Error(`Unexpected error in the event stream of the AnonymousVoting contract at ${addr}`),
   paramsHash: (addr) => new Error(`Unable to retrieve the parameters hash from the AnonymousVoting contract at ${addr}`),
-  phase: (addr) => new Error(`Unable to retrieve the current phase from the AnonymousVoting contract at ${addr}`)
+  phase: (addr) => new Error(`Unable to retrieve the current phase from the AnonymousVoting contract at ${addr}`),
+  regDeadline: (addr) => new Error('Unable to retrieve the registration deadline from the AnonymousVoting contract' +
+  `at ${addr}`),
+  votingDeadline: (addr) => new Error('Unable to retrieve the voting deadline from the AnonymousVoting contract' +
+    `at ${addr}`)
 };
 
 @Injectable()
@@ -81,6 +89,46 @@ export class AnonymousVotingContractService implements IAnonymousVotingContractS
       .catch(err => {
         this.errSvc.add(AnonymousVotingContractErrors.paramsHash(addr), err);
         return <Observable<string>> Observable.empty();
+      });
+  }
+
+  /**
+   * Queries the registration deadline from the specified AnonymousVoting contract
+   * Notifies the Error Service if there is no contract at the specified address
+   * or if the deadline cannot be retrieved
+   * @param {address} addr the address of the AnonymousVoting contract
+   * @returns {Observable<Date>} an observable that emits the registration deadline <br/>
+   * or an empty observable if there was an error
+   */
+  registrationDeadlineAt$(addr: address): Observable<Date> {
+    return this._contractAt(addr)
+      .map(contract => contract.registrationDeadline.call())
+      .switchMap(deadlinePromise => Observable.fromPromise(deadlinePromise))
+      .map(deadlineBN => deadlineBN.toNumber())
+      .map(deadlineInt => new Date(deadlineInt))
+      .catch(err => {
+        this.errSvc.add(AnonymousVotingContractErrors.regDeadline(addr), err);
+        return <Observable<Date>> Observable.empty();
+      });
+  }
+
+  /**
+   * Queries the voting deadline from the specified AnonymousVoting contract
+   * Notifies the Error Service if there is no contract at the specified address
+   * or if the deadline cannot be retrieved
+   * @param {address} addr the address of the AnonymousVoting contract
+   * @returns {Observable<Date>} an observable that emits the voting deadline <br/>
+   * or an empty observable if there was an error
+   */
+  votingDeadlineAt$(addr: address): Observable<Date> {
+    return this._contractAt(addr)
+      .map(contract => contract.votingDeadline.call())
+      .switchMap(deadlinePromise => Observable.fromPromise(deadlinePromise))
+      .map(deadlineBN => deadlineBN.toNumber())
+      .map(deadlineInt => new Date(deadlineInt))
+      .catch(err => {
+        this.errSvc.add(AnonymousVotingContractErrors.votingDeadline(addr), err);
+        return <Observable<Date>> Observable.empty();
       });
   }
 

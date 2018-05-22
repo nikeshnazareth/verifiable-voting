@@ -360,6 +360,136 @@ describe('Service: AnonymousVotingContractService', () => {
       });
     });
   });
+
+  describe('method: registrationDeadlineAt$', () => {
+
+    const init_regDeadlineAt$_and_subscribe = fakeAsync(() => {
+      anonymousVotingSvc = new AnonymousVotingContractService(web3Svc, contractSvc, errSvc);
+      anonymousVotingSvc.registrationDeadlineAt$(voteCollection.address)
+        .subscribe(onNext, onError, onCompleted);
+      tick();
+    });
+
+    it('should return an observable that emits the deadline and completes', () => {
+      init_regDeadlineAt$_and_subscribe();
+      expect(onNext).toHaveBeenCalledTimes(1);
+      expect(onNext).toHaveBeenCalledWith(new Date(voteCollection.timeframes.registrationDeadline));
+      expect(onCompleted).toHaveBeenCalled();
+    });
+
+    describe('case: web3 is not injected', () => {
+      beforeEach(() => spyOnProperty(web3Svc, 'isInjected').and.returnValue(false));
+
+      it('should return an empty observable', () => {
+        init_regDeadlineAt$_and_subscribe();
+        expect(onNext).not.toHaveBeenCalled();
+        expect(onCompleted).toHaveBeenCalled();
+      });
+    });
+
+    describe('case: AnonymousVoting contract is not deployed at the address', () => {
+
+      const error: Error = new Error('No contract at the specified address');
+
+      beforeEach(() => spyOn(Mock.TruffleAnonymousVotingAbstraction, 'at').and.returnValue(Promise.reject(error)));
+
+      it('should notify the Error Service', () => {
+        init_regDeadlineAt$_and_subscribe();
+        expect(errSvc.add).toHaveBeenCalledWith(AnonymousVotingContractErrors.network(voteCollection.address), error);
+      });
+
+      it('should return an empty observable', () => {
+        init_regDeadlineAt$_and_subscribe();
+        expect(onNext).not.toHaveBeenCalled();
+        expect(onCompleted).toHaveBeenCalled();
+      });
+    });
+
+    describe('case: contract.registrationDeadline.call() fails', () => {
+      const error: Error = new Error('Unable to retrieve registration deadline');
+
+      beforeEach(() => spyOn(voteCollection.instance.registrationDeadline, 'call').and
+        .returnValue(Promise.reject(error)));
+
+      it('should notify the Error Service', () => {
+        init_regDeadlineAt$_and_subscribe();
+        expect(errSvc.add).toHaveBeenCalledWith(
+          AnonymousVotingContractErrors.regDeadline(voteCollection.address), error
+        );
+      });
+
+      it('should return an empty observable', () => {
+        init_regDeadlineAt$_and_subscribe();
+        expect(onNext).not.toHaveBeenCalled();
+        expect(onCompleted).toHaveBeenCalled();
+      });
+    });
+  });
+
+  describe('method: votingDeadlineAt$', () => {
+
+    const init_votingDeadlineAt$ = fakeAsync(() => {
+      anonymousVotingSvc = new AnonymousVotingContractService(web3Svc, contractSvc, errSvc);
+      anonymousVotingSvc.votingDeadlineAt$(voteCollection.address)
+        .subscribe(onNext, onError, onCompleted);
+      tick();
+    });
+
+    it('should return an observable that emits the deadline and completes', () => {
+      init_votingDeadlineAt$();
+      expect(onNext).toHaveBeenCalledTimes(1);
+      expect(onNext).toHaveBeenCalledWith(new Date(voteCollection.timeframes.votingDeadline));
+      expect(onCompleted).toHaveBeenCalled();
+    });
+
+    describe('case: web3 is not injected', () => {
+      beforeEach(() => spyOnProperty(web3Svc, 'isInjected').and.returnValue(false));
+
+      it('should return an empty observable', () => {
+        init_votingDeadlineAt$();
+        expect(onNext).not.toHaveBeenCalled();
+        expect(onCompleted).toHaveBeenCalled();
+      });
+    });
+
+    describe('case: AnonymousVoting contract is not deployed at the address', () => {
+
+      const error: Error = new Error('No contract at the specified address');
+
+      beforeEach(() => spyOn(Mock.TruffleAnonymousVotingAbstraction, 'at').and.returnValue(Promise.reject(error)));
+
+      it('should notify the Error Service', () => {
+        init_votingDeadlineAt$();
+        expect(errSvc.add).toHaveBeenCalledWith(AnonymousVotingContractErrors.network(voteCollection.address), error);
+      });
+
+      it('should return an empty observable', () => {
+        init_votingDeadlineAt$();
+        expect(onNext).not.toHaveBeenCalled();
+        expect(onCompleted).toHaveBeenCalled();
+      });
+    });
+
+    describe('case: contract.votingDeadline.call() fails', () => {
+      const error: Error = new Error('Unable to retrieve voting deadline');
+
+      beforeEach(() => spyOn(voteCollection.instance.votingDeadline, 'call').and
+        .returnValue(Promise.reject(error)));
+
+      it('should notify the Error Service', () => {
+        init_votingDeadlineAt$();
+        expect(errSvc.add).toHaveBeenCalledWith(
+          AnonymousVotingContractErrors.votingDeadline(voteCollection.address), error
+        );
+      });
+
+      it('should return an empty observable', () => {
+        init_votingDeadlineAt$();
+        expect(onNext).not.toHaveBeenCalled();
+        expect(onCompleted).toHaveBeenCalled();
+      });
+    });
+  });
 });
 
 

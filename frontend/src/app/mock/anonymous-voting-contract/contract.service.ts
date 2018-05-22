@@ -17,4 +17,24 @@ export class AnonymousVotingContractService implements IAnonymousVotingContractS
         .params_hash
     );
   }
+
+  registrationDeadlineAt$(addr: address): Observable<Date> {
+    return Observable.of(
+      Mock.AnonymousVotingContractCollections
+        .filter(collection => collection.address === addr)[0]
+        .timeframes
+        .registrationDeadline
+    )
+      .map(t => new Date(t));
+  }
+
+  votingDeadlineAt$(addr: address): Observable<Date> {
+    return Observable.of(
+      Mock.AnonymousVotingContractCollections
+        .filter(collection => collection.address === addr)[0]
+        .timeframes
+        .votingDeadline
+    )
+      .map(t => new Date(t))
+  };
 }
