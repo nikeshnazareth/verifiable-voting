@@ -107,7 +107,7 @@ describe('Component: VoteComponent', () => {
     });
   });
 
-  fdescribe('Phase', () => {
+  describe('Phase', () => {
 
     it('should state the specified phase', () => {
       fixture.componentInstance.index = Page.ARBITRARY_INDICES[0];

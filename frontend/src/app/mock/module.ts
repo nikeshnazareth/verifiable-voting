@@ -96,7 +96,7 @@ function generateMockVoteContract(idx: number): IAnonymousVotingContractCollecti
   const VOTING_DEADLINE: number = REGISTRATION_DEADLINE + 7 * msPerDay;
   const PARAMS_HASH: string = 'MOCK_PARAMETERS_IPFS_HASH_' + idx;
   const ELIGIBILITY_CONTRACT: address = 'deadbeef' + idx;
-  const REGISTRATION_AUTHORITY: address = 'cafebabe' + idx;
+  const REGISTRATION_AUTHORITY: address = Array(40).fill(idx).join('');
 
   return {
     address: 'MOCK_ADDRESS_' + idx,
