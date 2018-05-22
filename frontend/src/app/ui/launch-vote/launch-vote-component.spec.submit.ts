@@ -6,7 +6,7 @@ import { Observable } from 'rxjs/Observable';
 
 import { TestLaunchVoteComponent } from './launch-vote.component.spec';
 import { IVoteParameters, VoteManagerService } from '../../core/vote-manager/vote-manager.service';
-import { DOMInteractionUtility } from '../dom-interaction-utility';
+import { DOMInteractionUtility } from '../../mock/dom-interaction-utility';
 import { Mock } from '../../mock/module';
 
 export function submit_button_tests(getFixture) {

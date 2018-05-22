@@ -4,7 +4,7 @@ import { By } from '@angular/platform-browser';
 import { AbstractControl } from '@angular/forms';
 
 import { TestLaunchVoteComponent } from './launch-vote.component.spec';
-import { DOMInteractionUtility } from '../dom-interaction-utility';
+import { DOMInteractionUtility } from '../../mock/dom-interaction-utility';
 import { Mock } from '../../mock/module';
 import {
   INoRestrictionContractService,

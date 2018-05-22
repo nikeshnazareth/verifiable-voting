@@ -8,10 +8,6 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs/Observable';
 import 'rxjs/add/operator/switchMap';
 
-import {
-  AnonymousVotingContractErrors,
-  AnonymousVotingContractService
-} from '../ethereum/anonymous-voting-contract/contract.service';
 import { IPFSService } from '../ipfs/ipfs.service';
 import { ErrorService } from '../error-service/error.service';
 import { address } from '../ethereum/type.mappings';

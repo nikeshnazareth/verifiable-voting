@@ -4,7 +4,7 @@ import { By } from '@angular/platform-browser';
 import { AbstractControl, FormGroup } from '@angular/forms';
 
 import { TestLaunchVoteComponent } from './launch-vote.component.spec';
-import { DOMInteractionUtility } from '../dom-interaction-utility';
+import { DOMInteractionUtility } from '../../mock/dom-interaction-utility';
 import { address } from '../../core/ethereum/type.mappings';
 
 export function registration_key_tests(getFixture) {
