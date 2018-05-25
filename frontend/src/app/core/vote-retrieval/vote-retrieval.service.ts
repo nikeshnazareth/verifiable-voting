@@ -164,7 +164,9 @@ export class VoteRetrievalService implements IVoteRetrievalService {
       index: idx,
       address: placeholder,
       phase: placeholder,
-      parameters: params
+      parameters: params,
+      registrationDeadline: null,
+      votingDeadline: null
     };
   }
 
@@ -191,7 +193,9 @@ export class VoteRetrievalService implements IVoteRetrievalService {
       index: index,
       address: addr,
       phase: phase,
-      parameters: parameters
+      parameters: parameters,
+      registrationDeadline: null,
+      votingDeadline: null
     };
   }
 

@@ -1,4 +1,3 @@
-
 import { IVoteParameters } from '../vote-manager/vote-manager.service';
 import { address } from '../ethereum/type.mappings';
 
@@ -7,6 +6,8 @@ export interface IVotingContractDetails {
   address: address;
   phase: string;
   parameters: IVoteParameters;
+  registrationDeadline: IDynamicValue<Date>;
+  votingDeadline: IDynamicValue<Date>;
 }
 
 export interface IVotingContractSummary {
@@ -17,8 +18,9 @@ export interface IVotingContractSummary {
 }
 
 export const RETRIEVAL_STATUS = {
-  UNAVAILABLE: 'UNAVAILABLE',
-  RETRIEVING: 'RETRIEVING'
+  RETRIEVING: 'RETRIEVING...',
+  AVAILABLE: 'AVAILABLE',
+  UNAVAILABLE: 'UNAVAILABLE'
 };
 
 export const VoteRetrievalServiceErrors = {
@@ -30,3 +32,8 @@ export const VoteRetrievalServiceErrors = {
     parametersHash: (params) => new Error(`Retrieved parameters (${params}) do not match the expected format`)
   }
 };
+
+interface IDynamicValue<T> {
+  status: string;
+  value: T;
+}
