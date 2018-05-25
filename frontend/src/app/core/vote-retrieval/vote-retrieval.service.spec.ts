@@ -17,6 +17,7 @@ import { IVoteParameters } from '../vote-manager/vote-manager.service';
 import { address } from '../ethereum/type.mappings';
 import { IAnonymousVotingContractCollection, Mock } from '../../mock/module';
 import Spy = jasmine.Spy;
+import { before } from "selenium-webdriver/testing";
 
 describe('Service: VoteRetrievalService', () => {
 
@@ -715,55 +716,124 @@ describe('Service: VoteRetrievalService', () => {
 
     describe('parameter: registrationDeadline', () => {
       describe('case: the contract cannot be retrieved from the index', () => {
-        xit('"status" should be "UNAVAILABLE"');
+        beforeEach(() => {
+          spyOn(voteListingSvc, 'deployedVotes$').and.returnValue(Observable.empty());
+          init_detailsAtIndex$_and_subscribe();
+        });
 
-        xit('"value" should be null');
+        it('"status" should be "UNAVAILABLE"', () => {
+          expect(lastEmitted().registrationDeadline.status).toEqual(RETRIEVAL_STATUS.UNAVAILABLE);
+        });
+
+        it('"value" should be null', () => {
+          expect(lastEmitted().registrationDeadline.value).toEqual(null);
+        });
       });
 
       describe('case: before the registration deadline is retrieved', () => {
-        xit('"status" should be "RETRIEVING...');
+        beforeEach(() => {
+          spyOn(anonymousVotingSvc, 'registrationDeadlineAt$').and.returnValue(Observable.never());
+          init_detailsAtIndex$_and_subscribe();
+        });
 
-        xit('"value" should be null');
+        it('"status" should be "RETRIEVING...', () => {
+          expect(lastEmitted().registrationDeadline.status).toEqual(RETRIEVAL_STATUS.RETRIEVING);
+        });
+
+        it('"value" should be null', () => {
+          expect(lastEmitted().registrationDeadline.value).toEqual(null);
+        });
       });
 
       describe('case: after the registration deadline is retrieved', () => {
-        xit('"status" should be "AVAILABLE');
+        beforeEach(() => init_detailsAtIndex$_and_subscribe());
 
-        xit('"value" should be set');
+        it('"status" should be "AVAILABLE', () => {
+          expect(lastEmitted().registrationDeadline.status).toEqual(RETRIEVAL_STATUS.AVAILABLE);
+        });
+
+        it('"value" should be set', () => {
+          const deadline = new Date(Mock.AnonymousVotingContractCollections[index].timeframes.registrationDeadline);
+          expect(lastEmitted().registrationDeadline.value).toEqual(deadline);
+        });
       });
 
       describe('case: registrationDeadlineAt$ returns an empty observable', () => {
-        xit('"status" should be "UNAVAILABLE');
+        beforeEach(() => {
+          spyOn(anonymousVotingSvc, 'registrationDeadlineAt$').and.returnValue(Observable.empty());
+          init_detailsAtIndex$_and_subscribe();
+        });
 
-        xit('"value" should be null');
+        it('"status" should be "UNAVAILABLE', () => {
+          expect(lastEmitted().registrationDeadline.status).toEqual(RETRIEVAL_STATUS.UNAVAILABLE);
+        });
+
+        it('"value" should be null', () => {
+          expect(lastEmitted().registrationDeadline.value).toEqual(null);
+        });
       });
     });
 
     describe('parameter: votingDeadline', () => {
       describe('case: the contract cannot be retrieved from the index', () => {
-        xit('"status" should be "UNAVAILABLE"');
+        beforeEach(() => {
+          spyOn(voteListingSvc, 'deployedVotes$').and.returnValue(Observable.empty());
+          init_detailsAtIndex$_and_subscribe();
+        });
 
-        xit('"value" should be null');
+        it('"status" should be "UNAVAILABLE"', () => {
+          expect(lastEmitted().votingDeadline.status).toEqual(RETRIEVAL_STATUS.UNAVAILABLE);
+        });
+
+        it('"value" should be null', () => {
+          expect(lastEmitted().votingDeadline.value).toEqual(null);
+        });
       });
 
       describe('case: before the voting deadline is retrieved', () => {
-        xit('"status" should be "RETRIEVING...');
+        beforeEach(() => {
+          spyOn(anonymousVotingSvc, 'votingDeadlineAt$').and.returnValue(Observable.never());
+          init_detailsAtIndex$_and_subscribe();
+        });
 
-        xit('"value" should be null');
+        it('"status" should be "RETRIEVING...', () => {
+          expect(lastEmitted().votingDeadline.status).toEqual(RETRIEVAL_STATUS.RETRIEVING);
+        });
+
+        it('"value" should be null', () => {
+          expect(lastEmitted().votingDeadline.value).toEqual(null);
+        });
       });
 
       describe('case: after the voting deadline is retrieved', () => {
-        xit('"status" should be "AVAILABLE');
+        beforeEach(() => init_detailsAtIndex$_and_subscribe());
 
-        xit('"value" should be set');
+        it('"status" should be "AVAILABLE', () => {
+          expect(lastEmitted().votingDeadline.status).toEqual(RETRIEVAL_STATUS.AVAILABLE);
+        });
+
+        it('"value" should be set', () => {
+          const deadline = new Date(Mock.AnonymousVotingContractCollections[index].timeframes.registrationDeadline);
+          expect(lastEmitted().votingDeadline.value).toEqual(deadline);
+        });
       });
 
       describe('case: votingDeadlineAt$ returns an empty observable', () => {
-        xit('"status" should be "UNAVAILABLE');
+        beforeEach(() => {
+          spyOn(anonymousVotingSvc, 'votingDeadlineAt$').and.returnValue(Observable.empty());
+          init_detailsAtIndex$_and_subscribe();
+        });
 
-        xit('"value" should be null');
+        it('"status" should be "UNAVAILABLE', () => {
+          expect(lastEmitted().votingDeadline.status).toEqual(RETRIEVAL_STATUS.UNAVAILABLE);
+        });
+
+        it('"value" should be null', () => {
+          expect(lastEmitted().votingDeadline.value).toEqual(null);
+        });
       });
     });
+
   });
 });
 
