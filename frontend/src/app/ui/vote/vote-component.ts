@@ -1,6 +1,5 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { Observable } from 'rxjs/Observable';
-import 'rxjs/add/operator/pluck';
 
 import { VoteRetrievalService } from '../../core/vote-retrieval/vote-retrieval.service';
 import { IVotingContractDetails } from '../../core/vote-retrieval/vote-retreival.service.constants';

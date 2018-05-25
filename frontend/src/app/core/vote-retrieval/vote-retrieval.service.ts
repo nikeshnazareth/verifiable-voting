@@ -10,6 +10,7 @@ import 'rxjs/add/operator/startWith';
 import 'rxjs/add/operator/shareReplay';
 import 'rxjs/add/operator/scan';
 import 'rxjs/add/operator/combineLatest';
+import 'rxjs/add/operator/switchMap';
 
 import { VoteListingContractService } from '../ethereum/vote-listing-contract/contract.service';
 import { AnonymousVotingContractService } from '../ethereum/anonymous-voting-contract/contract.service';
@@ -19,7 +20,6 @@ import { IPFSService } from '../ipfs/ipfs.service';
 import { IVoteParameters } from '../vote-manager/vote-manager.service';
 import { ErrorService } from '../error-service/error.service';
 import {
-  IDynamicValue,
   IVotingContractDetails, IVotingContractSummary, RETRIEVAL_STATUS,
   VoteRetrievalServiceErrors
 } from './vote-retreival.service.constants';
@@ -217,7 +217,7 @@ export class VoteRetrievalService implements IVoteRetrievalService {
         value: typeof regDeadline === 'string' ? null : regDeadline
       },
       votingDeadline: {
-        status: typeof votingDeadline === 'string' ? votingDeadline: RETRIEVAL_STATUS.AVAILABLE,
+        status: typeof votingDeadline === 'string' ? votingDeadline : RETRIEVAL_STATUS.AVAILABLE,
         value: typeof votingDeadline === 'string' ? null : votingDeadline
       }
     };
