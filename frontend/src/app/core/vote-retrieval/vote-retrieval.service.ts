@@ -19,6 +19,7 @@ import { IPFSService } from '../ipfs/ipfs.service';
 import { IVoteParameters } from '../vote-manager/vote-manager.service';
 import { ErrorService } from '../error-service/error.service';
 import {
+  IDynamicValue,
   IVotingContractDetails, IVotingContractSummary, RETRIEVAL_STATUS,
   VoteRetrievalServiceErrors
 } from './vote-retreival.service.constants';
@@ -116,9 +117,20 @@ export class VoteRetrievalService implements IVoteRetrievalService {
         .defaultIfEmpty(this._placeholderParameters(RETRIEVAL_STATUS.UNAVAILABLE))
         .startWith(this._placeholderParameters(RETRIEVAL_STATUS.RETRIEVING));
 
+      const regDeadline$: Observable<Date | string> = this.anonymousVotingSvc.registrationDeadlineAt$(addr)
+        .defaultIfEmpty(RETRIEVAL_STATUS.UNAVAILABLE)
+        .startWith(RETRIEVAL_STATUS.RETRIEVING);
+
+      const votingDeadline$: Observable<Date | string> = this.anonymousVotingSvc.votingDeadlineAt$(addr)
+        .defaultIfEmpty(RETRIEVAL_STATUS.UNAVAILABLE)
+        .startWith(RETRIEVAL_STATUS.RETRIEVING);
+
       this._voteCache[addr] = phase$.combineLatest(
         parameters$,
-        (phase, parameters) => this.newContractDetails(idx, addr, phase, parameters)
+        regDeadline$,
+        votingDeadline$,
+        (phase, parameters, regDeadline, votingDeadline) =>
+          this.newContractDetails(idx, addr, phase, parameters, regDeadline, votingDeadline)
       )
         .shareReplay(1);
     }
@@ -165,8 +177,14 @@ export class VoteRetrievalService implements IVoteRetrievalService {
       address: placeholder,
       phase: placeholder,
       parameters: params,
-      registrationDeadline: null,
-      votingDeadline: null
+      registrationDeadline: {
+        status: placeholder,
+        value: null
+      },
+      votingDeadline: {
+        status: placeholder,
+        value: null
+      }
     };
   }
 
@@ -188,14 +206,20 @@ export class VoteRetrievalService implements IVoteRetrievalService {
   /**
    * @returns {IVotingContractDetails} a new IVotingContractDetails object with the specified values
    */
-  private newContractDetails(index, addr, phase, parameters): IVotingContractDetails {
+  private newContractDetails(index, addr, phase, parameters, regDeadline, votingDeadline): IVotingContractDetails {
     return {
       index: index,
       address: addr,
       phase: phase,
       parameters: parameters,
-      registrationDeadline: null,
-      votingDeadline: null
+      registrationDeadline: {
+        status: typeof regDeadline === 'string' ? regDeadline : RETRIEVAL_STATUS.AVAILABLE,
+        value: typeof regDeadline === 'string' ? null : regDeadline
+      },
+      votingDeadline: {
+        status: typeof votingDeadline === 'string' ? votingDeadline: RETRIEVAL_STATUS.AVAILABLE,
+        value: typeof votingDeadline === 'string' ? null : votingDeadline
+      }
     };
   }
 

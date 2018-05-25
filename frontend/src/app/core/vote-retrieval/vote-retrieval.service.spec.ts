@@ -17,7 +17,6 @@ import { IVoteParameters } from '../vote-manager/vote-manager.service';
 import { address } from '../ethereum/type.mappings';
 import { IAnonymousVotingContractCollection, Mock } from '../../mock/module';
 import Spy = jasmine.Spy;
-import { before } from "selenium-webdriver/testing";
 
 describe('Service: VoteRetrievalService', () => {
 
@@ -717,7 +716,7 @@ describe('Service: VoteRetrievalService', () => {
     describe('parameter: registrationDeadline', () => {
       describe('case: the contract cannot be retrieved from the index', () => {
         beforeEach(() => {
-          spyOn(voteListingSvc, 'deployedVotes$').and.returnValue(Observable.empty());
+          spyOnProperty(voteListingSvc, 'deployedVotes$').and.returnValue(Observable.empty());
           init_detailsAtIndex$_and_subscribe();
         });
 
@@ -777,7 +776,7 @@ describe('Service: VoteRetrievalService', () => {
     describe('parameter: votingDeadline', () => {
       describe('case: the contract cannot be retrieved from the index', () => {
         beforeEach(() => {
-          spyOn(voteListingSvc, 'deployedVotes$').and.returnValue(Observable.empty());
+          spyOnProperty(voteListingSvc, 'deployedVotes$').and.returnValue(Observable.empty());
           init_detailsAtIndex$_and_subscribe();
         });
 
@@ -813,7 +812,7 @@ describe('Service: VoteRetrievalService', () => {
         });
 
         it('"value" should be set', () => {
-          const deadline = new Date(Mock.AnonymousVotingContractCollections[index].timeframes.registrationDeadline);
+          const deadline = new Date(Mock.AnonymousVotingContractCollections[index].timeframes.votingDeadline);
           expect(lastEmitted().votingDeadline.value).toEqual(deadline);
         });
       });

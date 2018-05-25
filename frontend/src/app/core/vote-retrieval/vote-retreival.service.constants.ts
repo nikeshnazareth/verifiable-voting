@@ -17,6 +17,11 @@ export interface IVotingContractSummary {
   topic: string;
 }
 
+export interface IDynamicValue<T> {
+  status: string;
+  value: T;
+}
+
 export const RETRIEVAL_STATUS = {
   RETRIEVING: 'RETRIEVING...',
   AVAILABLE: 'AVAILABLE',
@@ -33,7 +38,4 @@ export const VoteRetrievalServiceErrors = {
   }
 };
 
-interface IDynamicValue<T> {
-  status: string;
-  value: T;
-}
+
