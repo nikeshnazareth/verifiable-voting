@@ -500,210 +500,268 @@ describe('Service: VoteRetrievalService', () => {
     });
     const lastEmitted: (() => IVotingContractDetails) = () => onNext.calls.mostRecent().args[0];
 
-    xit('NOTE: most of the cases have been tested in the summaries$ property. The following are the additions');
+    xit('NOTE: many of the cases have been tested in the summaries$ property. The following are the additions');
 
-    it('the index should match the specified index', () => {
-      init_detailsAtIndex$_and_subscribe();
-      expect(lastEmitted().index).toEqual(index);
-    });
-
-    it('the address should match the address of the corresponding contract', () => {
-      init_detailsAtIndex$_and_subscribe();
-      expect(lastEmitted().address).toEqual(voteCollection.address);
-    });
-
-    describe('case: before the parameters hash is retrieved from the AnonymousVoting contract', () => {
-      beforeEach(() => {
-        spyOn(anonymousVotingSvc, 'paramsHashAt$').and.returnValue(Observable.never());
+    describe('parameter: index', () => {
+      it('the index should match the specified index', () => {
         init_detailsAtIndex$_and_subscribe();
-      });
+        expect(lastEmitted().index).toEqual(index);
 
-      it('the candidates should be an empty list', () => {
-        expect(lastEmitted().parameters.candidates).toEqual([]);
-      });
+        describe('case: the specified index corresponds to a null value in VoteListingService.deployedVotes$', () => {
+          beforeEach(() => {
+            const addresses: address[] = Mock.addresses.map(v => v); // make a shallow copy
+            addresses[index] = null;
+            spyOnProperty(voteListingSvc, 'deployedVotes$').and.returnValue(Observable.from(addresses));
+            init_detailsAtIndex$_and_subscribe();
+          });
 
-      it('the registration key modulus should be "RETRIEVING..."', () => {
-        expect(lastEmitted().parameters.registration_key.modulus).toEqual(RETRIEVAL_STATUS.RETRIEVING);
-      });
+          it('the topic should be "UNAVAILABLE"', () => {
+            expect(lastEmitted().parameters.topic).toEqual(RETRIEVAL_STATUS.UNAVAILABLE);
+          });
 
-      it('the registration key public exponent should be "RETRIEVING..."', () => {
-        expect(lastEmitted().parameters.registration_key.public_exp).toEqual(RETRIEVAL_STATUS.RETRIEVING);
+          it('the candidates should be an empty list', () => {
+            expect(lastEmitted().parameters.candidates).toEqual([]);
+          });
+
+          it('the registration key modulus should be "UNAVAILABLE', () => {
+            expect(lastEmitted().parameters.registration_key.modulus).toEqual(RETRIEVAL_STATUS.UNAVAILABLE);
+          });
+
+          it('the registration key public exponent should be "UNAVAILABLE', () => {
+            expect(lastEmitted().parameters.registration_key.public_exp).toEqual(RETRIEVAL_STATUS.UNAVAILABLE);
+          });
+        });
+
+        describe('case: the specified index is negative', () => {
+
+          const newIndex: number = -1;
+
+          beforeEach(fakeAsync(() => {
+            voteRetrievalSvc().detailsAtIndex$(newIndex)
+              .subscribe(onNext, onError, onCompleted);
+            tick();
+          }));
+
+          it('the topic should be "UNAVAILABLE"', () => {
+            expect(lastEmitted().parameters.topic).toEqual(RETRIEVAL_STATUS.UNAVAILABLE);
+          });
+
+          it('the candidates should be an empty list', () => {
+            expect(lastEmitted().parameters.candidates).toEqual([]);
+          });
+
+          it('the registration key modulus should be "UNAVAILABLE', () => {
+            expect(lastEmitted().parameters.registration_key.modulus).toEqual(RETRIEVAL_STATUS.UNAVAILABLE);
+          });
+
+          it('the registration key public exponent should be "UNAVAILABLE', () => {
+            expect(lastEmitted().parameters.registration_key.public_exp).toEqual(RETRIEVAL_STATUS.UNAVAILABLE);
+          });
+        });
+
+        describe('case: the specified index exceeds the highest index in VoteListingService.deployedVotes$', () => {
+          const newIndex: number = Mock.addresses.length;
+
+          beforeEach(fakeAsync(() => {
+            voteRetrievalSvc().detailsAtIndex$(newIndex)
+              .subscribe(onNext, onError, onCompleted);
+            tick();
+          }));
+
+          it('the topic should be "UNAVAILABLE"', () => {
+            expect(lastEmitted().parameters.topic).toEqual(RETRIEVAL_STATUS.UNAVAILABLE);
+          });
+
+          it('the candidates should be an empty list', () => {
+            expect(lastEmitted().parameters.candidates).toEqual([]);
+          });
+
+          it('the registration key modulus should be "UNAVAILABLE', () => {
+            expect(lastEmitted().parameters.registration_key.modulus).toEqual(RETRIEVAL_STATUS.UNAVAILABLE);
+          });
+
+          it('the registration key public exponent should be "UNAVAILABLE', () => {
+            expect(lastEmitted().parameters.registration_key.public_exp).toEqual(RETRIEVAL_STATUS.UNAVAILABLE);
+          });
+        });
       });
     });
 
-    describe('case: before the parameters are retrieved from IPFS', () => {
-      const unresolvedPromise: Promise<IVoteParameters> = new Promise(resolve => null);
-
-      beforeEach(() => {
-        spyOn(ipfsSvc, 'catJSON').and.returnValue(unresolvedPromise);
+    describe('parameter: address', () => {
+      it('the address should match the address of the corresponding contract', () => {
         init_detailsAtIndex$_and_subscribe();
-      });
-
-      it('the candidates should be an empty list', () => {
-        expect(lastEmitted().parameters.candidates).toEqual([]);
-      });
-
-      it('the registration key modulus should be "RETRIEVING..."', () => {
-        expect(lastEmitted().parameters.registration_key.modulus).toEqual(RETRIEVAL_STATUS.RETRIEVING);
-      });
-
-      it('the registration key public exponent should be "RETRIEVING..."', () => {
-        expect(lastEmitted().parameters.registration_key.public_exp).toEqual(RETRIEVAL_STATUS.RETRIEVING);
+        expect(lastEmitted().address).toEqual(voteCollection.address);
       });
     });
 
-    describe('case: after the parameters are retrieved from IPFS', () => {
-      beforeEach(() => {
-        init_detailsAtIndex$_and_subscribe();
+    describe('parameter: parameters', () => {
+      describe('case: before the parameters hash is retrieved from the AnonymousVoting contract', () => {
+        beforeEach(() => {
+          spyOn(anonymousVotingSvc, 'paramsHashAt$').and.returnValue(Observable.never());
+          init_detailsAtIndex$_and_subscribe();
+        });
+
+        it('the candidates should be an empty list', () => {
+          expect(lastEmitted().parameters.candidates).toEqual([]);
+        });
+
+        it('the registration key modulus should be "RETRIEVING..."', () => {
+          expect(lastEmitted().parameters.registration_key.modulus).toEqual(RETRIEVAL_STATUS.RETRIEVING);
+        });
+
+        it('the registration key public exponent should be "RETRIEVING..."', () => {
+          expect(lastEmitted().parameters.registration_key.public_exp).toEqual(RETRIEVAL_STATUS.RETRIEVING);
+        });
       });
 
-      it('the candidates should match the candidates at the corresponding contract', () => {
-        expect(lastEmitted().parameters.candidates).toEqual(voteCollection.parameters.candidates);
+      describe('case: before the parameters are retrieved from IPFS', () => {
+        const unresolvedPromise: Promise<IVoteParameters> = new Promise(resolve => null);
+
+        beforeEach(() => {
+          spyOn(ipfsSvc, 'catJSON').and.returnValue(unresolvedPromise);
+          init_detailsAtIndex$_and_subscribe();
+        });
+
+        it('the candidates should be an empty list', () => {
+          expect(lastEmitted().parameters.candidates).toEqual([]);
+        });
+
+        it('the registration key modulus should be "RETRIEVING..."', () => {
+          expect(lastEmitted().parameters.registration_key.modulus).toEqual(RETRIEVAL_STATUS.RETRIEVING);
+        });
+
+        it('the registration key public exponent should be "RETRIEVING..."', () => {
+          expect(lastEmitted().parameters.registration_key.public_exp).toEqual(RETRIEVAL_STATUS.RETRIEVING);
+        });
       });
 
-      it('the registration key should match the registration key of the corresponding contract', () => {
-        expect(lastEmitted().parameters.registration_key).toEqual(voteCollection.parameters.registration_key);
-      });
-    });
+      describe('case: after the parameters are retrieved from IPFS', () => {
+        beforeEach(() => {
+          init_detailsAtIndex$_and_subscribe();
+        });
 
-    describe('case: AnonymousVotingService.paramsHashAt$ return an empty observable', () => {
-      beforeEach(() => {
-        spyOn(anonymousVotingSvc, 'paramsHashAt$').and.returnValue(Observable.empty());
-        init_detailsAtIndex$_and_subscribe();
-      });
+        it('the candidates should match the candidates at the corresponding contract', () => {
+          expect(lastEmitted().parameters.candidates).toEqual(voteCollection.parameters.candidates);
+        });
 
-      it('the candidates should be an empty list', () => {
-        expect(lastEmitted().parameters.candidates).toEqual([]);
-      });
-
-      it('the registration key modulus should be "UNVAILABLE"', () => {
-        expect(lastEmitted().parameters.registration_key.modulus).toEqual(RETRIEVAL_STATUS.UNAVAILABLE);
+        it('the registration key should match the registration key of the corresponding contract', () => {
+          expect(lastEmitted().parameters.registration_key).toEqual(voteCollection.parameters.registration_key);
+        });
       });
 
-      it('the registration key public exponent should be "UNVAILABLE"', () => {
-        expect(lastEmitted().parameters.registration_key.public_exp).toEqual(RETRIEVAL_STATUS.UNAVAILABLE);
-      });
-    });
+      describe('case: AnonymousVotingService.paramsHashAt$ return an empty observable', () => {
+        beforeEach(() => {
+          spyOn(anonymousVotingSvc, 'paramsHashAt$').and.returnValue(Observable.empty());
+          init_detailsAtIndex$_and_subscribe();
+        });
 
-    describe('case: IPFSService.catJSON fails', () => {
-      const error: Error = new Error('could not retrieve the parameters from the hash');
+        it('the candidates should be an empty list', () => {
+          expect(lastEmitted().parameters.candidates).toEqual([]);
+        });
 
-      beforeEach(() => {
-        spyOn(ipfsSvc, 'catJSON').and.returnValue(Promise.reject(error));
-        init_detailsAtIndex$_and_subscribe();
-      });
+        it('the registration key modulus should be "UNVAILABLE"', () => {
+          expect(lastEmitted().parameters.registration_key.modulus).toEqual(RETRIEVAL_STATUS.UNAVAILABLE);
+        });
 
-      it('the candidates should be an empty list', () => {
-        expect(lastEmitted().parameters.candidates).toEqual([]);
-      });
-
-      it('the registration key modulus should be "UNAVAILABLE"', () => {
-        expect(lastEmitted().parameters.registration_key.modulus).toEqual(RETRIEVAL_STATUS.UNAVAILABLE);
+        it('the registration key public exponent should be "UNVAILABLE"', () => {
+          expect(lastEmitted().parameters.registration_key.public_exp).toEqual(RETRIEVAL_STATUS.UNAVAILABLE);
+        });
       });
 
-      it('the registration key public exponent should be "UNAVAILABLE"', () => {
-        expect(lastEmitted().parameters.registration_key.public_exp).toEqual(RETRIEVAL_STATUS.UNAVAILABLE);
-      });
-    });
+      describe('case: IPFSService.catJSON fails', () => {
+        const error: Error = new Error('could not retrieve the parameters from the hash');
 
-    describe('case: the returns parameters have the wrong format', () => {
-      const invalid = {
-        invalid: 'This is not a valid IVoteParameters object'
-      };
+        beforeEach(() => {
+          spyOn(ipfsSvc, 'catJSON').and.returnValue(Promise.reject(error));
+          init_detailsAtIndex$_and_subscribe();
+        });
 
-      beforeEach(() => {
-        spyOn(ipfsSvc, 'catJSON').and.returnValue(Promise.resolve(invalid));
-        init_detailsAtIndex$_and_subscribe();
-      });
+        it('the candidates should be an empty list', () => {
+          expect(lastEmitted().parameters.candidates).toEqual([]);
+        });
 
-      it('the candidates should be an empty list', () => {
-        expect(lastEmitted().parameters.candidates).toEqual([]);
-      });
+        it('the registration key modulus should be "UNAVAILABLE"', () => {
+          expect(lastEmitted().parameters.registration_key.modulus).toEqual(RETRIEVAL_STATUS.UNAVAILABLE);
+        });
 
-      it('the registration key modulus should be "UNAVAILABLE"', () => {
-        expect(lastEmitted().parameters.registration_key.modulus).toEqual(RETRIEVAL_STATUS.UNAVAILABLE);
+        it('the registration key public exponent should be "UNAVAILABLE"', () => {
+          expect(lastEmitted().parameters.registration_key.public_exp).toEqual(RETRIEVAL_STATUS.UNAVAILABLE);
+        });
       });
 
-      it('the registration key public exponent should be "UNAVAILABLE"', () => {
-        expect(lastEmitted().parameters.registration_key.public_exp).toEqual(RETRIEVAL_STATUS.UNAVAILABLE);
-      });
-    });
+      describe('case: the returns parameters have the wrong format', () => {
+        const invalid = {
+          invalid: 'This is not a valid IVoteParameters object'
+        };
 
-    describe('case: the specified index corresponds to a null value in VoteListingService.deployedVotes$', () =>{
-      beforeEach(() => {
-        const addresses: address[] = Mock.addresses.map(v => v); // make a shallow copy
-        addresses[index] = null;
-        spyOnProperty(voteListingSvc, 'deployedVotes$').and.returnValue(Observable.from(addresses));
-        init_detailsAtIndex$_and_subscribe();
-      });
+        beforeEach(() => {
+          spyOn(ipfsSvc, 'catJSON').and.returnValue(Promise.resolve(invalid));
+          init_detailsAtIndex$_and_subscribe();
+        });
 
-      it('the topic should be "UNAVAILABLE"', () => {
-        expect(lastEmitted().parameters.topic).toEqual(RETRIEVAL_STATUS.UNAVAILABLE);
-      });
+        it('the candidates should be an empty list', () => {
+          expect(lastEmitted().parameters.candidates).toEqual([]);
+        });
 
-      it('the candidates should be an empty list', () => {
-        expect(lastEmitted().parameters.candidates).toEqual([]);
-      });
+        it('the registration key modulus should be "UNAVAILABLE"', () => {
+          expect(lastEmitted().parameters.registration_key.modulus).toEqual(RETRIEVAL_STATUS.UNAVAILABLE);
+        });
 
-      it('the registration key modulus should be "UNAVAILABLE', () => {
-        expect(lastEmitted().parameters.registration_key.modulus).toEqual(RETRIEVAL_STATUS.UNAVAILABLE);
-      });
-
-      it('the registration key public exponent should be "UNAVAILABLE', () => {
-        expect(lastEmitted().parameters.registration_key.public_exp).toEqual(RETRIEVAL_STATUS.UNAVAILABLE);
-      });
-    });
-
-    describe('case: the specified index is negative', () => {
-
-      const newIndex: number = -1;
-
-      beforeEach(fakeAsync(() => {
-        voteRetrievalSvc().detailsAtIndex$(newIndex)
-          .subscribe(onNext, onError, onCompleted);
-        tick();
-      }));
-
-      it('the topic should be "UNAVAILABLE"', () => {
-        expect(lastEmitted().parameters.topic).toEqual(RETRIEVAL_STATUS.UNAVAILABLE);
-      });
-
-      it('the candidates should be an empty list', () => {
-        expect(lastEmitted().parameters.candidates).toEqual([]);
-      });
-
-      it('the registration key modulus should be "UNAVAILABLE', () => {
-        expect(lastEmitted().parameters.registration_key.modulus).toEqual(RETRIEVAL_STATUS.UNAVAILABLE);
-      });
-
-      it('the registration key public exponent should be "UNAVAILABLE', () => {
-        expect(lastEmitted().parameters.registration_key.public_exp).toEqual(RETRIEVAL_STATUS.UNAVAILABLE);
+        it('the registration key public exponent should be "UNAVAILABLE"', () => {
+          expect(lastEmitted().parameters.registration_key.public_exp).toEqual(RETRIEVAL_STATUS.UNAVAILABLE);
+        });
       });
     });
 
-    describe('case: the specified index exceeds the highest index in VoteListingService.deployedVotes$', () => {
-      const newIndex: number = Mock.addresses.length;
+    describe('parameter: registrationDeadline', () => {
+      describe('case: the contract cannot be retrieved from the index', () => {
+        xit('"status" should be "UNAVAILABLE"');
 
-      beforeEach(fakeAsync(() => {
-        voteRetrievalSvc().detailsAtIndex$(newIndex)
-          .subscribe(onNext, onError, onCompleted);
-        tick();
-      }));
-
-      it('the topic should be "UNAVAILABLE"', () => {
-        expect(lastEmitted().parameters.topic).toEqual(RETRIEVAL_STATUS.UNAVAILABLE);
+        xit('"value" should be null');
       });
 
-      it('the candidates should be an empty list', () => {
-        expect(lastEmitted().parameters.candidates).toEqual([]);
+      describe('case: before the registration deadline is retrieved', () => {
+        xit('"status" should be "RETRIEVING...');
+
+        xit('"value" should be null');
       });
 
-      it('the registration key modulus should be "UNAVAILABLE', () => {
-        expect(lastEmitted().parameters.registration_key.modulus).toEqual(RETRIEVAL_STATUS.UNAVAILABLE);
+      describe('case: after the registration deadline is retrieved', () => {
+        xit('"status" should be "AVAILABLE');
+
+        xit('"value" should be set');
       });
 
-      it('the registration key public exponent should be "UNAVAILABLE', () => {
-        expect(lastEmitted().parameters.registration_key.public_exp).toEqual(RETRIEVAL_STATUS.UNAVAILABLE);
+      describe('case: registrationDeadlineAt$ returns an empty observable', () => {
+        xit('"status" should be "UNAVAILABLE');
+
+        xit('"value" should be null');
+      });
+    });
+
+    describe('parameter: votingDeadline', () => {
+      describe('case: the contract cannot be retrieved from the index', () => {
+        xit('"status" should be "UNAVAILABLE"');
+
+        xit('"value" should be null');
+      });
+
+      describe('case: before the voting deadline is retrieved', () => {
+        xit('"status" should be "RETRIEVING...');
+
+        xit('"value" should be null');
+      });
+
+      describe('case: after the voting deadline is retrieved', () => {
+        xit('"status" should be "AVAILABLE');
+
+        xit('"value" should be set');
+      });
+
+      describe('case: votingDeadlineAt$ returns an empty observable', () => {
+        xit('"status" should be "UNAVAILABLE');
+
+        xit('"value" should be null');
       });
     });
   });
