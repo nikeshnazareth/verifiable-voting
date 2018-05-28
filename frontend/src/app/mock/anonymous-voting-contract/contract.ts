@@ -3,6 +3,7 @@ import { IContractEventStream } from '../../core/ethereum/contract.interface';
 import { address } from '../../core/ethereum/type.mappings';
 import { BigNumber } from '../bignumber';
 import { Mock } from '../module';
+import { ITransactionReceipt } from "../../core/ethereum/transaction.interface";
 
 export class AnonymousVotingContract implements AnonymousVotingAPI {
   private REGISTRATION_DEADLINE: number;
@@ -50,6 +51,18 @@ export class AnonymousVotingContract implements AnonymousVotingAPI {
   registrationAuthority = {
     call: () => Promise.resolve(this.REGISTRATION_AUTHORITY)
   };
+
+  pendingRegistrations = {
+    call: () => Promise.resolve(new BigNumber(0))
+  };
+
+  blindedAddress = {
+    call: (addr: address) => Promise.resolve(['', ''])
+  };
+
+  register(_blindedAddressHash: string): Promise<ITransactionReceipt> {
+    return Promise.resolve(`MOCK_REGISTER_${_blindedAddressHash}_RECEIPT`);
+  }
 
   // These functions create self-referential loop.
   // Mock.AnonymousVotingContractCollections is instantiated with instances of AnonymousVotingContract
