@@ -3,7 +3,7 @@ const AnonymousVoting = artifacts.require('AnonymousVoting');
 
 describe('Contract: VoteListing', () => {
 
-    describe('method: deploy', async (accounts) => {
+    describe('method: deploy', async () => {
 
         let instance;
         const now = web3.eth.getBlock(web3.eth.blockNumber).timestamp;

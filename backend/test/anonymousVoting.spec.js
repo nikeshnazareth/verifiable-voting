@@ -1,7 +1,9 @@
 const AnonymousVoting = artifacts.require('AnonymousVoting');
 const AnonymousVotingPhases = artifacts.require('TestAnonymousVotingPhases');
+const NoRestriction = artifacts.require('NoRestriction');
+const AlwaysBlock = artifacts.require('AlwaysBlock');
 
-describe.only('contract: AnonymousVoting', () => {
+contract('AnonymousVoting', (accounts) => {
     const SUPPRESS_EXPECTED_ERROR = 'SUPPRESS_EXPECTED_ERROR';
 
     let instance;
@@ -15,7 +17,7 @@ describe.only('contract: AnonymousVoting', () => {
 
     describe('method: constructor', () => {
 
-        describe('case: valid timings', () => {
+        describe('case: valid arguments', () => {
 
             beforeEach(async () => {
                 const now = web3.eth.getBlock(web3.eth.blockNumber).timestamp;
@@ -64,15 +66,11 @@ describe.only('contract: AnonymousVoting', () => {
                 votingExpiration = now + 2 * PHASE_DURATION;
             });
 
-            it('should throw an error during deployment', done => {
-                AnonymousVoting.new(
+            it('should throw an error during deployment', async () => {
+                const response = await AnonymousVoting.new(
                     registrationExpiration, votingExpiration, PARAMS_HASH, ELIGIBILITY_CONTRACT, REGISTRATION_AUTH
-                )
-                    .catch(() => SUPPRESS_EXPECTED_ERROR)
-                    .then(val => val === SUPPRESS_EXPECTED_ERROR ? null :
-                        Error('Successfully deployed AnonymousVoting contract with expired Registration phase')
-                    )
-                    .then(done);
+                ).catch(() => SUPPRESS_EXPECTED_ERROR);
+                assert.equal(response, SUPPRESS_EXPECTED_ERROR);
             });
         });
 
@@ -83,15 +81,11 @@ describe.only('contract: AnonymousVoting', () => {
                 votingExpiration = registrationExpiration - PHASE_DURATION;
             });
 
-            it('should throw an error during deployment', done => {
-                AnonymousVoting.new(
+            it('should throw an error during deployment', async () => {
+                const response = AnonymousVoting.new(
                     registrationExpiration, votingExpiration, PARAMS_HASH, ELIGIBILITY_CONTRACT, REGISTRATION_AUTH
-                )
-                    .catch(() => SUPPRESS_EXPECTED_ERROR)
-                    .then(val => val === SUPPRESS_EXPECTED_ERROR ? null :
-                        Error('Successfully deployed AnonymousVoting contract with Voting ending before Registration')
-                    )
-                    .then(done);
+                ).catch(() => SUPPRESS_EXPECTED_ERROR);
+                assert.equal(response, SUPPRESS_EXPECTED_ERROR);
             });
         });
     });
@@ -212,4 +206,121 @@ describe.only('contract: AnonymousVoting', () => {
             });
         });
     });
+
+    describe.only('method: register', () => {
+        let gatekeeper;
+        const BLINDED_ADDRESS_HASH = 'DUMMY_BLINDED_ADDRESS_HASH';
+        const VOTER_ADDRESS = accounts[1];
+        const SECOND_VOTER_ADDRESS = accounts[2];
+
+        const BLINDING_INDICES = {
+            'ADDRESS_HASH': 0,
+            'SIGNATURE_HASH': 1
+        };
+
+        beforeEach(async () => {
+            const now = web3.eth.getBlock(web3.eth.blockNumber).timestamp;
+            registrationExpiration = now + PHASE_DURATION;
+            votingExpiration = registrationExpiration + PHASE_DURATION;
+        });
+
+        describe('case: valid context', () => {
+            beforeEach(async () => {
+                gatekeeper = await NoRestriction.new();
+                instance = await AnonymousVoting.new(
+                    registrationExpiration, votingExpiration, PARAMS_HASH, gatekeeper.address, REGISTRATION_AUTH
+                );
+            });
+
+            it('should set the addressHash of the message sender to the specified value', async () => {
+                let blindedAddress = await instance.blindedAddress.call(VOTER_ADDRESS);
+                assert.equal(blindedAddress[BLINDING_INDICES.ADDRESS_HASH], '');
+
+                await instance.register(BLINDED_ADDRESS_HASH, {from: VOTER_ADDRESS});
+                blindedAddress = await instance.blindedAddress.call(VOTER_ADDRESS);
+                assert.equal(blindedAddress[BLINDING_INDICES.ADDRESS_HASH], BLINDED_ADDRESS_HASH);
+            });
+
+            it('should not affect the signatureHash of the message sender', async () => {
+                let blindedAddress = await instance.blindedAddress.call(VOTER_ADDRESS);
+                assert.equal(blindedAddress[BLINDING_INDICES.SIGNATURE_HASH], '');
+
+                await instance.register(BLINDED_ADDRESS_HASH, {from: VOTER_ADDRESS});
+                blindedAddress = await instance.blindedAddress.call(VOTER_ADDRESS);
+                assert.equal(blindedAddress[BLINDING_INDICES.SIGNATURE_HASH], '');
+            });
+
+            it('should increment the "pendingRegistrations" value', async () => {
+                let pendingRegistrations = await instance.pendingRegistrations.call();
+                assert.equal(pendingRegistrations, 0);
+
+                await instance.register(BLINDED_ADDRESS_HASH, {from: VOTER_ADDRESS});
+                pendingRegistrations = await instance.pendingRegistrations.call();
+                assert.equal(pendingRegistrations, 1);
+
+                await instance.register(BLINDED_ADDRESS_HASH, {from: SECOND_VOTER_ADDRESS});
+                pendingRegistrations = await instance.pendingRegistrations.call();
+                assert.equal(pendingRegistrations, 2);
+            });
+
+            it('should emit a "VoterInitiatedRegistration" event with the sender as a parameter', async ()=> {
+               const tx =  await instance.register(BLINDED_ADDRESS_HASH, {from: VOTER_ADDRESS});
+               assert.equal(tx.logs.length, 1);
+               const log = tx.logs[0];
+               assert.equal(log.event, 'VoterInitiatedRegistration');
+               assert.deepEqual(log.args, {voter: VOTER_ADDRESS});
+            });
+
+        });
+
+        describe('case: the Registration phase has ended', () => {
+            beforeEach(async () => {
+                gatekeeper = await NoRestriction.new();
+                instance = await AnonymousVotingPhases.new(
+                    registrationExpiration, votingExpiration, PARAMS_HASH, gatekeeper.address, REGISTRATION_AUTH
+                );
+                instance.advanceTime(PHASE_DURATION * 1.1);
+            });
+
+            it('should throw an error when "register" is called', async () => {
+                const response = await instance.register(BLINDED_ADDRESS_HASH, {from: VOTER_ADDRESS})
+                    .catch(() => SUPPRESS_EXPECTED_ERROR);
+                assert.equal(response, SUPPRESS_EXPECTED_ERROR);
+            });
+        });
+
+        describe('case: the voter has already published their blinded address', () => {
+            const SECOND_BLINDED_ADDRESS_HASH = 'SECOND_DUMMY_BLINDED_ADDRESS_HASH';
+
+            beforeEach(async () => {
+                gatekeeper = await NoRestriction.new();
+                instance = await AnonymousVotingPhases.new(
+                    registrationExpiration, votingExpiration, PARAMS_HASH, gatekeeper.address, REGISTRATION_AUTH
+                );
+                await instance.register(BLINDED_ADDRESS_HASH, {from: VOTER_ADDRESS});
+            });
+
+            it('should throw an error when "register" is called', async() => {
+               const response = await instance.register(SECOND_BLINDED_ADDRESS_HASH, {from: VOTER_ADDRESS})
+                   .catch(() => SUPPRESS_EXPECTED_ERROR);
+               assert.equal(response, SUPPRESS_EXPECTED_ERROR);
+            });
+        });
+
+        describe('case: the voter is not eligible to vote', () => {
+            beforeEach(async () => {
+                gatekeeper = await AlwaysBlock.new();
+                instance = await AnonymousVotingPhases.new(
+                    registrationExpiration, votingExpiration, PARAMS_HASH, gatekeeper.address, REGISTRATION_AUTH
+                );
+            });
+
+            it('should throw an error when "register" is called', async() => {
+                const response = await instance.register(BLINDED_ADDRESS_HASH, {from: VOTER_ADDRESS})
+                    .catch(() => SUPPRESS_EXPECTED_ERROR);
+                assert.equal(response, SUPPRESS_EXPECTED_ERROR);
+            });
+        });
+    });
+
 });
