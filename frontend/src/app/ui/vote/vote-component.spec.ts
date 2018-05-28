@@ -10,6 +10,7 @@ import { RegistrationPhaseComponent } from './registration-phase.component';
 import { VotingPhaseComponent } from './voting-phase.component';
 import { CompletePhaseComponent } from './complete-phase-component';
 import { Mock } from '../../mock/module';
+import Spy = jasmine.Spy;
 
 describe('Component: VoteComponent', () => {
   let fixture: ComponentFixture<VoteComponent>;
@@ -132,7 +133,6 @@ describe('Component: VoteComponent', () => {
   });
 
 
-
   describe('User Interface', () => {
     describe('container', () => {
       it('should be hidden initially', () => {
@@ -185,16 +185,19 @@ describe('Component: VoteComponent', () => {
 
     describe('Registration Phase Component', () => {
       let regPhaseComp: DebugElement;
+      let indexSpy: Spy;
 
       beforeEach(() => {
         regPhaseComp = fixture.debugElement.query(By.css('vv-registration-phase'));
+        indexSpy = jasmine.createSpy('index setter');
+        spyOnProperty(regPhaseComp.componentInstance, 'index', 'set').and.callFake(indexSpy);
       });
 
       it('should track the index of the Vote Component', () => {
         Page.ARBITRARY_CONTRACT_INDICES.map(idx => {
           fixture.componentInstance.index = idx;
           fixture.detectChanges();
-          expect(regPhaseComp.componentInstance.index).toEqual(String(idx));
+          expect(indexSpy.calls.mostRecent().args[0]).toEqual(idx);
         });
       });
     });
@@ -210,13 +213,12 @@ describe('Component: VoteComponent', () => {
         Page.ARBITRARY_CONTRACT_INDICES.map(idx => {
           fixture.componentInstance.index = idx;
           fixture.detectChanges();
-          expect(votingPhaseComp.componentInstance.index).toEqual(String(idx));
+          expect(votingPhaseComp.componentInstance.index).toEqual(idx);
         });
       });
     });
 
     describe('Complete Phase Component', () => {
-
       let completePhaseComp: DebugElement;
 
       beforeEach(() => {
@@ -227,7 +229,7 @@ describe('Component: VoteComponent', () => {
         Page.ARBITRARY_CONTRACT_INDICES.map(idx => {
           fixture.componentInstance.index = idx;
           fixture.detectChanges();
-          expect(completePhaseComp.componentInstance.index).toEqual(String(idx));
+          expect(completePhaseComp.componentInstance.index).toEqual(idx);
         });
       });
     });

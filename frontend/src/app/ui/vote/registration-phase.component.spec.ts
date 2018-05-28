@@ -10,7 +10,7 @@ import { IAnonymousVotingContractCollection, Mock } from '../../mock/module';
 import { IVotingContractDetails, RETRIEVAL_STATUS } from '../../core/vote-retrieval/vote-retreival.service.constants';
 import { VotePhases } from '../../core/ethereum/anonymous-voting-contract/contract.api';
 
-fdescribe('Component: RegistrationPhaseComponent', () => {
+describe('Component: RegistrationPhaseComponent', () => {
   let fixture: ComponentFixture<RegistrationPhaseComponent>;
   let page: Page;
 

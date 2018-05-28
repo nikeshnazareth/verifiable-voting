@@ -50,8 +50,8 @@ export class RegistrationPhaseComponent implements OnInit {
    * @param val
    */
   @Input()
-  set index(val) {
-    this._index$.next(Number(val));
+  set index(val: number) {
+    this._index$.next(val);
   }
 
   /**

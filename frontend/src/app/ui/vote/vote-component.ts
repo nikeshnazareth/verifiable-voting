@@ -12,15 +12,15 @@ import { BehaviorSubject } from 'rxjs/BehaviorSubject';
       <h2>{{_heading$ | async}}</h2>
       <mat-expansion-panel>
         <mat-expansion-panel-header>REGISTER</mat-expansion-panel-header>
-        <vv-registration-phase index="{{_index$ | async}}"></vv-registration-phase>
+        <vv-registration-phase [index]="_index$ | async"></vv-registration-phase>
       </mat-expansion-panel>
       <mat-expansion-panel>
         <mat-expansion-panel-header>VOTE</mat-expansion-panel-header>
-        <vv-voting-phase index="{{_index$ | async}}"></vv-voting-phase>
+        <vv-voting-phase [index]="_index$ | async"></vv-voting-phase>
       </mat-expansion-panel>
       <mat-expansion-panel>
         <mat-expansion-panel-header>RESULTS</mat-expansion-panel-header>
-        <vv-complete-phase index="{{_index$ | async}}"></vv-complete-phase>
+        <vv-complete-phase [index]="_index$ | async"></vv-complete-phase>
       </mat-expansion-panel>
     </div>
   `,
@@ -51,8 +51,10 @@ export class VoteComponent implements OnInit {
    * @param val
    */
   @Input()
-  set index(val) {
-    this._index$.next(val);
-    this._voteIsSelected = typeof val !== 'undefined';
+  set index(val: number) {
+    if (typeof val !== 'undefined') {
+      this._voteIsSelected = true;
+      this._index$.next(val);
+    }
   }
 }
