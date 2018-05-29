@@ -69,6 +69,7 @@ export class Mock {
       collection.eligibilityContract = Mock.NO_RESTRICTION_ADDRESS;
       return collection;
     });
+  public static Voters = range(4).map(i => generateMockVoter(i));
   public static NoRestrictionContract = new NoRestrictionContract();
   public static VoteListingContract = new VoteListingContract();
   public static VoteCreatedEventStream = new TriggerableEventStream();
@@ -127,6 +128,24 @@ function generateMockVoteContract(idx: number): IAnonymousVotingContractCollecti
     ),
     currentPhase: (idx + 11) * 11 % VotePhases.length,
     eventStream: new TriggerableEventStream()
+  };
+}
+
+export interface IVoter {
+  public_address: address;
+  anonymous_address: address;
+  blinded_address: string;
+  blinded_address_hash: string;
+  register_receipt: ITransactionReceipt;
+}
+
+function generateMockVoter(idx: number): IVoter {
+  return {
+    public_address: 'MOCK_PUBLIC_ADDRESS_' + idx,
+    anonymous_address: 'MOCK_ANONYMOUS_ADDRESS_' + idx,
+    blinded_address: 'MOCK_BLINDED_ADDRESS_' + idx,
+    blinded_address_hash: 'MOCK_BLINDED_ADDRESS_HASH_' + idx,
+    register_receipt: 'MOCK_REGISTER_RECEIPT_' + idx
   };
 }
 

@@ -13,6 +13,7 @@ import { ErrorService } from '../../error-service/error.service';
 import { address } from '../type.mappings';
 import { AnonymousVotingAPI, NewPhaseEvent, VotePhases } from './contract.api';
 import { IContractLog } from '../contract.interface';
+import { ITransactionReceipt } from '../transaction.interface';
 
 
 export interface IAnonymousVotingContractService {
@@ -23,6 +24,8 @@ export interface IAnonymousVotingContractService {
   registrationDeadlineAt$(addr: address): Observable<Date>;
 
   votingDeadlineAt$(addr: address): Observable<Date>;
+
+  registerAt$(contractAddr: address, voterAddr: address, blindAddressHash: string): Observable<ITransactionReceipt>;
 }
 
 export const AnonymousVotingContractErrors = {
@@ -33,7 +36,7 @@ export const AnonymousVotingContractErrors = {
   paramsHash: (addr) => new Error(`Unable to retrieve the parameters hash from the AnonymousVoting contract at ${addr}`),
   phase: (addr) => new Error(`Unable to retrieve the current phase from the AnonymousVoting contract at ${addr}`),
   regDeadline: (addr) => new Error('Unable to retrieve the registration deadline from the AnonymousVoting contract' +
-  `at ${addr}`),
+    `at ${addr}`),
   votingDeadline: (addr) => new Error('Unable to retrieve the voting deadline from the AnonymousVoting contract' +
     `at ${addr}`)
 };
@@ -130,6 +133,18 @@ export class AnonymousVotingContractService implements IAnonymousVotingContractS
         this.errSvc.add(AnonymousVotingContractErrors.votingDeadline(addr), err);
         return <Observable<Date>> Observable.empty();
       });
+  }
+
+  /**
+   * Uses the specified AnonymousVoting contract to register the specified voter's blinded address hash
+   * @param {address} contractAddr the address of the AnonymousVoting contract
+   * @param {address} voterAddr the public address of the voter
+   * @param {string} blindAddressHash the IPFS hash of the voter's blinded anonymous address
+   * @returns {Observable<ITransactionReceipt>} an observable that emits the receipt when the voter's registration<br/>
+   * request is published or an empty observable if there was an error
+   */
+  registerAt$(contractAddr: address, voterAddr: address, blindAddressHash: string): Observable<ITransactionReceipt> {
+    return Observable.empty();
   }
 
   /**
