@@ -9,7 +9,7 @@ import { IWeb3Service, Web3Service } from '../web3.service';
 import { ITruffleContractWrapperService, TruffleContractWrapperService } from '../truffle-contract-wrapper.service';
 import { ErrorService } from '../../error-service/error.service';
 import { APP_CONFIG } from '../../../config';
-import { IAnonymousVotingContractCollection, Mock } from '../../../mock/module';
+import { IAnonymousVotingContractCollection, IVoter, Mock } from '../../../mock/module';
 import { IContractLog } from '../contract.interface';
 import { NewPhaseEvent, VotePhases } from './contract.api';
 import { BigNumber } from '../../../mock/bignumber';
@@ -22,6 +22,7 @@ describe('Service: AnonymousVotingContractService', () => {
   let errSvc: ErrorService;
 
   const voteCollection: IAnonymousVotingContractCollection = Mock.AnonymousVotingContractCollections[0];
+  const voter: IVoter = Mock.Voters[0];
 
   beforeEach(() => {
     TestBed.configureTestingModule({
@@ -486,6 +487,80 @@ describe('Service: AnonymousVotingContractService', () => {
 
       it('should return an empty observable', () => {
         init_votingDeadlineAt$();
+        expect(onNext).not.toHaveBeenCalled();
+        expect(onCompleted).toHaveBeenCalled();
+      });
+    });
+  });
+
+  describe('method: registerAt$', () => {
+
+    const init_registerAt$ = fakeAsync(() => {
+      anonymousVotingSvc = new AnonymousVotingContractService(web3Svc, contractSvc, errSvc);
+      anonymousVotingSvc.registerAt$(voteCollection.address, voter.public_address, voter.blinded_address_hash)
+        .subscribe(onNext, onError, onCompleted);
+      tick();
+    });
+
+    it('should call the "register" function on the AnonymousVoting contract', () => {
+      spyOn(voteCollection.instance, 'register').and.stub();
+      init_registerAt$();
+      expect(voteCollection.instance.register).toHaveBeenCalled();
+    });
+
+    it('should pass the blinded address hash to the AnonymousVoting.register function', () => {
+      spyOn(voteCollection.instance, 'register').and.stub();
+      init_registerAt$();
+      expect((<Spy>voteCollection.instance.register).calls.mostRecent().args[0]).toEqual(voter.blinded_address_hash);
+    });
+
+    it('should set the message sender on the AnonymousVoting.register call to the specified voter address', () => {
+      spyOn(voteCollection.instance, 'register').and.stub();
+      init_registerAt$();
+      expect((<Spy>voteCollection.instance.register).calls.mostRecent().args[1]).toEqual({from: voter.public_address});
+    });
+
+    describe('case: web3 is not injected', () => {
+      beforeEach(() => spyOnProperty(web3Svc, 'isInjected').and.returnValue(false));
+
+      it('should return an empty observable', () => {
+        init_registerAt$();
+        expect(onNext).not.toHaveBeenCalled();
+        expect(onCompleted).toHaveBeenCalled();
+      });
+    });
+
+    describe('case: there is no AnonymousVoting contract at the specified address', () => {
+      const error: Error = new Error('No contract at the specified address');
+
+      beforeEach(() => spyOn(Mock.TruffleAnonymousVotingAbstraction, 'at').and.returnValue(Promise.reject(error)));
+
+      it('should notify the Error Service', () => {
+        init_registerAt$();
+        expect(errSvc.add).toHaveBeenCalledWith(AnonymousVotingContractErrors.network(voteCollection.address), error);
+      });
+
+      it('should return an empty observable', () => {
+        init_registerAt$();
+        expect(onNext).not.toHaveBeenCalled();
+        expect(onCompleted).toHaveBeenCalled();
+      });
+    });
+
+    describe('case: contract.register fails', () => {
+      const error: Error = new Error('Unable to register voter');
+
+      beforeEach(() => spyOn(voteCollection.instance, 'register').and.returnValue(Promise.reject(error)));
+
+      it('should notify the Error Service', () => {
+        init_registerAt$();
+        expect(errSvc.add).toHaveBeenCalledWith(
+          AnonymousVotingContractErrors.registration(voteCollection.address, voter.public_address), error
+        );
+      });
+
+      it('should return an empty observable', () => {
+        init_registerAt$();
         expect(onNext).not.toHaveBeenCalled();
         expect(onCompleted).toHaveBeenCalled();
       });

@@ -1,7 +1,7 @@
 import { IContract, IContractLog } from '../contract.interface';
 import { address, uint } from '../type.mappings';
 import * as BigNumber from 'bignumber.js';
-import { ITransactionReceipt } from "../transaction.interface";
+import { ITransactionProperties, ITransactionReceipt } from "../transaction.interface";
 
 
 export interface AnonymousVotingAPI extends VotePhasesAPI {
@@ -33,7 +33,7 @@ export interface AnonymousVotingAPI extends VotePhasesAPI {
   };
 
   // function register(string _blindedAddressHash) public
-  register(_blindedAddressHash: string): Promise<ITransactionReceipt>;
+  register(_blindedAddressHash: string, props?: ITransactionProperties): Promise<ITransactionReceipt>;
 }
 
 export namespace NewPhaseEvent {

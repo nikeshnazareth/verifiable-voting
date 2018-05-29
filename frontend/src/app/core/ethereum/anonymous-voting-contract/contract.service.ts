@@ -38,7 +38,9 @@ export const AnonymousVotingContractErrors = {
   regDeadline: (addr) => new Error('Unable to retrieve the registration deadline from the AnonymousVoting contract' +
     `at ${addr}`),
   votingDeadline: (addr) => new Error('Unable to retrieve the voting deadline from the AnonymousVoting contract' +
-    `at ${addr}`)
+    `at ${addr}`),
+  registration: (contractAddr, voter) => new Error(`Unable to register voter ${voter} ` +
+    `at the AnonymousVoting contract ${contractAddr}`)
 };
 
 @Injectable()
@@ -144,7 +146,13 @@ export class AnonymousVotingContractService implements IAnonymousVotingContractS
    * request is published or an empty observable if there was an error
    */
   registerAt$(contractAddr: address, voterAddr: address, blindAddressHash: string): Observable<ITransactionReceipt> {
-    return Observable.empty();
+    return this._contractAt(contractAddr)
+      .map(contract => contract.register(blindAddressHash, {from: voterAddr}))
+      .switchMap(registerPromise => Observable.from(registerPromise))
+      .catch(err => {
+        this.errSvc.add(AnonymousVotingContractErrors.registration(contractAddr, voterAddr), err);
+        return <Observable<Date>> Observable.empty();
+      });
   }
 
   /**
