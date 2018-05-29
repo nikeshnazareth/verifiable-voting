@@ -13,14 +13,12 @@ import { ErrorService } from '../error-service/error.service';
 import { address } from '../ethereum/type.mappings';
 import { ITransactionReceipt } from '../ethereum/transaction.interface';
 import { IVoteTimeframes, VoteListingContractService } from '../ethereum/vote-listing-contract/contract.service';
+import { IRSAKey } from '../cryptography/cryptography.service';
 
 export interface IVoteParameters {
   topic: string;
   candidates: string[];
-  registration_key: {
-    modulus: string;
-    public_exp: string;
-  };
+  registration_key: IRSAKey;
 }
 
 export interface IVoteManagerService {
