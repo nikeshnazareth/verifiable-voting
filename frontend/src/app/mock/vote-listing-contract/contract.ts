@@ -2,7 +2,7 @@ import { VoteListingAPI } from '../../core/ethereum/vote-listing-contract/contra
 import { ITransactionProperties, ITransactionReceipt } from '../../core/ethereum/transaction.interface';
 import { IContractEventStream } from '../../core/ethereum/contract.interface';
 import { Mock } from '../module';
-import { address, uint } from '../../core/ethereum/type.mappings';
+import { address } from '../../core/ethereum/type.mappings';
 import { BigNumber } from '../bignumber';
 
 export class VoteListingContract implements VoteListingAPI {
@@ -14,8 +14,8 @@ export class VoteListingContract implements VoteListingAPI {
     call: () => Promise.resolve(new BigNumber(Mock.addresses.length))
   };
 
-  deploy(_registrationDeadline: uint,
-         _votingDeadline: uint,
+  deploy(_registrationDeadline: number,
+         _votingDeadline: number,
          _paramsHash: string,
          _eligibilityContract: address,
          _registrationAuthority: address,

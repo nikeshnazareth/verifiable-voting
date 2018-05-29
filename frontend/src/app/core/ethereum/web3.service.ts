@@ -5,6 +5,10 @@ export interface IWeb3Service {
   defaultAccount: string;
 }
 
+export interface IBigNumber {
+  toNumber(): number;
+}
+
 export interface IWeb3Provider { //tslint:disable-line
 }
 
@@ -37,7 +41,7 @@ export class Web3Service {
 
 
 // There is no official web3 typings file
-// In the meantime, these are skeleton interfaces that cover this project
+// In the meantime, this is a skeleton interface that covers this project
 interface IWeb3 {
   currentProvider: any;
   eth: {

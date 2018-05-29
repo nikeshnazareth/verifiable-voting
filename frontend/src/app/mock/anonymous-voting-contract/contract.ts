@@ -3,7 +3,7 @@ import { IContractEventStream } from '../../core/ethereum/contract.interface';
 import { address } from '../../core/ethereum/type.mappings';
 import { BigNumber } from '../bignumber';
 import { Mock } from '../module';
-import { ITransactionReceipt } from "../../core/ethereum/transaction.interface";
+import { ITransactionReceipt } from '../../core/ethereum/transaction.interface';
 
 export class AnonymousVotingContract implements AnonymousVotingAPI {
   private REGISTRATION_DEADLINE: number;

@@ -1,7 +1,7 @@
 import { IContract, IContractLog } from '../contract.interface';
 import { address, uint } from '../type.mappings';
-import * as BigNumber from 'bignumber.js';
-import { ITransactionProperties, ITransactionReceipt } from "../transaction.interface";
+import { ITransactionProperties, ITransactionReceipt } from '../transaction.interface';
+import { IBigNumber } from '../web3.service';
 
 
 export interface AnonymousVotingAPI extends VotePhasesAPI {
@@ -41,7 +41,7 @@ export namespace NewPhaseEvent {
 
   export interface Log extends IContractLog {
     args: {
-      phase: BigNumber;
+      phase: IBigNumber;
     };
   }
 }

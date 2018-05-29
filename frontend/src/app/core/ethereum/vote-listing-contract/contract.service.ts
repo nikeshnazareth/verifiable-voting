@@ -18,7 +18,7 @@ import { Web3Service } from '../web3.service';
 import { ITruffleContractAbstraction, TruffleContractWrapperService } from '../truffle-contract-wrapper.service';
 import { IContractLog } from '../contract.interface';
 import { ErrorService } from '../../error-service/error.service';
-import { address, uint } from '../type.mappings';
+import { address } from '../type.mappings';
 import { ITransactionReceipt } from '../transaction.interface';
 
 
@@ -44,7 +44,7 @@ export const VoteListingContractErrors = {
   eventError: new Error('Unexpected error in the VoteListing contract event stream'),
   deployVote: new Error('Unable to deploy a new AnonymousVoting contract'),
   deployedVotes: new Error('Unable to obtain AnonymousVoting contracts from the VoteListing contract'),
-  contractAddress: (i: uint) => new Error(`Unable to retrieve voting contract ${i} (0-up indexing)`)
+  contractAddress: (i: number) => new Error(`Unable to retrieve voting contract ${i} (0-up indexing)`)
 };
 
 @Injectable()
