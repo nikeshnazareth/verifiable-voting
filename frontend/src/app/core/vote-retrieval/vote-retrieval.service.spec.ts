@@ -33,10 +33,10 @@ describe('Service: VoteRetrievalService', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
       providers: [
+        ErrorService,
         {provide: VoteListingContractService, useClass: Mock.VoteListingContractService},
         {provide: AnonymousVotingContractService, useClass: Mock.AnonymousVotingContractService},
         {provide: IPFSService, useClass: Mock.IPFSService},
-        {provide: ErrorService, useClass: Mock.ErrorService}
       ]
     });
     voteListingSvc = TestBed.get(VoteListingContractService);
@@ -47,6 +47,7 @@ describe('Service: VoteRetrievalService', () => {
     onNext = jasmine.createSpy('onNext');
     onError = (err) => fail(err);
     onCompleted = jasmine.createSpy('onCompleted');
+    spyOn(errSvc, 'add').and.stub();
   });
 
   describe('property: summaries$', () => {

@@ -22,7 +22,7 @@ describe('Service: VoteListingContractService', () => {
     TestBed.configureTestingModule({
       providers: [
         VoteListingContractService,
-        {provide: ErrorService, useClass: Mock.ErrorService},
+        ErrorService,
         {provide: Web3Service, useClass: Mock.Web3Service},
         {provide: TruffleContractWrapperService, useClass: Mock.TruffleVoteListingWrapperService},
       ]
@@ -41,6 +41,7 @@ describe('Service: VoteListingContractService', () => {
   beforeEach(() => {
     onNext = jasmine.createSpy('onNext');
     onCompleted = jasmine.createSpy('onCompleted');
+    spyOn(errSvc, 'add').and.stub();
   });
 
   describe('constructor', () => {

@@ -27,7 +27,7 @@ describe('Service: AnonymousVotingContractService', () => {
     TestBed.configureTestingModule({
       providers: [
         AnonymousVotingContractService,
-        {provide: ErrorService, useClass: Mock.ErrorService},
+        ErrorService,
         {provide: Web3Service, useClass: Mock.Web3Service},
         {provide: TruffleContractWrapperService, useClass: Mock.TruffleAnonymousVotingWrapperService},
       ]
@@ -45,6 +45,7 @@ describe('Service: AnonymousVotingContractService', () => {
   beforeEach(() => {
     onNext = jasmine.createSpy('onNext');
     onCompleted = jasmine.createSpy('onCompleted');
+    spyOn(errSvc, 'add').and.stub();
   });
 
   describe('constructor', () => {
@@ -115,7 +116,7 @@ describe('Service: AnonymousVotingContractService', () => {
     });
 
     it('should emit a new event whenever the AnonymousVoting contract emits a NewPhase event', () => {
-     spyOn(voteCollection.instance.currentPhase, 'call').and
+      spyOn(voteCollection.instance.currentPhase, 'call').and
         .returnValue(Promise.resolve(new BigNumber(0)));
       init_phaseAt$_and_subscribe();
 

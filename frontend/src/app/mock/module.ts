@@ -2,7 +2,6 @@ import { address } from '../core/ethereum/type.mappings';
 import { AnonymousVotingAPI, VotePhases } from '../core/ethereum/anonymous-voting-contract/contract.api';
 import { AnonymousVotingContract } from './anonymous-voting-contract/contract';
 import { AnonymousVotingContractService } from './anonymous-voting-contract/contract.service';
-import { ErrorService } from './error.service';
 import { IPFSService } from './ipfs.service';
 import { ITransactionReceipt } from '../core/ethereum/transaction.interface';
 import { IVoteParameters } from '../core/vote-manager/vote-manager.service';
@@ -43,7 +42,6 @@ export class Mock {
 
   // generic services
   public static Web3Service = Web3Service;
-  public static ErrorService = ErrorService;
   public static IPFSService = IPFSService;
   public static VoteManagerService = VoteManagerService;
   public static VoteRetrievalService = VoteRetrievalService;

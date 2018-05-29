@@ -18,7 +18,7 @@ describe('Service: VoteManagerService', () => {
     TestBed.configureTestingModule({
       providers: [
         VoteManagerService,
-        {provide: ErrorService, useClass: Mock.ErrorService},
+        ErrorService,
         {provide: VoteListingContractService, useClass: Mock.VoteListingContractService},
         {provide: IPFSService, useClass: Mock.IPFSService},
       ]
@@ -36,6 +36,7 @@ describe('Service: VoteManagerService', () => {
   beforeEach(() => {
     onNext = jasmine.createSpy('onNext');
     onCompleted = jasmine.createSpy('onCompleted');
+    spyOn(errSvc, 'add').and.stub();
   });
 
   const voteDetails: IAnonymousVotingContractCollection = Mock.AnonymousVotingContractCollections[0];
