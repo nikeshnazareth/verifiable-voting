@@ -148,7 +148,7 @@ export class AnonymousVotingContractService implements IAnonymousVotingContractS
   registerAt$(contractAddr: address, voterAddr: address, blindAddressHash: string): Observable<ITransactionReceipt> {
     return this._contractAt(contractAddr)
       .map(contract => contract.register(blindAddressHash, {from: voterAddr}))
-      .switchMap(registerPromise => Observable.from(registerPromise))
+      .switchMap(registerPromise => Observable.fromPromise(registerPromise))
       .catch(err => {
         this.errSvc.add(AnonymousVotingContractErrors.registration(contractAddr, voterAddr), err);
         return <Observable<Date>> Observable.empty();

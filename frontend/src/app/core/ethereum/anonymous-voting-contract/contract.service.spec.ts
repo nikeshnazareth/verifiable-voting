@@ -503,19 +503,19 @@ describe('Service: AnonymousVotingContractService', () => {
     });
 
     it('should call the "register" function on the AnonymousVoting contract', () => {
-      spyOn(voteCollection.instance, 'register').and.stub();
+      spyOn(voteCollection.instance, 'register').and.callThrough();
       init_registerAt$();
       expect(voteCollection.instance.register).toHaveBeenCalled();
     });
 
     it('should pass the blinded address hash to the AnonymousVoting.register function', () => {
-      spyOn(voteCollection.instance, 'register').and.stub();
+      spyOn(voteCollection.instance, 'register').and.callThrough();
       init_registerAt$();
       expect((<Spy>voteCollection.instance.register).calls.mostRecent().args[0]).toEqual(voter.blinded_address_hash);
     });
 
     it('should set the message sender on the AnonymousVoting.register call to the specified voter address', () => {
-      spyOn(voteCollection.instance, 'register').and.stub();
+      spyOn(voteCollection.instance, 'register').and.callThrough();
       init_registerAt$();
       expect((<Spy>voteCollection.instance.register).calls.mostRecent().args[1]).toEqual({from: voter.public_address});
     });
