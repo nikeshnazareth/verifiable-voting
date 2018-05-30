@@ -1,16 +1,12 @@
 import { async, ComponentFixture, TestBed } from '@angular/core/testing';
-import { DebugElement } from '@angular/core';
+import { Component, DebugElement, Input } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 
 import { VoteComponent } from './vote-component';
-import { MaterialModule } from '../../material/material.module';
 import { VoteRetrievalService } from '../../core/vote-retrieval/vote-retrieval.service';
-import { RegistrationPhaseComponent } from './registration-phase.component';
-import { VotingPhaseComponent } from './voting-phase.component';
-import { CompletePhaseComponent } from './complete-phase-component';
+import { MaterialModule } from '../../material/material.module';
 import { Mock } from '../../mock/module';
-import Spy = jasmine.Spy;
 
 describe('Component: VoteComponent', () => {
   let fixture: ComponentFixture<VoteComponent>;
@@ -36,16 +32,16 @@ describe('Component: VoteComponent', () => {
     TestBed.configureTestingModule({
       declarations: [
         VoteComponent,
-        RegistrationPhaseComponent,
-        VotingPhaseComponent,
-        CompletePhaseComponent
+        StubRegistrationPhaseComponent,
+        StubVotingPhaseComponent,
+        StubCompletePhaseComponent
       ],
       imports: [
         MaterialModule,
         BrowserAnimationsModule
       ],
       providers: [
-        {provide: VoteRetrievalService, useClass: Mock.VoteRetrievalService}
+        {provide: VoteRetrievalService, useClass: Mock.VoteRetrievalService},
       ]
     })
       .compileComponents()
@@ -184,20 +180,17 @@ describe('Component: VoteComponent', () => {
     });
 
     describe('Registration Phase Component', () => {
-      let regPhaseComp: DebugElement;
-      let indexSpy: Spy;
+      let regPhaseComponent: DebugElement;
 
       beforeEach(() => {
-        regPhaseComp = fixture.debugElement.query(By.css('vv-registration-phase'));
-        indexSpy = jasmine.createSpy('index setter');
-        spyOnProperty(regPhaseComp.componentInstance, 'index', 'set').and.callFake(indexSpy);
+        regPhaseComponent = fixture.debugElement.query(By.css('vv-registration-phase'));
       });
 
       it('should track the index of the Vote Component', () => {
         Page.ARBITRARY_CONTRACT_INDICES.map(idx => {
           fixture.componentInstance.index = idx;
           fixture.detectChanges();
-          expect(indexSpy.calls.mostRecent().args[0]).toEqual(idx);
+          expect(regPhaseComponent.componentInstance.index).toEqual(idx);
         });
       });
     });
@@ -236,3 +229,30 @@ describe('Component: VoteComponent', () => {
 
   });
 });
+
+@Component({
+  selector: 'vv-registration-phase',
+  template: ''
+})
+class StubRegistrationPhaseComponent {
+  @Input() index;
+}
+
+@Component({
+  selector: 'vv-voting-phase',
+  template: ''
+})
+class StubVotingPhaseComponent {
+  @Input() index;
+}
+
+
+@Component({
+  selector: 'vv-complete-phase',
+  template: ''
+})
+class StubCompletePhaseComponent {
+  @Input() index;
+}
+
+
