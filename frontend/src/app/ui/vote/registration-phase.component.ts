@@ -1,5 +1,5 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { AbstractControl, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Observable } from 'rxjs/Observable';
 import { BehaviorSubject } from 'rxjs/BehaviorSubject';
 import 'rxjs/add/operator/map';
@@ -35,6 +35,23 @@ export const RegistrationPhaseComponentMessages = {
           <mat-checkbox formControlName="voterAddressAck"></mat-checkbox>
           <b>I ACKNOWLEDGE</b> that this is a public address.
           It will be used to prove I am eligible to vote.
+        </div>
+        <mat-divider></mat-divider>
+        <div>
+          0x
+          <mat-form-field>
+            <input matInput formControlName="anonymousAddress" placeholder="Anonymous Address">
+          </mat-form-field>
+          <button mat-button color="primary" type="button" id="fillAnonymousAddress" (click)="_fillAnonymousAddress()">
+            Use Active Account
+          </button>
+        </div>
+        <div>
+          <mat-checkbox formControlName="anonymousAddressAck"></mat-checkbox>
+          <b>I ACKNOWLEDGE</b> that this address will be publicly associated with my vote and should, therefore,
+          remain anonymous.<br/>
+          It is recommended to create a new account specifically for this vote, never use it for any other purpose, 
+          and never reveal it to anyone.
         </div>
       </form>
     </div>
@@ -74,7 +91,9 @@ export class RegistrationPhaseComponent implements OnInit {
   private createForm() {
     this.registerForm = this.fb.group({
       voterAddress: ['', [Validators.required, Validators.pattern('^[0-9a-fA-F]{40}$')]],
-      voterAddressAck: [false, Validators.requiredTrue]
+      voterAddressAck: [false, Validators.requiredTrue],
+      anonymousAddress: ['', [Validators.required, Validators.pattern('^[0-9a-fA-F]{40}$')]],
+      anonymousAddressAck: [false, Validators.requiredTrue]
     });
   }
 
@@ -87,12 +106,35 @@ export class RegistrationPhaseComponent implements OnInit {
     this._index$.next(val);
   }
 
+  /**
+   * Fill the public voter address with the web3 default account or
+   * raise an error if it is undefined
+   * @private
+   */
   private _fillVoterAddress() {
+    this._fillAddress(this.registerForm.get('voterAddress'));
+  }
+
+  /**
+   * Fill the anonymous voter address with the web3 default account or
+   * raise an error if it is undefined
+   * @private
+   */
+  private _fillAnonymousAddress() {
+    this._fillAddress(this.registerForm.get('anonymousAddress'));
+  }
+
+  /**
+   * Fill the specified control with the web3 default account or
+   * raise an error if it is undefined
+   * @private
+   */
+  private _fillAddress(ctrl: AbstractControl) {
     const account: string = this.web3Svc.defaultAccount;
     if (typeof account === 'undefined') {
       this.errSvc.add(Web3ServiceErrors.account, null);
     } else {
-      this.registerForm.get('voterAddress').setValue(this.web3Svc.defaultAccount.slice(2));
+      ctrl.setValue(this.web3Svc.defaultAccount.slice(2));
     }
   }
 

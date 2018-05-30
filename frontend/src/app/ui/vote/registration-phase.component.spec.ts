@@ -55,6 +55,18 @@ describe('Component: RegistrationPhaseComponent', () => {
     get voterAddressAcknowledgement(): DebugElement {
       return fixture.debugElement.query(By.css('mat-checkbox[formControlName="voterAddressAck"]'));
     }
+
+    get anonymousAddressInput(): DebugElement {
+      return fixture.debugElement.query(By.css('input[formControlName="anonymousAddress"]'));
+    }
+
+    get anonymousAddressButton(): DebugElement {
+      return fixture.debugElement.query(By.css('button#fillAnonymousAddress'));
+    }
+
+    get anonymousAddressAcknowledgement(): DebugElement {
+      return fixture.debugElement.query(By.css('mat-checkbox[formControlName="anonymousAddressAck"]'));
+    }
   }
 
 
@@ -400,6 +412,111 @@ describe('Component: RegistrationPhaseComponent', () => {
           it('should be valid when checked', () => {
             ctrl.setValue(true);
             expect(page.voterAddressAcknowledgement.componentInstance.checked).toEqual(true);
+            expect(ctrl.valid).toEqual(true);
+          });
+        });
+      });
+    });
+
+    fdescribe('Anonymous Address', () => {
+      beforeEach(() => fixture.detectChanges());
+
+      describe('input box', () => {
+        it('should exist', () => {
+          expect(page.anonymousAddressInput).not.toBeNull();
+        });
+
+        it('should start empty', () => {
+          expect(page.anonymousAddressInput.nativeElement.value).toBeFalsy();
+        });
+
+        it('should have a placeholder "Anonymous Address"', () => {
+          expect(page.anonymousAddressInput.nativeElement.placeholder).toEqual('Anonymous Address');
+        });
+
+        it('should be a form control', () => {
+          expect(page.anonymousAddressInput.attributes.formControlName).not.toBeNull();
+        });
+
+        describe('form control validity', () => {
+          let ctrl: AbstractControl;
+          const valid_address: address = '1234567890aabbccddee1234567890aabbccddee';
+
+          beforeEach(() => {
+            ctrl = fixture.componentInstance.form.get(page.anonymousAddressInput.attributes.formControlName);
+          });
+
+          it('should be invalid when null', () => {
+            DOMInteractionUtility.setValueOn(page.anonymousAddressInput, '');
+            fixture.detectChanges();
+            expect(page.anonymousAddressInput.nativeElement.value).toBeFalsy();
+            expect(ctrl.valid).toEqual(false);
+          });
+
+          it('should be valid when containing exactly 40 hex characters', () => {
+            DOMInteractionUtility.setValueOn(page.anonymousAddressInput, valid_address);
+            fixture.detectChanges();
+            expect(ctrl.valid).toEqual(true);
+          });
+
+          xit('should reuse the validator (and tests) from the LaunchVoteComponent -> registration authority address');
+        });
+      });
+
+      describe('button', () => {
+        it('should exist', () => {
+          expect(page.anonymousAddressButton).not.toBeNull();
+        });
+
+        it('should have type "button"', () => {
+          expect(page.anonymousAddressButton.nativeElement.type).toEqual('button');
+        });
+
+        it('should have text "Use Active Account"', () => {
+          expect(page.anonymousAddressButton.nativeElement.innerText).toEqual('Use Active Account');
+        });
+
+        it('should fill the Anonymous Address input box with the current web3 active account', () => {
+          expect(page.anonymousAddressInput.nativeElement.value).toBeFalsy();
+          DOMInteractionUtility.clickOn(page.anonymousAddressButton);
+          expect(page.anonymousAddressInput.nativeElement.value).toEqual(page.web3Svc.defaultAccount.slice(2));
+        });
+
+        it('should raise an error with the Error Service if the default account is undefined', () => {
+          spyOnProperty(page.web3Svc, 'defaultAccount').and.returnValue(undefined);
+          DOMInteractionUtility.clickOn(page.anonymousAddressButton);
+          expect(page.errSvc.add).toHaveBeenCalledWith(Web3ServiceErrors.account, null);
+        });
+      });
+
+      describe('checkbox', () => {
+        it('should exist', () => {
+          expect(page.anonymousAddressAcknowledgement).not.toBeNull();
+        });
+
+        it('should start unchecked', () => {
+          expect(page.anonymousAddressAcknowledgement.componentInstance.checked).toEqual(false);
+        });
+
+        it('should be a form control', () => {
+          expect(page.anonymousAddressAcknowledgement.attributes.formControlName).not.toBeNull();
+        });
+
+        describe('form control validity', () => {
+          let ctrl: AbstractControl;
+
+          beforeEach(() => {
+            ctrl = fixture.componentInstance.form.get(page.anonymousAddressAcknowledgement.attributes.formControlName);
+          });
+
+          it('should be invalid when unchecked', () => {
+            expect(page.anonymousAddressAcknowledgement.componentInstance.checked).toEqual(false);
+            expect(ctrl.valid).toEqual(false);
+          });
+
+          it('should be valid when checked', () => {
+            ctrl.setValue(true);
+            expect(page.anonymousAddressAcknowledgement.componentInstance.checked).toEqual(true);
             expect(ctrl.valid).toEqual(true);
           });
         });
