@@ -1,4 +1,3 @@
-
 export interface IWeb3Service {
   isInjected: boolean;
   currentProvider: IWeb3Provider;
@@ -17,7 +16,7 @@ declare const web3: IWeb3;
 
 export class Web3Service {
 
-   /**
+  /**
    * @returns {boolean} whether or not web3 has been injected into the current context
    */
   get isInjected(): boolean {
@@ -37,6 +36,14 @@ export class Web3Service {
   get defaultAccount(): string {
     return this.isInjected ? web3.eth.defaultAccount : null;
   }
+
+  /**
+   * @param {string} preimage the value to be hashed
+   * @returns {string} the sha3 hash of the preimage as a hex string
+   */
+  sha3(preimage: string): string {
+    return this.isInjected ? web3.sha3(preimage) : null;
+  }
 }
 
 
@@ -47,5 +54,6 @@ interface IWeb3 {
   eth: {
     defaultAccount: string;
   };
+  sha3: (preimage: string) => string;
 }
 
