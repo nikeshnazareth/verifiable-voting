@@ -51,7 +51,7 @@ export class CryptographyService implements ICryptographyService {
     const hexRegex = /^0x[a-f0-9]*$/;
     if (!(key && hexRegex.test(key.modulus) && hexRegex.test(key.public_exp))) {
       this.errSvc.add(CryptographyServiceErrors.key(key), null);
-      return;
+      return null;
     }
 
     const messageHash: string = this.web3Svc.sha3(message);

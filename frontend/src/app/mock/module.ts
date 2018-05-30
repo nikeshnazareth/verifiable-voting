@@ -27,6 +27,7 @@ import { NoRestrictionContractService } from './no-restriction-contract/contract
 import { Web3Service } from './web3.service';
 import { VoteRetrievalService } from './vote-retrieval.service';
 import { MOCK_BLINDING } from './sample-blinding';
+import { CryptographyService } from './cryptography.service';
 
 
 const msPerDay: number = 1000 * 60 * 60 * 24;
@@ -47,6 +48,7 @@ export class Mock {
   public static IPFSService = IPFSService;
   public static VoteManagerService = VoteManagerService;
   public static VoteRetrievalService = VoteRetrievalService;
+  public static CryptographyService = CryptographyService;
 
   // contract service
   public static AnonymousVotingContractService = AnonymousVotingContractService;
@@ -134,6 +136,7 @@ function generateMockVoteContract(idx: number): IAnonymousVotingContractCollecti
 export interface IVoter {
   public_address: address;
   anonymous_address: address;
+  blinding_factor: string;
   blinded_address: string;
   blinded_address_hash: string;
   register_receipt: ITransactionReceipt;
@@ -143,6 +146,7 @@ function generateMockVoter(idx: number): IVoter {
   return {
     public_address: 'MOCK_PUBLIC_ADDRESS_' + idx,
     anonymous_address: 'MOCK_ANONYMOUS_ADDRESS_' + idx,
+    blinding_factor: 'MOCK_BLINDING_FACTOR_' + idx,
     blinded_address: 'MOCK_BLINDED_ADDRESS_' + idx,
     blinded_address_hash: 'MOCK_BLINDED_ADDRESS_HASH_' + idx,
     register_receipt: 'MOCK_REGISTER_RECEIPT_' + idx
