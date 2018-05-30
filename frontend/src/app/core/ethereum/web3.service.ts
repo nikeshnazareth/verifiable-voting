@@ -2,6 +2,7 @@ export interface IWeb3Service {
   isInjected: boolean;
   currentProvider: IWeb3Provider;
   defaultAccount: string;
+  sha3(preimage: string): string;
 }
 
 export interface IBigNumber {

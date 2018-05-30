@@ -26,6 +26,7 @@ import { VoteManagerService } from './vote-manager.service';
 import { NoRestrictionContractService } from './no-restriction-contract/contract.service';
 import { Web3Service } from './web3.service';
 import { VoteRetrievalService } from './vote-retrieval.service';
+import { MOCK_BLINDING } from './sample-blinding';
 
 
 const msPerDay: number = 1000 * 60 * 60 * 24;
@@ -39,6 +40,7 @@ export class Mock {
   public static TODAY: Date = TODAY;
   public static VOTE_LISTING_ADDRESS: address = 'MOCK_VOTE_LISTING_ADDRESS';
   public static NO_RESTRICTION_ADDRESS: address = 'MOCK_NO_RESTRICTION_ADDRESS';
+  public static BLINDING = MOCK_BLINDING;
 
   // generic services
   public static Web3Service = Web3Service;

@@ -1,5 +1,9 @@
 import { TestBed } from '@angular/core/testing';
+
 import { CryptographyService, ICryptographyService } from './cryptography.service';
+import { Mock } from '../../mock/module';
+import { ErrorService } from '../error-service/error.service';
+import { Web3Service } from '../ethereum/web3.service';
 
 describe('Service: CryptographyService', () => {
   let cryptoSvc: ICryptographyService;
@@ -7,7 +11,9 @@ describe('Service: CryptographyService', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
       providers: [
-        CryptographyService
+        CryptographyService,
+        ErrorService,
+        {provide: Web3Service, useClass: Mock.Web3Service}
       ]
     });
     cryptoSvc = TestBed.get(CryptographyService);
@@ -61,5 +67,22 @@ describe('Service: CryptographyService', () => {
       const anotherRandom = cryptoSvc.random(SIZES[0]);
       expect(random).not.toEqual(anotherRandom);
     });
+  });
+
+  describe('method: blind', () => {
+    it('should return the blinded value corresponding to the message, factor and key', () => {
+      const blinded: string = cryptoSvc.blind(
+        Mock.BLINDING.message.plain, Mock.BLINDING.factor.plain, Mock.BLINDING.public_key
+      );
+      expect(blinded).toEqual(Mock.BLINDING.blinded_message);
+    });
+
+    xdescribe('case: the key is null', () => {});
+
+    xdescribe('case: the modulus is not a valid hex value', () => {});
+
+    xdescribe('case: the public exponent is not a valid hex value', () => {});
+
+    xdescribe('case: web3 is not injected', () => {});
   });
 });
