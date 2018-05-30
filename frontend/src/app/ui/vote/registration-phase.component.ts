@@ -10,6 +10,7 @@ import { VotePhases } from '../../core/ethereum/anonymous-voting-contract/contra
 import { IVotingContractDetails, RETRIEVAL_STATUS } from '../../core/vote-retrieval/vote-retreival.service.constants';
 import { Web3Service, Web3ServiceErrors } from '../../core/ethereum/web3.service';
 import { ErrorService } from '../../core/error-service/error.service';
+import { CryptographyService } from '../../core/cryptography/cryptography.service';
 
 export const RegistrationPhaseComponentMessages = {
   retrieving: 'Retrieving the contract details...',
@@ -28,6 +29,7 @@ export class RegistrationPhaseComponent implements OnInit {
   private _message$: Observable<string>;
 
   constructor(private voteRetrievalSvc: VoteRetrievalService,
+              private cryptoSvc: CryptographyService,
               private fb: FormBuilder,
               private web3Svc: Web3Service,
               private errSvc: ErrorService) {
@@ -54,8 +56,13 @@ export class RegistrationPhaseComponent implements OnInit {
       voterAddress: ['', [Validators.required, Validators.pattern('^[0-9a-fA-F]{40}$')]],
       voterAddressAck: [false, Validators.requiredTrue],
       anonymousAddress: ['', [Validators.required, Validators.pattern('^[0-9a-fA-F]{40}$')]],
-      anonymousAddressAck: [false, Validators.requiredTrue]
+      anonymousAddressAck: [false, Validators.requiredTrue],
+      blindingFactor: ['', Validators.required],
+      blindingFactorSaveAck: [false, Validators.requiredTrue],
+      blindingFactorProtectAck: [false, Validators.requiredTrue]
     });
+
+    this._refreshBlindingFactor();
   }
 
   /**
@@ -65,6 +72,14 @@ export class RegistrationPhaseComponent implements OnInit {
   @Input()
   set index(val: number) {
     this._index$.next(val);
+  }
+
+  /**
+   * Set the blinding factor to a new 33-byte random string (in base64)
+   * @private
+   */
+  private _refreshBlindingFactor() {
+    this.registerForm.get('blindingFactor').setValue(this.cryptoSvc.random(33));
   }
 
   /**

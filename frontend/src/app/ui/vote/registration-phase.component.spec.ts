@@ -15,6 +15,7 @@ import { address } from '../../core/ethereum/type.mappings';
 import { DOMInteractionUtility } from '../../mock/dom-interaction-utility';
 import { Web3Service, Web3ServiceErrors } from '../../core/ethereum/web3.service';
 import { ErrorService } from '../../core/error-service/error.service';
+import { CryptographyService } from '../../core/cryptography/cryptography.service';
 
 describe('Component: RegistrationPhaseComponent', () => {
   let fixture: ComponentFixture<TestRegistrationPhaseComponent>;
@@ -27,11 +28,13 @@ describe('Component: RegistrationPhaseComponent', () => {
     public voteRetrievalSvc: VoteRetrievalService;
     public errSvc: ErrorService;
     public web3Svc: Web3Service;
+    public cryptoSvc: CryptographyService;
 
     constructor() {
       this.voteRetrievalSvc = fixture.debugElement.injector.get(VoteRetrievalService);
       this.web3Svc = fixture.debugElement.injector.get(Web3Service);
       this.errSvc = fixture.debugElement.injector.get(ErrorService);
+      this.cryptoSvc = fixture.debugElement.injector.get(CryptographyService);
     }
 
     // use getters because the components are added/removed from the DOM
@@ -67,6 +70,22 @@ describe('Component: RegistrationPhaseComponent', () => {
     get anonymousAddressAcknowledgement(): DebugElement {
       return fixture.debugElement.query(By.css('mat-checkbox[formControlName="anonymousAddressAck"]'));
     }
+
+    get blindingFactorInput(): DebugElement {
+      return fixture.debugElement.query(By.css('input[formControlName="blindingFactor"]'));
+    }
+
+    get blindingFactorButton(): DebugElement {
+      return fixture.debugElement.query(By.css('button#refreshBlindingFactor'));
+    }
+
+    get blindingFactorSaveAcknowledgement(): DebugElement {
+      return fixture.debugElement.query(By.css('mat-checkbox[formControlName="blindingFactorSaveAck"]'));
+    }
+
+    get blindingFactorProtectAcknowledgement(): DebugElement {
+      return fixture.debugElement.query(By.css('mat-checkbox[formControlName="blindingFactorProtectAck"]'));
+    }
   }
 
 
@@ -83,6 +102,7 @@ describe('Component: RegistrationPhaseComponent', () => {
       ],
       providers: [
         ErrorService,
+        {provide: CryptographyService, useClass: Mock.CryptographyService},
         {provide: VoteRetrievalService, useClass: Mock.VoteRetrievalService},
         {provide: Web3Service, useClass: Mock.Web3Service}
       ]
@@ -418,7 +438,7 @@ describe('Component: RegistrationPhaseComponent', () => {
       });
     });
 
-    fdescribe('Anonymous Address', () => {
+    describe('Anonymous Address', () => {
       beforeEach(() => fixture.detectChanges());
 
       describe('input box', () => {
@@ -517,6 +537,153 @@ describe('Component: RegistrationPhaseComponent', () => {
           it('should be valid when checked', () => {
             ctrl.setValue(true);
             expect(page.anonymousAddressAcknowledgement.componentInstance.checked).toEqual(true);
+            expect(ctrl.valid).toEqual(true);
+          });
+        });
+      });
+    });
+
+    describe('Blinding Factor', () => {
+      const random = (i) => 'MOCK_RANDOM_VALUE_' + i;
+      let numRequests;
+
+      beforeEach(() => {
+        numRequests = 0;
+        spyOn(page.cryptoSvc, 'random').and.callFake(() => {
+          numRequests++;
+          return random(numRequests);
+        });
+        fixture.detectChanges();
+      });
+
+      describe('input box', () => {
+        it('should exist', () => {
+          expect(page.blindingFactorInput).not.toBeNull();
+        });
+
+        it('should immediately request 33 bytes of random from the cryptography service', () => {
+          expect(page.cryptoSvc.random).toHaveBeenCalledWith(33);
+        });
+
+        it('should be initialised to the random value', () => {
+          expect(page.blindingFactorInput.nativeElement.value).toEqual(random(1));
+        });
+
+        it('should have a placeholder "Random Blinding Factor"', () => {
+          expect(page.blindingFactorInput.nativeElement.placeholder).toEqual('Random Blinding Factor');
+        });
+
+        it('should be a form control', () => {
+          expect(page.blindingFactorInput.attributes.formControlName).not.toBeNull();
+        });
+
+        describe('form control validity', () => {
+          let ctrl: AbstractControl;
+
+          beforeEach(() => {
+            ctrl = fixture.componentInstance.form.get(page.blindingFactorInput.attributes.formControlName);
+          });
+
+          it('should be invalid when null', () => {
+            DOMInteractionUtility.setValueOn(page.blindingFactorInput, '');
+            fixture.detectChanges();
+            expect(page.blindingFactorInput.nativeElement.value).toBeFalsy();
+            expect(ctrl.valid).toEqual(false);
+          });
+
+          it('should be valid when populated', () => {
+            fixture.detectChanges();
+            expect(page.blindingFactorInput.nativeElement.value).toBeTruthy();
+            expect(ctrl.valid).toEqual(true);
+          });
+        });
+      });
+
+      describe('button', () => {
+        it('should exist', () => {
+          expect(page.blindingFactorButton).not.toBeNull();
+        });
+
+        it('should have type "button"', () => {
+          expect(page.blindingFactorButton.nativeElement.type).toEqual('button');
+        });
+
+        it('should have text "Regenerate"', () => {
+          expect(page.blindingFactorButton.nativeElement.innerText).toEqual('Regenerate');
+        });
+
+        it('should fill the Blinding Factor input box with 33 bytes of fresh random', () => {
+          expect(page.blindingFactorInput.nativeElement.value).toEqual(random(1));
+          DOMInteractionUtility.clickOn(page.blindingFactorButton);
+          expect(page.blindingFactorInput.nativeElement.value).toEqual(random(2));
+        });
+      });
+
+      describe('save checkbox', () => {
+        it('should exist', () => {
+          expect(page.blindingFactorSaveAcknowledgement).not.toBeNull();
+        });
+
+        it('should start unchecked', () => {
+          expect(page.blindingFactorSaveAcknowledgement.componentInstance.checked).toEqual(false);
+        });
+
+        it('should be a form control', () => {
+          expect(page.blindingFactorSaveAcknowledgement.attributes.formControlName).not.toBeNull();
+        });
+
+        describe('form control validity', () => {
+          let ctrl: AbstractControl;
+
+          beforeEach(() => {
+            ctrl = fixture.componentInstance.form.get(
+              page.blindingFactorSaveAcknowledgement.attributes.formControlName
+            );
+          });
+
+          it('should be invalid when unchecked', () => {
+            expect(page.blindingFactorSaveAcknowledgement.componentInstance.checked).toEqual(false);
+            expect(ctrl.valid).toEqual(false);
+          });
+
+          it('should be valid when checked', () => {
+            ctrl.setValue(true);
+            expect(page.blindingFactorSaveAcknowledgement.componentInstance.checked).toEqual(true);
+            expect(ctrl.valid).toEqual(true);
+          });
+        });
+      });
+
+      describe('protect checkbox', () => {
+        it('should exist', () => {
+          expect(page.blindingFactorProtectAcknowledgement).not.toBeNull();
+        });
+
+        it('should start unchecked', () => {
+          expect(page.blindingFactorProtectAcknowledgement.componentInstance.checked).toEqual(false);
+        });
+
+        it('should be a form control', () => {
+          expect(page.blindingFactorProtectAcknowledgement.attributes.formControlName).not.toBeNull();
+        });
+
+        describe('form control validity', () => {
+          let ctrl: AbstractControl;
+
+          beforeEach(() => {
+            ctrl = fixture.componentInstance.form.get(
+              page.blindingFactorProtectAcknowledgement.attributes.formControlName
+            );
+          });
+
+          it('should be invalid when unchecked', () => {
+            expect(page.blindingFactorProtectAcknowledgement.componentInstance.checked).toEqual(false);
+            expect(ctrl.valid).toEqual(false);
+          });
+
+          it('should be valid when checked', () => {
+            ctrl.setValue(true);
+            expect(page.blindingFactorProtectAcknowledgement.componentInstance.checked).toEqual(true);
             expect(ctrl.valid).toEqual(true);
           });
         });
