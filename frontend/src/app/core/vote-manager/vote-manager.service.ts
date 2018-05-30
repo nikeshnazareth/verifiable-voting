@@ -26,6 +26,12 @@ export interface IVoteManagerService {
               params: IVoteParameters,
               eligibilityContract: address,
               registrationAuthority: address): Observable<ITransactionReceipt>;
+
+  registerAt$(contractAddress: address,
+              registrationKey: IRSAKey,
+              voterAddr: address,
+              anonymousAddr: address,
+              blindingFactor: string): Observable<ITransactionReceipt>;
 }
 
 export const VoteManagerServiceErrors = {
@@ -62,6 +68,14 @@ export class VoteManagerService implements IVoteManagerService {
         return <Observable<string>> Observable.empty();
       })
       .switchMap(hash => this.voteListingSvc.deployVote$(timeframes, hash, eligibilityContract, registrationAuth));
+  }
+
+  registerAt$(contractAddr: address,
+              registrationKey: IRSAKey,
+              voterAddr: address,
+              anonymousAddr: address,
+              blindingFactor: string): Observable<ITransactionReceipt> {
+    return Observable.empty();
   }
 }
 
