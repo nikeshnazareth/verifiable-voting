@@ -10,6 +10,7 @@ import { MatNativeDateModule } from '@angular/material';
 import { MatIconModule } from '@angular/material/icon';
 import { MatStepperModule } from '@angular/material/stepper';
 import { MatExpansionModule } from '@angular/material/expansion';
+import { MatCheckboxModule } from '@angular/material/checkbox';
 
 
 @NgModule({
@@ -24,7 +25,8 @@ import { MatExpansionModule } from '@angular/material/expansion';
     MatNativeDateModule,
     MatIconModule,
     MatStepperModule,
-    MatExpansionModule
+    MatExpansionModule,
+    MatCheckboxModule
   ],
   exports: [
     MatButtonModule,
@@ -37,7 +39,8 @@ import { MatExpansionModule } from '@angular/material/expansion';
     MatNativeDateModule,
     MatIconModule,
     MatStepperModule,
-    MatExpansionModule
+    MatExpansionModule,
+    MatCheckboxModule
   ],
 })
 

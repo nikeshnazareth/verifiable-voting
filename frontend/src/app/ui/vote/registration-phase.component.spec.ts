@@ -16,7 +16,7 @@ import { DOMInteractionUtility } from '../../mock/dom-interaction-utility';
 import { Web3Service, Web3ServiceErrors } from '../../core/ethereum/web3.service';
 import { ErrorService } from '../../core/error-service/error.service';
 
-fdescribe('Component: RegistrationPhaseComponent', () => {
+describe('Component: RegistrationPhaseComponent', () => {
   let fixture: ComponentFixture<TestRegistrationPhaseComponent>;
   let page: Page;
 
@@ -51,6 +51,10 @@ fdescribe('Component: RegistrationPhaseComponent', () => {
     get voterAddressButton(): DebugElement {
       return fixture.debugElement.query(By.css('button#fillVoterAddress'));
     }
+
+    get voterAddressAcknowledgement(): DebugElement {
+      return fixture.debugElement.query(By.css('mat-checkbox[formControlName="voterAddressAck"]'));
+    }
   }
 
 
@@ -78,7 +82,7 @@ fdescribe('Component: RegistrationPhaseComponent', () => {
       });
   }));
 
-  fdescribe('User Interface', () => {
+  describe('User Interface', () => {
 
     const index = Page.ARBITRARY_CONTRACT_INDICES[0];
     const voteCollection: IAnonymousVotingContractCollection = Mock.AnonymousVotingContractCollections[index];
@@ -297,7 +301,7 @@ fdescribe('Component: RegistrationPhaseComponent', () => {
       });
     });
 
-    fdescribe('Voter Address', () => {
+    describe('Voter Address', () => {
       beforeEach(() => fixture.detectChanges());
 
       describe('input box', () => {
@@ -365,6 +369,39 @@ fdescribe('Component: RegistrationPhaseComponent', () => {
           spyOnProperty(page.web3Svc, 'defaultAccount').and.returnValue(undefined);
           DOMInteractionUtility.clickOn(page.voterAddressButton);
           expect(page.errSvc.add).toHaveBeenCalledWith(Web3ServiceErrors.account, null);
+        });
+      });
+
+      describe('checkbox', () => {
+        it('should exist', () => {
+          expect(page.voterAddressAcknowledgement).not.toBeNull();
+        });
+
+        it('should start unchecked', () => {
+          expect(page.voterAddressAcknowledgement.componentInstance.checked).toEqual(false);
+        });
+
+        it('should be a form control', () => {
+          expect(page.voterAddressAcknowledgement.attributes.formControlName).not.toBeNull();
+        });
+
+        describe('form control validity', () => {
+          let ctrl: AbstractControl;
+
+          beforeEach(() => {
+            ctrl = fixture.componentInstance.form.get(page.voterAddressAcknowledgement.attributes.formControlName);
+          });
+
+          it('should be invalid when unchecked', () => {
+            expect(page.voterAddressAcknowledgement.componentInstance.checked).toEqual(false);
+            expect(ctrl.valid).toEqual(false);
+          });
+
+          it('should be valid when checked', () => {
+            ctrl.setValue(true);
+            expect(page.voterAddressAcknowledgement.componentInstance.checked).toEqual(true);
+            expect(ctrl.valid).toEqual(true);
+          });
         });
       });
     });

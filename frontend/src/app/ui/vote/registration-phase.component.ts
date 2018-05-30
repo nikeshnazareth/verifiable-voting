@@ -22,13 +22,20 @@ export const RegistrationPhaseComponentMessages = {
   template: `
     <div id="register" *ngIf="_inRegistrationPhase$ | async; else unavailable">
       <form (ngSubmit)="onSubmit()" [formGroup]=registerForm>
-        0x
-        <mat-form-field>
-          <input matInput formControlName="voterAddress" placeholder="Public Address">
-        </mat-form-field>
-        <button mat-button color="primary" type="button" id="fillVoterAddress" (click)="_fillVoterAddress()">
-          Use Active Account
-        </button>
+        <div>
+          0x
+          <mat-form-field>
+            <input matInput formControlName="voterAddress" placeholder="Public Address">
+          </mat-form-field>
+          <button mat-button color="primary" type="button" id="fillVoterAddress" (click)="_fillVoterAddress()">
+            Use Active Account
+          </button>
+        </div>
+        <div>
+          <mat-checkbox formControlName="voterAddressAck"></mat-checkbox>
+          <b>I ACKNOWLEDGE</b> that this is a public address.
+          It will be used to prove I am eligible to vote.
+        </div>
       </form>
     </div>
     <ng-template #unavailable>
@@ -67,6 +74,7 @@ export class RegistrationPhaseComponent implements OnInit {
   private createForm() {
     this.registerForm = this.fb.group({
       voterAddress: ['', [Validators.required, Validators.pattern('^[0-9a-fA-F]{40}$')]],
+      voterAddressAck: [false, Validators.requiredTrue]
     });
   }
 
