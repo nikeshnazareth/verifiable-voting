@@ -1,6 +1,8 @@
 import { async, ComponentFixture, TestBed } from '@angular/core/testing';
-import { DebugElement } from '@angular/core';
+import { DebugElement, OnInit } from '@angular/core';
 import { By } from '@angular/platform-browser';
+import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import { AbstractControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { Observable } from 'rxjs/Observable';
 
 import { RegistrationPhaseComponent, RegistrationPhaseComponentMessages } from './registration-phase.component';
@@ -9,9 +11,13 @@ import { MaterialModule } from '../../material/material.module';
 import { IAnonymousVotingContractCollection, Mock } from '../../mock/module';
 import { IVotingContractDetails, RETRIEVAL_STATUS } from '../../core/vote-retrieval/vote-retreival.service.constants';
 import { VotePhases } from '../../core/ethereum/anonymous-voting-contract/contract.api';
+import { address } from '../../core/ethereum/type.mappings';
+import { DOMInteractionUtility } from '../../mock/dom-interaction-utility';
+import { Web3Service, Web3ServiceErrors } from '../../core/ethereum/web3.service';
+import { ErrorService } from '../../core/error-service/error.service';
 
-describe('Component: RegistrationPhaseComponent', () => {
-  let fixture: ComponentFixture<RegistrationPhaseComponent>;
+fdescribe('Component: RegistrationPhaseComponent', () => {
+  let fixture: ComponentFixture<TestRegistrationPhaseComponent>;
   let page: Page;
 
   class Page {
@@ -19,10 +25,16 @@ describe('Component: RegistrationPhaseComponent', () => {
     public static MS_PER_DAY: number = 1000 * 60 * 60 * 24;
 
     public voteRetrievalSvc: VoteRetrievalService;
+    public errSvc: ErrorService;
+    public web3Svc: Web3Service;
 
     constructor() {
       this.voteRetrievalSvc = fixture.debugElement.injector.get(VoteRetrievalService);
+      this.web3Svc = fixture.debugElement.injector.get(Web3Service);
+      this.errSvc = fixture.debugElement.injector.get(ErrorService);
     }
+
+    // use getters because the components are added/removed from the DOM
 
     get registerSection(): DebugElement {
       return fixture.debugElement.query(By.css('#register'));
@@ -31,52 +43,67 @@ describe('Component: RegistrationPhaseComponent', () => {
     get unavailableSection(): DebugElement {
       return fixture.debugElement.query(By.css('#unavailable'));
     }
+
+    get voterAddressInput(): DebugElement {
+      return fixture.debugElement.query(By.css('input[formControlName="voterAddress"]'));
+    }
+
+    get voterAddressButton(): DebugElement {
+      return fixture.debugElement.query(By.css('button#fillVoterAddress'));
+    }
   }
 
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
       declarations: [
-        RegistrationPhaseComponent
+        TestRegistrationPhaseComponent
       ],
       imports: [
-        MaterialModule,
+        BrowserAnimationsModule,
+        FormsModule,
+        ReactiveFormsModule,
+        MaterialModule
       ],
       providers: [
-        {provide: VoteRetrievalService, useClass: Mock.VoteRetrievalService}
+        ErrorService,
+        {provide: VoteRetrievalService, useClass: Mock.VoteRetrievalService},
+        {provide: Web3Service, useClass: Mock.Web3Service}
       ]
     })
       .compileComponents()
       .then(() => {
-        fixture = TestBed.createComponent(RegistrationPhaseComponent);
+        fixture = TestBed.createComponent(TestRegistrationPhaseComponent);
         page = new Page();
       });
   }));
 
-  describe('User Interface', () => {
+  fdescribe('User Interface', () => {
+
+    const index = Page.ARBITRARY_CONTRACT_INDICES[0];
+    const voteCollection: IAnonymousVotingContractCollection = Mock.AnonymousVotingContractCollections[index];
+    let voteDetails: IVotingContractDetails;
+
+    beforeEach(() => {
+      voteDetails = {
+        index: index,
+        address: voteCollection.address,
+        phase: VotePhases[voteCollection.currentPhase],
+        parameters: voteCollection.parameters,
+        registrationDeadline: {
+          status: RETRIEVAL_STATUS.AVAILABLE,
+          value: new Date(voteCollection.timeframes.registrationDeadline)
+        },
+        votingDeadline: {
+          status: RETRIEVAL_STATUS.AVAILABLE,
+          value: new Date(voteCollection.timeframes.votingDeadline)
+        }
+      };
+      spyOn(page.voteRetrievalSvc, 'detailsAtIndex$').and.returnValue(Observable.of(voteDetails));
+      spyOn(page.errSvc, 'add').and.stub();
+    });
+
     describe('component status', () => {
-      const index = Page.ARBITRARY_CONTRACT_INDICES[0];
-      const voteCollection: IAnonymousVotingContractCollection = Mock.AnonymousVotingContractCollections[index];
-      let voteDetails: IVotingContractDetails;
-
-      beforeEach(() => {
-        voteDetails = {
-          index: index,
-          address: voteCollection.address,
-          phase: VotePhases[voteCollection.currentPhase],
-          parameters: voteCollection.parameters,
-          registrationDeadline: {
-            status: RETRIEVAL_STATUS.AVAILABLE,
-            value: new Date(voteCollection.timeframes.registrationDeadline)
-          },
-          votingDeadline: {
-            status: RETRIEVAL_STATUS.AVAILABLE,
-            value: new Date(voteCollection.timeframes.votingDeadline)
-          }
-        };
-        spyOn(page.voteRetrievalSvc, 'detailsAtIndex$').and.returnValue(Observable.of(voteDetails));
-      });
-
       describe(`case: phase = ${RETRIEVAL_STATUS.RETRIEVING}`, () => {
         beforeEach(() => {
           voteDetails.phase = RETRIEVAL_STATUS.RETRIEVING;
@@ -269,9 +296,97 @@ describe('Component: RegistrationPhaseComponent', () => {
         });
       });
     });
+
+    fdescribe('Voter Address', () => {
+      beforeEach(() => fixture.detectChanges());
+
+      describe('input box', () => {
+        it('should exist', () => {
+          expect(page.voterAddressInput).not.toBeNull();
+        });
+
+        it('should start empty', () => {
+          expect(page.voterAddressInput.nativeElement.value).toBeFalsy();
+        });
+
+        it('should have a placeholder "Public Address"', () => {
+          expect(page.voterAddressInput.nativeElement.placeholder).toEqual('Public Address');
+        });
+
+        it('should be a form control', () => {
+          expect(page.voterAddressInput.attributes.formControlName).not.toBeNull();
+        });
+
+        describe('form control validity', () => {
+          let ctrl: AbstractControl;
+          const valid_address: address = '1234567890aabbccddee1234567890aabbccddee';
+
+          beforeEach(() => {
+            ctrl = fixture.componentInstance.form.get(page.voterAddressInput.attributes.formControlName);
+          });
+
+          it('should be invalid when null', () => {
+            DOMInteractionUtility.setValueOn(page.voterAddressInput, '');
+            fixture.detectChanges();
+            expect(page.voterAddressInput.nativeElement.value).toBeFalsy();
+            expect(ctrl.valid).toEqual(false);
+          });
+
+          it('should be valid when containing exactly 40 hex characters', () => {
+            DOMInteractionUtility.setValueOn(page.voterAddressInput, valid_address);
+            fixture.detectChanges();
+            expect(ctrl.valid).toEqual(true);
+          });
+
+          xit('should reuse the validator (and tests) from the LaunchVoteComponent -> registration authority address');
+        });
+      });
+
+      describe('button', () => {
+        it('should exist', () => {
+          expect(page.voterAddressButton).not.toBeNull();
+        });
+
+        it('should have type "button"', () => {
+          expect(page.voterAddressButton.nativeElement.type).toEqual('button');
+        });
+
+        it('should have text "Use Active Account"', () => {
+          expect(page.voterAddressButton.nativeElement.innerText).toEqual('Use Active Account');
+        });
+
+        it('should fill the Voter Address input box with the current web3 active account', () => {
+          expect(page.voterAddressInput.nativeElement.value).toBeFalsy();
+          DOMInteractionUtility.clickOn(page.voterAddressButton);
+          expect(page.voterAddressInput.nativeElement.value).toEqual(page.web3Svc.defaultAccount.slice(2));
+        });
+
+        it('should raise an error with the Error Service if the default account is undefined', () => {
+          spyOnProperty(page.web3Svc, 'defaultAccount').and.returnValue(undefined);
+          DOMInteractionUtility.clickOn(page.voterAddressButton);
+          expect(page.errSvc.add).toHaveBeenCalledWith(Web3ServiceErrors.account, null);
+        });
+      });
+    });
   });
 
   describe('Functionality', () => {
 
   });
 });
+
+/**
+ * Class to expose protected values for testing purposes
+ * It is more correct to confirm the functionality using only public values
+ * but testing form validation is a lot easier if we can see the validators directly
+ * (instead of testing their effects, which cannot be isolated,
+ *  since the relevant effects are synthesised across many components )
+ */
+export class TestRegistrationPhaseComponent extends RegistrationPhaseComponent implements OnInit {
+  public form: FormGroup;
+
+  ngOnInit() {
+    super.ngOnInit();
+    this.form = this.registerForm;
+  }
+}

@@ -1,4 +1,5 @@
 import { Component, Input, OnInit } from '@angular/core';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Observable } from 'rxjs/Observable';
 import { BehaviorSubject } from 'rxjs/BehaviorSubject';
 import 'rxjs/add/operator/map';
@@ -7,6 +8,8 @@ import 'rxjs/add/operator/switchMap';
 import { VoteRetrievalService } from '../../core/vote-retrieval/vote-retrieval.service';
 import { VotePhases } from '../../core/ethereum/anonymous-voting-contract/contract.api';
 import { IVotingContractDetails, RETRIEVAL_STATUS } from '../../core/vote-retrieval/vote-retreival.service.constants';
+import { Web3Service, Web3ServiceErrors } from '../../core/ethereum/web3.service';
+import { ErrorService } from '../../core/error-service/error.service';
 
 export const RegistrationPhaseComponentMessages = {
   retrieving: 'Retrieving the contract details...',
@@ -17,18 +20,32 @@ export const RegistrationPhaseComponentMessages = {
 @Component({
   selector: 'vv-registration-phase',
   template: `
-    <div id="register" *ngIf="_inRegistrationPhase$ | async; else unavailable"></div>
+    <div id="register" *ngIf="_inRegistrationPhase$ | async; else unavailable">
+      <form (ngSubmit)="onSubmit()" [formGroup]=registerForm>
+        0x
+        <mat-form-field>
+          <input matInput formControlName="voterAddress" placeholder="Public Address">
+        </mat-form-field>
+        <button mat-button color="primary" type="button" id="fillVoterAddress" (click)="_fillVoterAddress()">
+          Use Active Account
+        </button>
+      </form>
+    </div>
     <ng-template #unavailable>
       <div id="unavailable">{{_message$ | async}}</div>
     </ng-template>
   `,
 })
 export class RegistrationPhaseComponent implements OnInit {
+  protected registerForm: FormGroup;
   private _index$: BehaviorSubject<number>;
   private _inRegistrationPhase$: Observable<boolean>;
   private _message$: Observable<string>;
 
-  constructor(private voteRetrievalSvc: VoteRetrievalService) {
+  constructor(private voteRetrievalSvc: VoteRetrievalService,
+              private fb: FormBuilder,
+              private web3Svc: Web3Service,
+              private errSvc: ErrorService) {
     this._index$ = new BehaviorSubject<number>(null);
   }
 
@@ -43,6 +60,14 @@ export class RegistrationPhaseComponent implements OnInit {
     this._inRegistrationPhase$ = _voteDetails$.map(details => this._inRegistrationPhase(details));
     this._message$ = _voteDetails$.filter(details => !this._inRegistrationPhase(details))
       .map(details => this._chooseMessage(details));
+
+    this.createForm();
+  }
+
+  private createForm() {
+    this.registerForm = this.fb.group({
+      voterAddress: ['', [Validators.required, Validators.pattern('^[0-9a-fA-F]{40}$')]],
+    });
   }
 
   /**
@@ -52,6 +77,15 @@ export class RegistrationPhaseComponent implements OnInit {
   @Input()
   set index(val: number) {
     this._index$.next(val);
+  }
+
+  private _fillVoterAddress() {
+    const account: string = this.web3Svc.defaultAccount;
+    if (typeof account === 'undefined') {
+      this.errSvc.add(Web3ServiceErrors.account, null);
+    } else {
+      this.registerForm.get('voterAddress').setValue(this.web3Svc.defaultAccount.slice(2));
+    }
   }
 
   /**
@@ -82,7 +116,7 @@ export class RegistrationPhaseComponent implements OnInit {
     } else {
       return null;
     }
- }
+  }
 
   /**
    * @param {IVotingContractDetails} voteDetails the details corresponding to the selected AnonymousVoting contract

@@ -2,7 +2,7 @@ import { IWeb3Provider, IWeb3Service } from '../core/ethereum/web3.service';
 import { Mock } from './module';
 
 const ARBITRARY_WEB3_PROVIDER: string = 'MOCK_WEB3_PROVIDER';
-const ARIBTRARY_ETH_ACCOUNT: string = 'MOCK_ETHEREUM_ACCOUNT';
+const ARIBTRARY_ETH_ACCOUNT: string = '0xMOCK_ETHEREUM_ACCOUNT';
 
 export class Web3Service implements IWeb3Service {
   get isInjected(): boolean {

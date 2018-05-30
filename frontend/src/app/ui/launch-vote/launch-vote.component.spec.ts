@@ -114,7 +114,7 @@ describe('Component: LaunchVoteComponent', () => {
  * It is more correct to confirm the functionality using only public values
  * but testing form validation is a lot easier if we can see the validators directly
  * (instead of testing their effects, which cannot be isolated,
- *  since they relevant affects are synthesised across many components )
+ *  since the relevant effects are synthesised across many components )
  */
 export class TestLaunchVoteComponent extends LaunchVoteComponent implements OnInit {
   public form: FormGroup;
