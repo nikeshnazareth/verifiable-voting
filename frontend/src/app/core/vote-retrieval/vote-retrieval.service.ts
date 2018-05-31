@@ -145,6 +145,7 @@ export class VoteRetrievalService implements IVoteRetrievalService {
   private _confirmParametersFormat(obj: object): IVoteParameters {
     const params: IVoteParameters = <IVoteParameters> obj;
     const valid: boolean =
+      params &&
       params.topic &&
       typeof params.topic === 'string' &&
       params.candidates &&

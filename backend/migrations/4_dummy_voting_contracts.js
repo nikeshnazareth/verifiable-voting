@@ -7,9 +7,9 @@ const now = (new Date()).getTime();
 
 // These are parameter hashes stored on the simulated IPFS node (using the browser's local storage)
 const paramHashes = [
-    '12812',
-    '744915',
-    '177200'
+    '137041',
+    '612945',
+    '179475'
 ];
 const registrationAuth = '0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef';
 
