@@ -1,18 +1,19 @@
-<div id="register" *ngIf="_inRegistrationPhase$ | async; else unavailable">
-  <form (ngSubmit)="onSubmit()" [formGroup]=registerForm>
+<div id="register" *ngIf="_ready$ | async; else unavailable">
+  <form (ngSubmit)="_submission$.next(registerForm.value)" [formGroup]=registerForm>
     <div>
       0x
       <mat-form-field>
         <input matInput formControlName="voterAddress" placeholder="Public Address">
       </mat-form-field>
-      <button mat-button color="primary" type="button" id="fillVoterAddress" (click)="_fillVoterAddress()">
+      <button mat-button color="primary" type="button" id="fillVoterAddress"
+              (click)="_fillAddress(registerForm.controls.voterAddress)">
         Use Active Account
       </button>
     </div>
     <div>
       <mat-checkbox formControlName="voterAddressAck"></mat-checkbox>
       <b>I ACKNOWLEDGE</b> that this is a public address.
-      It will be used to prove I am eligible to vote.
+      It will be used to confirm that I am eligible to vote.
     </div>
     <mat-divider></mat-divider>
     <div>
@@ -20,7 +21,8 @@
       <mat-form-field>
         <input matInput formControlName="anonymousAddress" placeholder="Anonymous Address">
       </mat-form-field>
-      <button mat-button color="primary" type="button" id="fillAnonymousAddress" (click)="_fillAnonymousAddress()">
+      <button mat-button color="primary" type="button" id="fillAnonymousAddress"
+              (click)="_fillAddress(registerForm.controls.anonymousAddress)">
         Use Active Account
       </button>
     </div>
@@ -42,7 +44,7 @@
     </div>
     <div>
       <mat-checkbox formControlName="blindingFactorSaveAck"></mat-checkbox>
-      <b>I ACKNOWLEDGE</b> that this value must be saved.<br/>
+      <b>I ACKNOWLEDGE</b> that this value must be saved (before pressing REGISTER below).<br/>
       If I cannot produce it during the Voting phase, I will be unable to vote.<br/>
       ( This requirement is an unfortunate inconvenience of this early version. It will be removed in future versions )
     </div>
@@ -51,6 +53,8 @@
       <b>I ACKNOWLEDGE</b> that this value secures my anonymity and should be protected accordingly.<br/>
       Anyone who knows this value will be able to associate my vote with my public address.
     </div>
+    <mat-divider></mat-divider>
+    <button type="submit" [disabled]="!registerForm.valid" mat-raised-button color="primary">REGISTER</button>
   </form>
 </div>
 <ng-template #unavailable>

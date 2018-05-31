@@ -144,8 +144,8 @@ export interface IVoter {
 
 function generateMockVoter(idx: number): IVoter {
   return {
-    public_address: 'MOCK_PUBLIC_ADDRESS_' + idx,
-    anonymous_address: 'MOCK_ANONYMOUS_ADDRESS_' + idx,
+    public_address: Array(20).fill('A' + idx).join(''),
+    anonymous_address: Array(20).fill('B' + idx).join(''),
     blinding_factor: 'MOCK_BLINDING_FACTOR_' + idx,
     blinded_address: 'MOCK_BLINDED_ADDRESS_' + idx,
     blinded_address_hash: 'MOCK_BLINDED_ADDRESS_HASH_' + idx,
