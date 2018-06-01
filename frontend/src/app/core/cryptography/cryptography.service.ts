@@ -18,11 +18,14 @@ export interface ICryptographyService {
   blind(message: string, factor: string, key: IRSAKey): string;
 
   unblind(blinded_signature: string, factor: string, key: IRSAKey): string;
+
+  verify(message: string, signature: string, key: IRSAKey): boolean;
 }
 
 export const CryptographyServiceErrors = {
   key: (key) => new Error(`Invalid RSA key (${key.modulus}, ${key.public_exp})`),
-  signature: (sig) => new Error(`Invalid blinded signature ${sig}`)
+  signature: (sig) => new Error(`Invalid signature ${sig}`),
+  rawMessage: (m) => new Error(`Invalid raw message ${m}`)
 };
 
 @Injectable()
@@ -123,6 +126,44 @@ export class CryptographyService implements ICryptographyService {
     }
   }
 
+  /**
+   * @param {string} rawMessage the message to be verified directly (ignoring hashing)
+   * @param {string} signature the signature
+   * @param {IRSAKey} key the public component of the RSA key that signed the raw message
+   * @returns {boolean} whether the signature matches the raw message and key
+   */
+  verify(rawMessage: string, signature: string, key: IRSAKey): boolean {
+    if (!this._validKey(key)) {
+      this.errSvc.add(CryptographyServiceErrors.key(key), null);
+      return null;
+    }
+
+    if (!this._isHexString(signature)) {
+      this.errSvc.add(CryptographyServiceErrors.signature(signature), null);
+      return null;
+    }
+
+    if (!this._isHexString(rawMessage)) {
+      this.errSvc.add(CryptographyServiceErrors.rawMessage(rawMessage), null);
+      return null;
+    }
+
+    // convert the hex strings to BN values
+    const sig = new BN(signature.slice(2), 16);
+    const N = new BN(key.modulus.slice(2), 16);
+    const e = new BN(key.public_exp.slice(2), 16);
+
+    // initialise the modular reduction values
+    const modN = BN.mont(N);
+    const sig_modN = sig.toRed(modN);
+
+    // the signature is m^d mod N. Raise it to e and see if we get m back
+    const m_modN = sig_modN.redPow(e);
+    const calculated_message = m_modN.fromRed().toString(16);
+
+    return ('0x' + calculated_message) === rawMessage;
+  }
+
   private _isHexString(val: string) {
     const hexRegex = /^0x[a-f0-9]*$/;
     return hexRegex.test(val);
@@ -131,5 +172,4 @@ export class CryptographyService implements ICryptographyService {
   private _validKey(key: IRSAKey) {
     return key && this._isHexString(key.modulus) && this._isHexString(key.public_exp);
   }
-
 }

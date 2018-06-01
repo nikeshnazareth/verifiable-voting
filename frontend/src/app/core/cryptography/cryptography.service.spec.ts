@@ -114,5 +114,40 @@ describe('Service: CryptographyService', () => {
 
     xdescribe('case: web3 is not injected', () => {
     });
-  })
+  });
+
+  describe('method: signature', () => {
+    it('should return true when comparing the blinded message to the unblinded message', () => {
+      const verify: boolean = cryptoSvc.verify(
+        Mock.BLINDING.blinded_message, Mock.BLINDING.signed_blinded_message, Mock.BLINDING.public_key
+      );
+      expect(verify).toEqual(true);
+    });
+
+    it('should return true when comparing the hashed message to the signed unblinded message', () => {
+      const verify: boolean = cryptoSvc.verify(
+        Mock.BLINDING.message.hash, Mock.BLINDING.signed_unblinded_message, Mock.BLINDING.public_key
+      );
+      expect(verify).toEqual(true);
+    });
+
+    xit('should return false in other cases');
+
+    xdescribe('case: the raw message is null', () => {
+    });
+
+    xdescribe('case: the raw message is not a valid hex value', () => {});
+
+    xdescribe('case: signature is null', () => {});
+
+    xdescribe('case: the signature is not a valid hex value', () => {});
+
+    xdescribe('case: the key is null', () => {});
+
+    xdescribe('case: the modulus is not a valid hex value', () => {
+    });
+
+    xdescribe('case: the public exponent is not a valid hex value', () => {
+    });
+  });
 });
