@@ -3,8 +3,8 @@ import 'rxjs/add/observable/never';
 
 import { IAnonymousVotingContractService } from '../../core/ethereum/anonymous-voting-contract/contract.service';
 import { address } from '../../core/ethereum/type.mappings';
+import { ITransactionReceipt } from '../../core/ethereum/transaction.interface';
 import { Mock } from '../module';
-import { ITransactionReceipt } from "../../core/ethereum/transaction.interface";
 
 export class AnonymousVotingContractService implements IAnonymousVotingContractService {
   phaseAt$(addr: address): Observable<number> {
@@ -44,6 +44,14 @@ export class AnonymousVotingContractService implements IAnonymousVotingContractS
       Mock.Voters
         .filter(voter => voter.public_address === voterAddr)[0]
         .register_receipt
+    );
+  }
+
+  voteAt$(contractAddr: address, anonymousAddr: address, voteHash: string): Observable<ITransactionReceipt> {
+    return Observable.of(
+      Mock.Voters
+        .filter(voter => voter.anonymous_address === anonymousAddr)[0]
+        .vote_receipt
     );
   }
 }

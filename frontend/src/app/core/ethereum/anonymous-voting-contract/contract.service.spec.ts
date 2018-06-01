@@ -571,6 +571,84 @@ describe('Service: AnonymousVotingContractService', () => {
       });
     });
   });
+
+  describe('method: voteAt$', () => {
+    const init_voteAt$ = fakeAsync(() => {
+      anonymousVotingSvc = new AnonymousVotingContractService(web3Svc, contractSvc, errSvc);
+      anonymousVotingSvc.voteAt$(voteCollection.address, voter.anonymous_address, voter.vote_hash)
+        .subscribe(onNext, onError, onCompleted);
+      tick();
+    });
+
+    it('should call the "vote" function on the AnonymousVoting contract', () => {
+      spyOn(voteCollection.instance, 'vote').and.callThrough();
+      init_voteAt$();
+      expect(voteCollection.instance.vote).toHaveBeenCalled();
+    });
+
+    it('should pass the vote hash to the AnonymousVoting.vote function', () => {
+      spyOn(voteCollection.instance, 'vote').and.callThrough();
+      init_voteAt$();
+      expect((<Spy>voteCollection.instance.vote).calls.mostRecent().args[0]).toEqual(voter.vote_hash);
+    });
+
+    it('should set the message sender on the AnonymousVoting.vote call to the specified anonymous address', () => {
+      spyOn(voteCollection.instance, 'vote').and.callThrough();
+      init_voteAt$();
+      expect((<Spy>voteCollection.instance.vote).calls.mostRecent().args[1]).toEqual({from: voter.anonymous_address});
+    });
+
+    it('should return the contract vote receipt', () => {
+      init_voteAt$();
+      expect(onNext).toHaveBeenCalledWith(voter.vote_receipt);
+    });
+
+    describe('case: web3 is not injected', () => {
+      beforeEach(() => spyOnProperty(web3Svc, 'isInjected').and.returnValue(false));
+
+      it('should return an empty observable', () => {
+        init_voteAt$();
+        expect(onNext).not.toHaveBeenCalled();
+        expect(onCompleted).toHaveBeenCalled();
+      });
+    });
+
+    describe('case: there is no AnonymousVoting contract at the specified address', () => {
+      const error: Error = new Error('No contract at the specified address');
+
+      beforeEach(() => spyOn(Mock.TruffleAnonymousVotingAbstraction, 'at').and.returnValue(Promise.reject(error)));
+
+      it('should notify the Error Service', () => {
+        init_voteAt$();
+        expect(errSvc.add).toHaveBeenCalledWith(AnonymousVotingContractErrors.network(voteCollection.address), error);
+      });
+
+      it('should return an empty observable', () => {
+        init_voteAt$();
+        expect(onNext).not.toHaveBeenCalled();
+        expect(onCompleted).toHaveBeenCalled();
+      });
+    });
+
+    describe('case: contract.vote fails', () => {
+      const error: Error = new Error('Unable to vote');
+
+      beforeEach(() => spyOn(voteCollection.instance, 'vote').and.returnValue(Promise.reject(error)));
+
+      it('should notify the Error Service', () => {
+        init_voteAt$();
+        expect(errSvc.add).toHaveBeenCalledWith(
+          AnonymousVotingContractErrors.vote(voteCollection.address, voter.anonymous_address), error
+        );
+      });
+
+      it('should return an empty observable', () => {
+        init_voteAt$();
+        expect(onNext).not.toHaveBeenCalled();
+        expect(onCompleted).toHaveBeenCalled();
+      });
+    });
+  });
 });
 
 

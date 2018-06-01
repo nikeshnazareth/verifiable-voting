@@ -26,6 +26,8 @@ export interface IAnonymousVotingContractService {
   votingDeadlineAt$(addr: address): Observable<Date>;
 
   registerAt$(contractAddr: address, voterAddr: address, blindAddressHash: string): Observable<ITransactionReceipt>;
+
+  voteAt$(contractAddr: address, anonymousAddr: address, voteHash: string): Observable<ITransactionReceipt>;
 }
 
 export const AnonymousVotingContractErrors = {
@@ -40,6 +42,8 @@ export const AnonymousVotingContractErrors = {
   votingDeadline: (addr) => new Error('Unable to retrieve the voting deadline from the AnonymousVoting contract' +
     `at ${addr}`),
   registration: (contractAddr, voter) => new Error(`Unable to register voter ${voter} ` +
+    `at the AnonymousVoting contract ${contractAddr}`),
+  vote: (contractAddr, voter) => new Error(`Unable to vote on from ${voter} ` +
     `at the AnonymousVoting contract ${contractAddr}`)
 };
 
@@ -151,7 +155,25 @@ export class AnonymousVotingContractService implements IAnonymousVotingContractS
       .switchMap(registerPromise => Observable.fromPromise(registerPromise))
       .catch(err => {
         this.errSvc.add(AnonymousVotingContractErrors.registration(contractAddr, voterAddr), err);
-        return <Observable<Date>> Observable.empty();
+        return <Observable<ITransactionReceipt>> Observable.empty();
+      });
+  }
+
+  /**
+   * Uses the specified AnonymousVoting contract to vote from the specified address
+   * @param {address} contractAddr the address of the AnonymousVoting contract
+   * @param {address} anonymousAddr the anonymous address of the voter
+   * @param {string} voteHash the IPFS hash of the voter's vote and proof of registration
+   * @returns {Observable<ITransactionReceipt>} an observable that emits the receipt when the vote is cast<br/>
+   * or an empty observable if there was an error
+   */
+  voteAt$(contractAddr: address, anonymousAddr: address, voteHash: string): Observable<ITransactionReceipt> {
+    return this._contractAt(contractAddr)
+      .map(contract => contract.vote(voteHash, {from: anonymousAddr}))
+      .switchMap(votePromise => Observable.fromPromise(votePromise))
+      .catch(err => {
+        this.errSvc.add(AnonymousVotingContractErrors.vote(contractAddr, anonymousAddr), err);
+        return <Observable<ITransactionReceipt>> Observable.empty();
       });
   }
 
