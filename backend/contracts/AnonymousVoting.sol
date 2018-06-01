@@ -36,17 +36,26 @@ contract AnonymousVoting is VotePhases {
         string signatureHash;
     }
 
+    /// @notice A mapping from anonymous addresses to an IPFS hash of their vote
+    mapping(address => string) public voteHashes;
+
     /**
         @notice An event generated whenever a voter successfully calls the "register" function
-        @param voter the address of the authorised voter
+        @param voter the public address of the authorised voter
     */
     event VoterInitiatedRegistration(address voter);
 
     /**
         @notice An event genenerated whenever the registration authority publishes a blinded signature
-        @param voter the address of the registered voter
+        @param voter the public address of the registered voter
     */
     event RegistrationComplete(address voter);
+
+    /**
+        @notice An event generated whenever someone votes
+        @param voter the anonymous address of the voter
+    */
+    event VoteSubmitted(address voter);
 
     /**
         @notice Deploys the AnonymousVoting contract and sets the vote parameters
@@ -108,5 +117,23 @@ contract AnonymousVoting is VotePhases {
         pendingRegistrations = pendingRegistrations - 1;
 
         emit RegistrationComplete(_voter);
+    }
+
+    /**
+        @notice Submit an anonymous vote
+        @notice Note that this function does not validate the votes - each observer must do that independently
+        @param _voteHash the IPFS hash of the vote (along with proof of registration)
+    */
+    function vote(string _voteHash) public
+    updatePhase
+    duringPhase(Phase.Voting) {
+        // the Registration Authority has completed all registrations
+        require(pendingRegistrations == 0);
+        // the voter has not yet voted
+        require(bytes(voteHashes[msg.sender]).length == 0);
+
+        voteHashes[msg.sender] = _voteHash;
+
+        emit VoteSubmitted(msg.sender);
     }
 }
