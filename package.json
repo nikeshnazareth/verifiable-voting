@@ -7,6 +7,7 @@
     "serve": "cd frontend; npm run start",
     "test-frontend": "cd frontend; npm run test",
     "truffle": "cd backend; truffle develop",
+    "truffle-test": "cd backend; truffle develop --network test",
     "truffle-reset": "rm -r backend/build; npm run truffle"
   },
   "repository": {
