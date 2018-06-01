@@ -9,6 +9,7 @@ import { VoteComponent } from './vote/vote-component';
 import { RegistrationPhaseComponent } from './vote/registration-phase.component';
 import { VotingPhaseComponent } from './vote/voting-phase.component';
 import { CompletePhaseComponent } from './vote/complete-phase-component';
+import { ExplanationComponent } from './explanation/explanation.component';
 
 @NgModule({
   declarations: [
@@ -17,7 +18,8 @@ import { CompletePhaseComponent } from './vote/complete-phase-component';
     VoteComponent,
     RegistrationPhaseComponent,
     VotingPhaseComponent,
-    CompletePhaseComponent
+    CompletePhaseComponent,
+    ExplanationComponent
   ],
   imports: [
     ReactiveFormsModule,
@@ -30,7 +32,8 @@ import { CompletePhaseComponent } from './vote/complete-phase-component';
     VoteComponent,
     RegistrationPhaseComponent,
     VotingPhaseComponent,
-    CompletePhaseComponent
+    CompletePhaseComponent,
+    ExplanationComponent
   ]
 })
 export class UiModule {

@@ -19,6 +19,9 @@ import { ErrorService } from './core/error-service/error.service';
         <mat-tab label="Create new vote">
           <vv-launch-vote></vv-launch-vote>
         </mat-tab>
+        <mat-tab label="How it works">
+          <vv-explanation></vv-explanation>
+        </mat-tab>
       </mat-tab-group>
     </div>
   `
