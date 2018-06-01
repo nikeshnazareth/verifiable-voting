@@ -122,29 +122,29 @@ contract('AnonymousVoting', (accounts) => {
         describe('case: half the Registration phase duration passes', () => {
             beforeEach(async () => {
                 await instance.advanceTime(PHASE_DURATION / 2);
+                await instance.updatePhaseIfNecessary();
             });
 
             it('should stay at Phase.Registration', async () => {
-                await instance.updatePhaseIfNecessary();
                 const phase = await instance.currentPhase.call();
                 assert.equal(phase.toNumber(), PHASES.REGISTRATION);
             });
         });
 
         describe('case: slightly more than the Registration phase duration passes', () => {
+            let tx;
 
             beforeEach(async () => {
                 await instance.advanceTime(PHASE_DURATION * 1.1);
+                tx = await instance.updatePhaseIfNecessary();
             });
 
             it('should advance to Phase.Voting', async () => {
-                await instance.updatePhaseIfNecessary();
                 const phase = await instance.currentPhase.call();
                 assert.equal(phase.toNumber(), PHASES.VOTING);
             });
 
             it('should emit a NewPhase event with Phase.Voting', async () => {
-                const tx = await instance.updatePhaseIfNecessary();
                 assert.equal(tx.logs.length, 1);
                 const log = tx.logs[0];
                 assert.equal(log.event, 'NewPhase');
@@ -155,34 +155,53 @@ contract('AnonymousVoting', (accounts) => {
             describe('case: consequently, half the Voting phase duration passes', () => {
                 beforeEach(async () => {
                     await instance.advanceTime(PHASE_DURATION / 2);
+                    tx = await instance.updatePhaseIfNecessary();
                 });
 
                 it('should stay at Phase.Voting', async () => {
-                    await instance.updatePhaseIfNecessary();
                     const phase = await instance.currentPhase.call();
                     assert.equal(phase.toNumber(), PHASES.VOTING);
+                });
+
+                it('should not emit a NewPhase event', async () => {
+                    assert.equal(tx.logs.length, 0);
                 });
             });
 
             describe('case: consequently, the Voting phase duration passes', () => {
                 beforeEach(async () => {
                     await instance.advanceTime(PHASE_DURATION);
+                    tx = await instance.updatePhaseIfNecessary();
                 });
 
                 it('should advance to Phase.Complete', async () => {
-                    await instance.updatePhaseIfNecessary();
                     const phase = await instance.currentPhase.call();
                     assert.equal(phase.toNumber(), PHASES.COMPLETE);
                 });
 
                 it('should emit a NewPhase event with Phase.Complete', async () => {
-                    const tx = await instance.updatePhaseIfNecessary();
                     assert.equal(tx.logs.length, 1);
                     const log = tx.logs[0];
                     assert.equal(log.event, 'NewPhase');
                     assert.isDefined(log.args.phase);
                     assert.equal(log.args.phase.toNumber(), PHASES.COMPLETE);
                 });
+
+                describe('case: consequently, more time passes', () => {
+                    beforeEach(async () => {
+                        await instance.advanceTime(PHASE_DURATION);
+                        tx = await instance.updatePhaseIfNecessary();
+                    });
+
+                    it('should stay at Phase.Complete', async() => {
+                       const phase = await instance.currentPhase.call();
+                       assert.equal(phase.toNumber(), PHASES.COMPLETE);
+                    });
+
+                    it('should not emit a NewPhase event', async () => {
+                       assert.equal(tx.logs.length, 0);
+                    });
+                })
             });
         });
 

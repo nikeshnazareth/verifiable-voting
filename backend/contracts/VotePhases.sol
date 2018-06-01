@@ -34,7 +34,7 @@ contract VotePhases {
         if (currentPhase != Phase.Complete && now > votingDeadline) {
             currentPhase = Phase.Complete;
             emit NewPhase(currentPhase);
-        } else if (now > registrationDeadline) {
+        } else if (currentPhase < Phase.Voting && now > registrationDeadline) {
             currentPhase = Phase.Voting;
             emit NewPhase(currentPhase);
         }
