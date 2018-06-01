@@ -520,6 +520,11 @@ describe('Service: AnonymousVotingContractService', () => {
       expect((<Spy>voteCollection.instance.register).calls.mostRecent().args[1]).toEqual({from: voter.public_address});
     });
 
+    it('should return the contract register receipt', () => {
+      init_registerAt$();
+      expect(onNext).toHaveBeenCalledWith(voter.register_receipt);
+    });
+
     describe('case: web3 is not injected', () => {
       beforeEach(() => spyOnProperty(web3Svc, 'isInjected').and.returnValue(false));
 

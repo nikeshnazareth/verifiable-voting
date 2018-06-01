@@ -61,7 +61,10 @@ export class AnonymousVotingContract implements AnonymousVotingAPI {
   };
 
   register(_blindedAddressHash: string): Promise<ITransactionReceipt> {
-    return Promise.resolve(`MOCK_REGISTER_${_blindedAddressHash}_RECEIPT`);
+    return Promise.resolve(
+      Mock.Voters.filter(voter => voter.blinded_address_hash === _blindedAddressHash)[0]
+        .register_receipt
+    );
   }
 
   // These functions create self-referential loop.
