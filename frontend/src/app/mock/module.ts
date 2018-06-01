@@ -4,7 +4,7 @@ import { AnonymousVotingContract } from './anonymous-voting-contract/contract';
 import { AnonymousVotingContractService } from './anonymous-voting-contract/contract.service';
 import { IPFSService } from './ipfs.service';
 import { ITransactionReceipt } from '../core/ethereum/transaction.interface';
-import { IVoteParameters } from '../core/vote-manager/vote-manager.service';
+import { IVote, IVoteParameters } from '../core/vote-manager/vote-manager.service';
 import { IVoteTimeframes } from '../core/ethereum/vote-listing-contract/contract.service';
 import { NoRestrictionContract } from './no-restriction-contract/contract';
 import { ITriggerableEventStream, TriggerableEventStream } from './triggerable-event-stream';
@@ -140,6 +140,9 @@ export interface IVoter {
   blinded_address: string;
   blinded_address_hash: string;
   register_receipt: ITransactionReceipt;
+  vote: IVote;
+  vote_hash: string;
+  vote_receipt: ITransactionReceipt;
 }
 
 function generateMockVoter(idx: number): IVoter {
@@ -149,7 +152,13 @@ function generateMockVoter(idx: number): IVoter {
     blinding_factor: 'MOCK_BLINDING_FACTOR_' + idx,
     blinded_address: 'MOCK_BLINDED_ADDRESS_' + idx,
     blinded_address_hash: 'MOCK_BLINDED_ADDRESS_HASH_' + idx,
-    register_receipt: 'MOCK_REGISTER_RECEIPT_' + idx
+    register_receipt: 'MOCK_REGISTER_RECEIPT_' + idx,
+    vote: {
+      signed_address: 'MOCK_SIGNED_ADDRESS_' + idx,
+      candidate: 'MOCK_CHOSEN_CANDIDATE_' + idx
+    },
+    vote_hash: 'MOCK_VOTE_HASH_' + idx,
+    vote_receipt: 'MOCK_VOTE_RECEIPT_' + idx
   };
 }
 

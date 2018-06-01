@@ -67,6 +67,13 @@ export class AnonymousVotingContract implements AnonymousVotingAPI {
     );
   }
 
+  vote(_voteHash: string): Promise<ITransactionReceipt> {
+    return Promise.resolve(
+      Mock.Voters.filter(voter => voter.vote_hash === _voteHash)[0]
+        .vote_receipt
+    );
+  }
+
   // These functions create self-referential loop.
   // Mock.AnonymousVotingContractCollections is instantiated with instances of AnonymousVotingContract
   // Luckily, it will already be defined when these get is called

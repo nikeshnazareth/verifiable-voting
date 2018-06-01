@@ -27,6 +27,11 @@ export interface IBlindedAddress {
   blinded_address: string;
 }
 
+export interface IVote {
+  signed_address: string;
+  candidate: string;
+}
+
 export interface IVoteManagerService {
   deployVote$(timeframes: IVoteTimeframes,
               params: IVoteParameters,
