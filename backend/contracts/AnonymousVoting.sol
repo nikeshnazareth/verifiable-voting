@@ -43,6 +43,12 @@ contract AnonymousVoting is VotePhases {
     event VoterInitiatedRegistration(address voter);
 
     /**
+        @notice An event genenerated whenever the registration authority publishes a blinded signature
+        @param voter the address of the registered voter
+    */
+    event RegistrationComplete(address voter);
+
+    /**
         @notice Deploys the AnonymousVoting contract and sets the vote parameters
         @notice (anything all users need to know about the vote)
         @param _registrationDeadline the time when the Registration phase ends
@@ -81,5 +87,26 @@ contract AnonymousVoting is VotePhases {
         assert(pendingRegistrations > 0);
 
         emit VoterInitiatedRegistration(msg.sender);
+    }
+
+    /**
+        @notice Completes registration for the specified voter by recording the blinded signature
+        @notice Can only be called from the Registration Authority account
+        @param _voter the public address of the registered voter
+        @param _signatureHash the IPFS hash of the voter's signed blinded address
+    */
+    function completeRegistration(address _voter, string _signatureHash) public {
+        // the sender is authorised to publish blinded signatures
+        require(msg.sender == registrationAuthority);
+        // the voter has initiated registration
+        require(bytes(blindedAddress[_voter].addressHash).length > 0);
+        // the blinded signature has not already been published
+        require(bytes(blindedAddress[_voter].signatureHash).length == 0);
+
+        blindedAddress[_voter].signatureHash = _signatureHash;
+        assert(pendingRegistrations > 0);
+        pendingRegistrations = pendingRegistrations - 1;
+
+        emit RegistrationComplete(_voter);
     }
 }
