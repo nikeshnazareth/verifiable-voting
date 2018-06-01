@@ -77,12 +77,42 @@ describe('Service: CryptographyService', () => {
       expect(blinded).toEqual(Mock.BLINDING.blinded_message);
     });
 
-    xdescribe('case: the key is null', () => {});
+    xdescribe('case: the key is null', () => {
+    });
 
-    xdescribe('case: the modulus is not a valid hex value', () => {});
+    xdescribe('case: the modulus is not a valid hex value', () => {
+    });
 
-    xdescribe('case: the public exponent is not a valid hex value', () => {});
+    xdescribe('case: the public exponent is not a valid hex value', () => {
+    });
 
-    xdescribe('case: web3 is not injected', () => {});
+    xdescribe('case: web3 is not injected', () => {
+    });
   });
+
+  describe('method: unblind', () => {
+    it('should return the unblinded signature corresponding to the blinded signature, factor and key', () => {
+      const unblinded: string = cryptoSvc.unblind(
+        Mock.BLINDING.signed_blinded_message, Mock.BLINDING.factor.plain, Mock.BLINDING.public_key
+      );
+      expect(unblinded).toEqual(Mock.BLINDING.signed_unblinded_message);
+    });
+
+    xdescribe('case: the blinded signature is null', () => {
+    });
+    xdescribe('case: the blinded signature is not a valid hex value', () => {
+    });
+
+    xdescribe('case: the key is null', () => {
+    });
+
+    xdescribe('case: the modulus is not a valid hex value', () => {
+    });
+
+    xdescribe('case: the public exponent is not a valid hex value', () => {
+    });
+
+    xdescribe('case: web3 is not injected', () => {
+    });
+  })
 });

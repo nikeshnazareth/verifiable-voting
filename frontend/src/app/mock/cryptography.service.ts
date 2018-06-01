@@ -11,4 +11,10 @@ export class CryptographyService implements ICryptographyService {
       .filter(voter => voter.blinding_factor === factor)[0]
       .blinded_address;
   }
+
+  unblind(blinded_signature: string, factor: string, key: IRSAKey): string {
+    return Mock.Voters
+      .filter(voter => voter.blinding_factor === factor)[0]
+      .signed_anonymous_address;
+  }
 }
