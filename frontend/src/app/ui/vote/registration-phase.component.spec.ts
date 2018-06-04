@@ -163,7 +163,9 @@ describe('Component: RegistrationPhaseComponent', () => {
 
   describe('User Interface', () => {
     describe('component status', () => {
-      const errorSectionTests = () => {
+      const errorSectionTests = (msg) => {
+        beforeEach(() => fixture.detectChanges());
+
         it('should remove the "register" section', () => {
           expect(Page.registerSection).toEqual(null);
         });
@@ -171,34 +173,22 @@ describe('Component: RegistrationPhaseComponent', () => {
         it('should create the "unavailable" section', () => {
           expect(Page.unavailableSection).toBeTruthy();
         });
+
+        it(`should display "${msg}"`, () => {
+          expect(Page.unavailableSection.nativeElement.innerText).toEqual(msg);
+        });
       };
 
       const retrievingTests = () => {
-        beforeEach(() => fixture.detectChanges());
-        errorSectionTests();
-
-        it(`should display "${RegistrationStatusMessages.retrieving}"`, () => {
-          expect(Page.unavailableSection.nativeElement.innerText)
-            .toEqual(RegistrationStatusMessages.retrieving);
-        });
+        errorSectionTests(RegistrationStatusMessages.retrieving);
       };
 
       const unavailableTests = () => {
-        beforeEach(() => fixture.detectChanges());
-        errorSectionTests();
-
-        it(`should display "${RegistrationStatusMessages.unavailable}"`, () => {
-          expect(Page.unavailableSection.nativeElement.innerText).toEqual(RegistrationStatusMessages.unavailable);
-        });
+        errorSectionTests(RegistrationStatusMessages.unavailable);
       };
 
       const registrationClosedTests = () => {
-        beforeEach(() => fixture.detectChanges());
-        errorSectionTests();
-
-        it(`should display "${RegistrationStatusMessages.closed}"`, () => {
-          expect(Page.unavailableSection.nativeElement.innerText).toEqual(RegistrationStatusMessages.closed);
-        });
+        errorSectionTests(RegistrationStatusMessages.closed);
       };
 
       describe('case: the phase is being retrieved', () => {
@@ -294,11 +284,7 @@ describe('Component: RegistrationPhaseComponent', () => {
             jasmine.clock().uninstall();
           });
 
-          errorSectionTests();
-
-          it(`should display "${RegistrationStatusMessages.closed}"`, () => {
-            expect(Page.unavailableSection.nativeElement.innerText).toEqual(RegistrationStatusMessages.closed);
-          });
+          registrationClosedTests();
         });
 
         describe('case: the registration deadline is in the future', () => {
