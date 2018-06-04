@@ -1,5 +1,5 @@
 import { async, ComponentFixture, TestBed } from '@angular/core/testing';
-import { DebugElement, OnInit } from '@angular/core';
+import { DebugElement } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { AbstractControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
@@ -19,7 +19,7 @@ import { CryptographyService } from '../../core/cryptography/cryptography.servic
 import { VoteManagerService } from '../../core/vote-manager/vote-manager.service';
 
 describe('Component: RegistrationPhaseComponent', () => {
-  let fixture: ComponentFixture<TestRegistrationPhaseComponent>;
+  let fixture: ComponentFixture<RegistrationPhaseComponent>;
   let page: Page;
 
   const voteIndex = 1; // a contract in the registration phase
@@ -107,7 +107,7 @@ describe('Component: RegistrationPhaseComponent', () => {
   beforeEach(async(() => {
     TestBed.configureTestingModule({
       declarations: [
-        TestRegistrationPhaseComponent
+        RegistrationPhaseComponent
       ],
       imports: [
         BrowserAnimationsModule,
@@ -125,7 +125,7 @@ describe('Component: RegistrationPhaseComponent', () => {
     })
       .compileComponents()
       .then(() => {
-        fixture = TestBed.createComponent(TestRegistrationPhaseComponent);
+        fixture = TestBed.createComponent(RegistrationPhaseComponent);
         page = new Page();
       });
   }));
@@ -790,19 +790,3 @@ describe('Component: RegistrationPhaseComponent', () => {
     });
   });
 });
-
-/**
- * Class to expose protected values for testing purposes
- * It is more correct to confirm the functionality using only public values
- * but testing form validation is a lot easier if we can see the validators directly
- * (instead of testing their effects, which cannot be isolated,
- *  since the relevant effects are synthesised across many components )
- */
-export class TestRegistrationPhaseComponent extends RegistrationPhaseComponent implements OnInit {
-  public form: FormGroup;
-
-  ngOnInit() {
-    super.ngOnInit();
-    this.form = this.registerForm;
-  }
-}

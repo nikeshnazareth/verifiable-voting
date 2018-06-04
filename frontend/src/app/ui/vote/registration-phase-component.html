@@ -1,12 +1,12 @@
-<div id="register" *ngIf="_ready$ | async; else unavailable">
-  <form (ngSubmit)="_submission$.next(registerForm.value)" [formGroup]=registerForm>
+<div id="register" *ngIf="ready$ | async; else unavailable">
+  <form (ngSubmit)="submission$.next(form.value)" [formGroup]="form">
     <div>
       0x
       <mat-form-field>
         <input matInput formControlName="voterAddress" placeholder="Public Address">
       </mat-form-field>
       <button mat-button color="primary" type="button" id="fillVoterAddress"
-              (click)="_fillAddress(registerForm.controls.voterAddress)">
+              (click)="_fillAddress(form.controls.voterAddress)">
         Use Active Account
       </button>
     </div>
@@ -22,7 +22,7 @@
         <input matInput formControlName="anonymousAddress" placeholder="Anonymous Address">
       </mat-form-field>
       <button mat-button color="primary" type="button" id="fillAnonymousAddress"
-              (click)="_fillAddress(registerForm.controls.anonymousAddress)">
+              (click)="_fillAddress(form.controls.anonymousAddress)">
         Use Active Account
       </button>
     </div>
@@ -54,9 +54,9 @@
       Anyone who knows this value will be able to associate my vote with my public address.
     </div>
     <mat-divider></mat-divider>
-    <button type="submit" [disabled]="!registerForm.valid" mat-raised-button color="primary">REGISTER</button>
+    <button type="submit" [disabled]="!form.valid" mat-raised-button color="primary">REGISTER</button>
   </form>
 </div>
 <ng-template #unavailable>
-  <div id="unavailable">{{_message$ | async}}</div>
+  <div id="unavailable">{{message$ | async}}</div>
 </ng-template>
