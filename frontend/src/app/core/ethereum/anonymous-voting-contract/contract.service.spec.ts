@@ -11,7 +11,7 @@ import { ErrorService } from '../../error-service/error.service';
 import { APP_CONFIG } from '../../../config';
 import { IAnonymousVotingContractCollection, IVoter, Mock } from '../../../mock/module';
 import { IContractLog } from '../contract.interface';
-import { NewPhaseEvent, VotePhases } from './contract.api';
+import { NewPhaseEvent, VotePhases, VoterInitiatedRegistration, RegistrationComplete } from './contract.api';
 import { BigNumber } from '../../../mock/bignumber';
 import Spy = jasmine.Spy;
 
@@ -490,6 +490,59 @@ describe('Service: AnonymousVotingContractService', () => {
         expect(onNext).not.toHaveBeenCalled();
         expect(onCompleted).toHaveBeenCalled();
       });
+    });
+  });
+
+  describe('method: pendingRegistrationsAt$', () => {
+    const init_pendingRegistrationsAt$ = fakeAsync(() => {
+      anonymousVotingSvc = new AnonymousVotingContractService(web3Svc, contractSvc, errSvc);
+      anonymousVotingSvc.pendingRegistrationsAt$(voteCollection.address)
+        .subscribe(onNext, onError, onCompleted);
+      tick();
+    });
+
+    const triggerEvent = fakeAsync((name: string) => {
+      voteCollection.eventStream.trigger(null, {
+        event: name,
+        args: {
+          voter: voter.public_address
+        }
+      });
+      tick();
+    });
+
+    it('should emit an item immediately', () => {
+      init_pendingRegistrationsAt$();
+      expect(onNext).toHaveBeenCalledTimes(1);
+    });
+
+    it(`should emit an event whenever a ${VoterInitiatedRegistration.name} event occurs`, () => {
+      init_pendingRegistrationsAt$();
+      expect(onNext).toHaveBeenCalledTimes(1);
+      triggerEvent(VoterInitiatedRegistration.name);
+      expect(onNext).toHaveBeenCalledTimes(2);
+      triggerEvent(VoterInitiatedRegistration.name);
+      expect(onNext).toHaveBeenCalledTimes(3);
+    });
+
+    it(`should emit an event whenever a ${RegistrationComplete.name} event occurs`, () => {
+      init_pendingRegistrationsAt$();
+      expect(onNext).toHaveBeenCalledTimes(1);
+      triggerEvent(RegistrationComplete.name);
+      expect(onNext).toHaveBeenCalledTimes(2);
+      triggerEvent(RegistrationComplete.name);
+      expect(onNext).toHaveBeenCalledTimes(3);
+    });
+
+    xit('TODO: should get the contract abstraction, retrieve the pending registrations and map to an integer');
+
+    xdescribe('TODO case: the event stream contains an error', () => {
+    });
+    xdescribe('TODO case: there is no AnonymousVoting contract at the specified address', () => {
+    });
+    xdescribe('TODO case: web3 is not injected', () => {
+    });
+    xdescribe('TODO case: contract.pendingRegistrations.call() fails', () => {
     });
   });
 

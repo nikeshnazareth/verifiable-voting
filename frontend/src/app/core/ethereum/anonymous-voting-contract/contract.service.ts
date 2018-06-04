@@ -11,7 +11,10 @@ import { Web3Service } from '../web3.service';
 import { ITruffleContractAbstraction, TruffleContractWrapperService } from '../truffle-contract-wrapper.service';
 import { ErrorService } from '../../error-service/error.service';
 import { address } from '../type.mappings';
-import { AnonymousVotingAPI, NewPhaseEvent, VotePhases } from './contract.api';
+import {
+  AnonymousVotingAPI, NewPhaseEvent, RegistrationComplete, VotePhases,
+  VoterInitiatedRegistration
+} from './contract.api';
 import { IContractLog } from '../contract.interface';
 import { ITransactionReceipt } from '../transaction.interface';
 
@@ -24,6 +27,8 @@ export interface IAnonymousVotingContractService {
   registrationDeadlineAt$(addr: address): Observable<Date>;
 
   votingDeadlineAt$(addr: address): Observable<Date>;
+
+  pendingRegistrationsAt$(addr: address): Observable<number>;
 
   registerAt$(contractAddr: address, voterAddr: address, blindAddressHash: string): Observable<ITransactionReceipt>;
 
@@ -41,6 +46,8 @@ export const AnonymousVotingContractErrors = {
     `at ${addr}`),
   votingDeadline: (addr) => new Error('Unable to retrieve the voting deadline from the AnonymousVoting contract' +
     `at ${addr}`),
+  pendingRegistration: (addr) => new Error('Unable to retrieve the pending registrations from the ' +
+    `AnonymousVoting contract at ${addr}`),
   registration: (contractAddr, voter) => new Error(`Unable to register voter ${voter} ` +
     `at the AnonymousVoting contract ${contractAddr}`),
   vote: (contractAddr, voter) => new Error(`Unable to vote on from ${voter} ` +
@@ -138,6 +145,29 @@ export class AnonymousVotingContractService implements IAnonymousVotingContractS
       .catch(err => {
         this.errSvc.add(AnonymousVotingContractErrors.votingDeadline(addr), err);
         return <Observable<Date>> Observable.empty();
+      });
+  }
+
+  /**
+   * Queries the number of pending registrations from the specified AnonymousVoting contract whenever
+   * a VoterInitiatedRegistration or RegistrationComplete event occurs on the contract
+   * Notifies the Error Service if there is no contract at the specified address or if the pending registrations
+   * cannot be retrieved
+   * @param {address} addr the address of the AnonymousVoting contract
+   * @returns {Observable<number>} an observable the emits the pending registrations whenever it changes and
+   * closes if there is an error
+   */
+  pendingRegistrationsAt$(addr: address): Observable<number> {
+    return this._eventsAt$(addr)
+      .filter(log => [VoterInitiatedRegistration.name, RegistrationComplete.name].includes(log.event))
+      .startWith(null)
+      .switchMap(() => this._contractAt(addr))
+      .map(contract => contract.pendingRegistrations.call())
+      .switchMap(pendingRegPromise => Observable.fromPromise(pendingRegPromise))
+      .map(pendingRegistration => pendingRegistration.toNumber())
+      .catch(err => {
+        this.errSvc.add(AnonymousVotingContractErrors.pendingRegistration(addr), err);
+        return <Observable<number>> Observable.empty();
       });
   }
 

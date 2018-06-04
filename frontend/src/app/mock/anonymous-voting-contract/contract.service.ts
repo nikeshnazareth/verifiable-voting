@@ -39,6 +39,11 @@ export class AnonymousVotingContractService implements IAnonymousVotingContractS
       .map(t => new Date(t));
   }
 
+  pendingRegistrationsAt$(addr: address): Observable<number> {
+    return Observable.of(0)
+      .concat(<Observable<number>> Observable.never());
+  }
+
   registerAt$(contractAddr: address, voterAddr: address, blindedAddressHash: string): Observable<ITransactionReceipt> {
     return Observable.of(
       Mock.Voters

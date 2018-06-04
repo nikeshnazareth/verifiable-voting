@@ -59,6 +59,26 @@ export namespace VoterInitiatedRegistration {
   }
 }
 
+export namespace RegistrationComplete {
+  export const name: string = 'RegistrationComplete';
+
+  export interface Log extends IContractLog {
+    args: {
+      voter: address;
+    };
+  }
+}
+
+export namespace VoteSubmitted {
+  export const name: string = 'VoteSubmitted';
+
+  export interface Log extends IContractLog {
+    args: {
+      voter: address;
+    };
+  }
+}
+
 export const VotePhases = [
   'REGISTRATION',
   'VOTING',
