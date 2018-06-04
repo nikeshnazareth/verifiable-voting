@@ -13,7 +13,7 @@ import { Component } from '@angular/core';
       <mat-divider></mat-divider>
 
       <h2>Technology</h2>
-      <p>The basics of Ethereum and IPFS</p>
+      <p>The basics of Ethereum and RSA blinding</p>
       <iframe width="560" height="315"
               src="https://www.youtube.com/embed/Vrf1OX_5SaU?rel=0"
               frameborder="0" allow="autoplay; encrypted-media" allowfullscreen>
