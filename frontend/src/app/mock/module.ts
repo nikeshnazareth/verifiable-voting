@@ -90,6 +90,7 @@ export interface IAnonymousVotingContractCollection {
   params_hash: string;
   deploy_receipt: ITransactionReceipt;
   currentPhase: number;
+  pendingRegistrations: number;
   instance: AnonymousVotingAPI;
   eventStream: ITriggerableEventStream;
 }
@@ -125,10 +126,11 @@ function generateMockVoteContract(idx: number): IAnonymousVotingContractCollecti
     deploy_receipt: {
       tx: 'MOCK_DEPLOY_TX_RECEIPT_' + idx
     },
+    currentPhase: (idx + 11) * 11 % VotePhases.length,
+    pendingRegistrations: (idx + 3) % 5,
     instance: new AnonymousVotingContract(
       REGISTRATION_DEADLINE, VOTING_DEADLINE, PARAMS_HASH, ELIGIBILITY_CONTRACT, REGISTRATION_AUTHORITY
     ),
-    currentPhase: (idx + 11) * 11 % VotePhases.length,
     eventStream: new TriggerableEventStream()
   };
 }

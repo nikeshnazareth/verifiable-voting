@@ -35,13 +35,17 @@ export class VoteRetrievalService implements IVoteRetrievalService {
         votingDeadline: {
           status: RETRIEVAL_STATUS.AVAILABLE,
           value: new Date(Mock.AnonymousVotingContractCollections[index].timeframes.votingDeadline)
+        },
+        pendingRegistrations: {
+          status: RETRIEVAL_STATUS.AVAILABLE,
+          value: Mock.AnonymousVotingContractCollections[index].pendingRegistrations
         }
       });
   }
 }
 
 const UnavailableDetails: IVotingContractDetails = {
-  index: -1,
+  index: null,
   address: RETRIEVAL_STATUS.UNAVAILABLE,
   phase: RETRIEVAL_STATUS.UNAVAILABLE,
   parameters: {
@@ -57,6 +61,10 @@ const UnavailableDetails: IVotingContractDetails = {
     value: null
   },
   votingDeadline: {
+    status: RETRIEVAL_STATUS.UNAVAILABLE,
+    value: null
+  },
+  pendingRegistrations: {
     status: RETRIEVAL_STATUS.UNAVAILABLE,
     value: null
   }

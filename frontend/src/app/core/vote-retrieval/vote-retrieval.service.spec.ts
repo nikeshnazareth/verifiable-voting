@@ -1,6 +1,7 @@
 import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { Observable } from 'rxjs/Observable';
 import { Subscription } from 'rxjs/Subscription';
+import { Subject } from 'rxjs/Subject';
 import 'rxjs/add/operator/distinctUntilChanged';
 
 import { VoteRetrievalService } from './vote-retrieval.service';
@@ -830,6 +831,91 @@ describe('Service: VoteRetrievalService', () => {
 
         it('"value" should be null', () => {
           expect(lastEmitted().votingDeadline.value).toEqual(null);
+        });
+      });
+    });
+
+    describe('parameter: pendingRegistrations', () => {
+      describe('case: the contract cannot be retrieved from the index', () => {
+        beforeEach(() => {
+          spyOnProperty(voteListingSvc, 'deployedVotes$').and.returnValue(Observable.empty());
+          init_detailsAtIndex$_and_subscribe();
+        });
+
+        it('"status" should be "UNAVAILABLE"', () => {
+          expect(lastEmitted().pendingRegistrations.status).toEqual(RETRIEVAL_STATUS.UNAVAILABLE);
+        });
+
+        it('"value" should be null', () => {
+          expect(lastEmitted().pendingRegistrations.value).toEqual(null);
+        });
+      });
+
+      describe('case: before the number of pending registrations is retrieved', () => {
+        beforeEach(() => {
+          spyOn(anonymousVotingSvc, 'pendingRegistrationsAt$').and.returnValue(Observable.never());
+          init_detailsAtIndex$_and_subscribe();
+        });
+
+        it('"status" should be "RETRIEVING...', () => {
+          expect(lastEmitted().pendingRegistrations.status).toEqual(RETRIEVAL_STATUS.RETRIEVING);
+        });
+
+        it('"value" should be null', () => {
+          expect(lastEmitted().pendingRegistrations.value).toEqual(null);
+        });
+      });
+
+      describe('case: after the number of pending registrations is retrieved', () => {
+        beforeEach(() => init_detailsAtIndex$_and_subscribe());
+
+        it('"status" should be "AVAILABLE', () => {
+          expect(lastEmitted().pendingRegistrations.status).toEqual(RETRIEVAL_STATUS.AVAILABLE);
+        });
+
+        it('"value" should be set', () => {
+          const pendingRegistrations = Mock.AnonymousVotingContractCollections[index].pendingRegistrations;
+          expect(lastEmitted().pendingRegistrations.value).toEqual(pendingRegistrations);
+        });
+      });
+
+      describe('case: the number of pending registrations is updated', () => {
+        const mockPendingRegistrations = [3, 1, 5, 0, 2];
+        let pendingRegistrations$: Subject<number>;
+
+        beforeEach(() => {
+          pendingRegistrations$ = new Subject();
+          spyOn(anonymousVotingSvc, 'pendingRegistrationsAt$').and.returnValue(pendingRegistrations$);
+          init_detailsAtIndex$_and_subscribe();
+        });
+
+        it('"status" should stay as AVAILABLE', () => {
+          mockPendingRegistrations.forEach(val => {
+            pendingRegistrations$.next(val);
+            expect(lastEmitted().pendingRegistrations.status).toEqual(RETRIEVAL_STATUS.AVAILABLE);
+          });
+        });
+
+        it('"value" should be updated accordingly', () => {
+          mockPendingRegistrations.forEach(val => {
+            pendingRegistrations$.next(val);
+            expect(lastEmitted().pendingRegistrations.value).toEqual(val);
+          });
+        });
+      });
+
+      describe('case: AnonymousVotingService.pendingRegistrations$ closes', () => {
+        beforeEach(() => {
+          spyOn(anonymousVotingSvc, 'pendingRegistrationsAt$').and.returnValue(Observable.empty());
+          init_detailsAtIndex$_and_subscribe();
+        });
+
+        it('"status" should be "UNAVAILABLE"', () => {
+          expect(lastEmitted().pendingRegistrations.status).toEqual(RETRIEVAL_STATUS.UNAVAILABLE);
+        });
+
+        it('"value" should be null', () => {
+          expect(lastEmitted().pendingRegistrations.value).toEqual(null);
         });
       });
     });

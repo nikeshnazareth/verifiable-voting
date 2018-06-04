@@ -8,6 +8,7 @@ export interface IVotingContractDetails {
   parameters: IVoteParameters;
   registrationDeadline: IDynamicValue<Date>;
   votingDeadline: IDynamicValue<Date>;
+  pendingRegistrations: IDynamicValue<number>;
 }
 
 export interface IVotingContractSummary {

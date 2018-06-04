@@ -53,7 +53,11 @@ export class AnonymousVotingContract implements AnonymousVotingAPI {
   };
 
   pendingRegistrations = {
-    call: () => Promise.resolve(new BigNumber(0))
+    call: () => Promise.resolve(new BigNumber(
+      Mock.AnonymousVotingContractCollections
+        .filter(collection => collection.params_hash === this.PARAMETERS_IPFS_HASH)[0]
+        .pendingRegistrations
+    ))
   };
 
   blindedAddress = {
