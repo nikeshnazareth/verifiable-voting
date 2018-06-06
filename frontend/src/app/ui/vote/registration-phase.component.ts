@@ -22,6 +22,7 @@ export const RegistrationStatusMessages = {
 @Component({
   selector: 'vv-registration-phase',
   templateUrl: './registration-phase-component.html',
+  styleUrls: ['./registration-phase-component.scss']
 })
 export class RegistrationPhaseComponent extends AbstractPhaseComponent {
 

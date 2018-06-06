@@ -24,6 +24,7 @@ import { BehaviorSubject } from 'rxjs/BehaviorSubject';
       </mat-expansion-panel>
     </div>
   `,
+  styleUrls: ['./vote-component.scss']
 })
 export class VoteComponent implements OnInit {
   private _voteIsSelected: boolean;
