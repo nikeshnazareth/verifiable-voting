@@ -18,7 +18,7 @@ export abstract class AbstractPhaseComponent implements OnInit, OnDestroy {
   private _index$: BehaviorSubject<number>;
   private _subscription: Subscription;
 
-  constructor(private voteRetrievalSvc: VoteRetrievalService) {
+  constructor(protected voteRetrievalSvc: VoteRetrievalService) {
     this._index$ = new BehaviorSubject<number>(null);
     this.submission$ = new Subject<any>();
   }

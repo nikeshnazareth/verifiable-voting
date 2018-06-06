@@ -12,6 +12,7 @@ import { MatStepperModule } from '@angular/material/stepper';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatDividerModule } from '@angular/material/divider';
+import { MatRadioModule } from '@angular/material/radio';
 
 
 @NgModule({
@@ -28,7 +29,8 @@ import { MatDividerModule } from '@angular/material/divider';
     MatStepperModule,
     MatExpansionModule,
     MatCheckboxModule,
-    MatDividerModule
+    MatDividerModule,
+    MatRadioModule
   ],
   exports: [
     MatButtonModule,
@@ -43,7 +45,8 @@ import { MatDividerModule } from '@angular/material/divider';
     MatStepperModule,
     MatExpansionModule,
     MatCheckboxModule,
-    MatDividerModule
+    MatDividerModule,
+    MatRadioModule
   ],
 })
 
