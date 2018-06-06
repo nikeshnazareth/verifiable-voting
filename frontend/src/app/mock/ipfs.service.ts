@@ -1,6 +1,6 @@
 import { IIPFSService } from '../core/ipfs/ipfs.service';
 import { Mock } from './module';
-import { IBlindedAddress, IVoteParameters } from '../core/vote-manager/vote-manager.service';
+import { IBlindedAddress, IBlindedSignature, IVoteParameters } from '../core/vote-manager/vote-manager.service';
 
 export class IPFSService implements IIPFSService {
 
@@ -21,6 +21,14 @@ export class IPFSService implements IIPFSService {
       );
     }
 
+    if (data.hasOwnProperty('blinded_signature')) {
+      return Promise.resolve(
+        Mock.Voters
+          .filter(voter => voter.signed_blinded_address === (<IBlindedSignature> data).blinded_signature)[0]
+          .signed_blinded_address_hash
+      );
+    }
+
     throw new Error('Unexpected data added to the Mock IPFS service');
   }
 
@@ -31,10 +39,17 @@ export class IPFSService implements IIPFSService {
       return Promise.resolve(matchingContracts[0].parameters);
     }
 
-    const matchingVoters = Mock.Voters.filter(voter => voter.blinded_address_hash === hash);
-    if (matchingVoters.length > 0) {
+    const matchingVotersByBlindedAddress = Mock.Voters.filter(voter => voter.blinded_address_hash === hash);
+    if (matchingVotersByBlindedAddress.length > 0) {
       return Promise.resolve({
-        blinded_address: matchingVoters[0].blinded_address
+        blinded_address: matchingVotersByBlindedAddress[0].blinded_address
+      });
+    }
+
+    const matchingVotersByBlindedSignature = Mock.Voters.filter(voter => voter.signed_blinded_address_hash === hash);
+    if (matchingVotersByBlindedSignature.length > 0) {
+      return Promise.resolve({
+        blinded_signature: matchingVotersByBlindedSignature[0].signed_blinded_address
       });
     }
 

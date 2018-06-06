@@ -17,11 +17,12 @@ import { AnonymousVotingContractService } from '../ethereum/anonymous-voting-con
 import { VotePhases } from '../ethereum/anonymous-voting-contract/contract.api';
 import { address } from '../ethereum/type.mappings';
 import { IPFSService } from '../ipfs/ipfs.service';
-import { IVoteParameters } from '../vote-manager/vote-manager.service';
+import { IBlindedSignature, IVoteParameters } from '../vote-manager/vote-manager.service';
 import { ErrorService } from '../error-service/error.service';
 import {
-  IDynamicValue,
-  IVotingContractDetails, IVotingContractSummary, RETRIEVAL_STATUS,
+  IVotingContractDetails,
+  IVotingContractSummary,
+  RETRIEVAL_STATUS,
   VoteRetrievalServiceErrors
 } from './vote-retreival.service.constants';
 
@@ -29,6 +30,8 @@ export interface IVoteRetrievalService {
   summaries$: Observable<IVotingContractSummary[]>;
 
   detailsAtIndex$(idx: number): Observable<IVotingContractDetails>;
+
+  blindSignatureAt$(contractAddr: address, publicVoterAddr: address): Observable<string>;
 }
 
 @Injectable()
@@ -70,6 +73,30 @@ export class VoteRetrievalService implements IVoteRetrievalService {
       .filter((addr, _idx) => _idx === idx)
       .defaultIfEmpty(null)
       .switchMap(addr => this._getVoteDetails(addr, idx));
+  }
+
+  /**
+   * Retrieves the blinded signature for the specified voter at the specified contract
+   * Notifies the error service if the hash cannot be obtained from the contract,
+   * the blinded signature cannot be obtained from the hash, or the retrieved value is incorrectly formatted
+   * @param {address} contractAddr the address of the AnonymousVoting contract
+   * @param {address} publicVoterAddr the voter address
+   * @returns {Observable<string>} an observable of the blinded signature <br/>
+   * including intermediate and error states
+   */
+  blindSignatureAt$(contractAddr: address, publicVoterAddr: address): Observable<string> {
+    return this.anonymousVotingSvc.blindSignatureHashAt$(contractAddr, publicVoterAddr)
+      .map(hash => this.ipfsSvc.catJSON(hash))
+      .switchMap(wrappedBlindSigPromise => Observable.fromPromise(wrappedBlindSigPromise))
+      .catch(err => {
+        this.errSvc.add(VoteRetrievalServiceErrors.ipfs.getBlindSignature(contractAddr, publicVoterAddr), err);
+        return <Observable<object>> Observable.empty();
+      })
+      .map(wrappedBlindedSig => this._confirmBlindSignatureFormat(wrappedBlindedSig))
+      .filter(wrappedBlindedSig => wrappedBlindedSig != null)
+      .map(wrappedBlindedSig => wrappedBlindedSig.blinded_signature)
+      .defaultIfEmpty(RETRIEVAL_STATUS.UNAVAILABLE)
+      .startWith(RETRIEVAL_STATUS.RETRIEVING);
   }
 
   /**
@@ -148,6 +175,7 @@ export class VoteRetrievalService implements IVoteRetrievalService {
    * Notifies the Error Service if the params object doesn't match the IVoteParameters interface
    * @param {Object} obj the object to check
    * @returns {IVoteParameters} the parameters object if it matches or null otherwise
+   * @private
    */
   private _confirmParametersFormat(obj: object): IVoteParameters {
     const params: IVoteParameters = <IVoteParameters> obj;
@@ -165,9 +193,30 @@ export class VoteRetrievalService implements IVoteRetrievalService {
       typeof params.registration_key.public_exp === 'string';
 
     if (valid) {
-      return <IVoteParameters> params;
+      return params;
     } else {
-      this.errSvc.add(VoteRetrievalServiceErrors.format.parametersHash(params), null);
+      this.errSvc.add(VoteRetrievalServiceErrors.format.parameters(params), null);
+      return null;
+    }
+  }
+
+  /**
+   * Notifies the Error Service if the object doesn't match the IBlindedSignature interface
+   * @param {Object} obj the object to check
+   * @returns {IBlindedSignature} the blinded signature object if it matches or null otherwise
+   * @private
+   */
+  private _confirmBlindSignatureFormat(obj: object): IBlindedSignature {
+    const wrappedBlindedSig: IBlindedSignature = <IBlindedSignature> obj;
+    const valid: boolean =
+      wrappedBlindedSig &&
+      wrappedBlindedSig.blinded_signature &&
+      typeof wrappedBlindedSig.blinded_signature === 'string';
+
+    if (valid) {
+      return wrappedBlindedSig;
+    } else {
+      this.errSvc.add(VoteRetrievalServiceErrors.format.blindSignature(wrappedBlindedSig), null);
       return null;
     }
   }

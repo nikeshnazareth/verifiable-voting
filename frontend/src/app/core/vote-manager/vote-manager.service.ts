@@ -27,6 +27,10 @@ export interface IBlindedAddress {
   blinded_address: string;
 }
 
+export interface IBlindedSignature {
+  blinded_signature: string;
+}
+
 export interface IVote {
   signed_address: string;
   candidate: string;

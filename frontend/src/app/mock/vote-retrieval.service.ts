@@ -6,6 +6,7 @@ import {
   IVotingContractDetails,
   IVotingContractSummary, RETRIEVAL_STATUS
 } from '../core/vote-retrieval/vote-retreival.service.constants';
+import { address } from '../core/ethereum/type.mappings';
 import { Mock } from './module';
 
 export class VoteRetrievalService implements IVoteRetrievalService {
@@ -41,6 +42,13 @@ export class VoteRetrievalService implements IVoteRetrievalService {
           value: Mock.AnonymousVotingContractCollections[index].pendingRegistrations
         }
       });
+  }
+
+  blindSignatureAt$(contractAddr: address, publicVoterAddr: address) {
+    return Observable.of(
+      Mock.Voters.filter(voter => voter.public_address === publicVoterAddr)[0]
+        .signed_blinded_address
+    );
   }
 }
 

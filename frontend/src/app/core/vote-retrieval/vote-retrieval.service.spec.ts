@@ -16,7 +16,7 @@ import { ErrorService } from '../error-service/error.service';
 import { VotePhases } from '../ethereum/anonymous-voting-contract/contract.api';
 import { IVoteParameters } from '../vote-manager/vote-manager.service';
 import { address } from '../ethereum/type.mappings';
-import { IAnonymousVotingContractCollection, Mock } from '../../mock/module';
+import { IAnonymousVotingContractCollection, IVoter, Mock } from '../../mock/module';
 import Spy = jasmine.Spy;
 
 describe('Service: VoteRetrievalService', () => {
@@ -410,7 +410,7 @@ describe('Service: VoteRetrievalService', () => {
 
           it('should notify the Error Service', () => {
             expect(errSvc.add).toHaveBeenCalledWith(
-              VoteRetrievalServiceErrors.format.parametersHash(invalid_params), null
+              VoteRetrievalServiceErrors.format.parameters(invalid_params), null
             );
           });
 
@@ -492,7 +492,7 @@ describe('Service: VoteRetrievalService', () => {
     });
   });
 
-  describe('method: detailsAtIndex', () => {
+  describe('method: detailsAtIndex$', () => {
     const index: number = 2;
     const voteCollection: IAnonymousVotingContractCollection = Mock.AnonymousVotingContractCollections[index];
     const init_detailsAtIndex$_and_subscribe = fakeAsync(() => {
@@ -920,6 +920,85 @@ describe('Service: VoteRetrievalService', () => {
       });
     });
 
+  });
+
+  describe('method: blindSignatureAt$', () => {
+    const voteCollection: IAnonymousVotingContractCollection = Mock.AnonymousVotingContractCollections[0];
+    const voter: IVoter = Mock.Voters[0];
+
+    const init_blindSignatureAt$_and_subscribe = fakeAsync(() => {
+      voteRetrievalSvc().blindSignatureAt$(voteCollection.address, voter.public_address)
+        .subscribe(onNext, onError, onCompleted);
+      tick();
+    });
+
+    it('should emit the blind signature and complete', () => {
+      init_blindSignatureAt$_and_subscribe();
+      expect(onNext.calls.mostRecent().args[0]).toEqual(voter.signed_blinded_address);
+      expect(onCompleted).toHaveBeenCalled();
+    });
+
+    describe('case: before the blind signature hash is retrieved', () => {
+      beforeEach(() => {
+        spyOn(anonymousVotingSvc, 'blindSignatureHashAt$').and.returnValue(Observable.never());
+        init_blindSignatureAt$_and_subscribe();
+      });
+
+      it(`should emit ${RETRIEVAL_STATUS.RETRIEVING}`, () => {
+        expect(onNext).toHaveBeenCalledTimes(1);
+        expect(onNext).toHaveBeenCalledWith(RETRIEVAL_STATUS.RETRIEVING);
+      });
+    });
+
+    describe('case: the blind signature hash cannot be retrieved', () => {
+      beforeEach(() => {
+        spyOn(anonymousVotingSvc, 'blindSignatureHashAt$').and.returnValue(Observable.empty());
+        init_blindSignatureAt$_and_subscribe();
+      });
+
+      it(`should emit ${RETRIEVAL_STATUS.UNAVAILABLE} and complete'`, () => {
+        expect(onNext.calls.mostRecent().args[0]).toEqual(RETRIEVAL_STATUS.UNAVAILABLE);
+        expect(onCompleted).toHaveBeenCalled();
+      });
+    });
+
+    describe('case: the blind signature cannot be retrieved from the hash', () => {
+      const error: Error = new Error('Unable to retrieve the blind signature');
+
+      beforeEach(() => {
+        spyOn(ipfsSvc, 'catJSON').and.returnValue(Promise.reject(error));
+        init_blindSignatureAt$_and_subscribe();
+      });
+
+      it('should notify the Error service', () => {
+        expect(errSvc.add).toHaveBeenCalledWith(
+          VoteRetrievalServiceErrors.ipfs.getBlindSignature(voteCollection.address, voter.public_address), error
+        );
+      });
+
+      it(`should emit ${RETRIEVAL_STATUS.UNAVAILABLE} and complete'`, () => {
+        expect(onNext.calls.mostRecent().args[0]).toEqual(RETRIEVAL_STATUS.UNAVAILABLE);
+        expect(onCompleted).toHaveBeenCalled();
+      });
+    });
+
+    describe('case: the retrieved blinded signature has the wrong format', () => {
+      const invalid = {invalid: 'Not a valid blinded signature'};
+
+      beforeEach(() => {
+        spyOn(ipfsSvc, 'catJSON').and.returnValue(Promise.resolve(invalid));
+        init_blindSignatureAt$_and_subscribe();
+      });
+
+      it('should notify the Error service', () => {
+        expect(errSvc.add).toHaveBeenCalledWith(VoteRetrievalServiceErrors.format.blindSignature(invalid), null);
+      });
+
+      it(`should emit ${RETRIEVAL_STATUS.UNAVAILABLE} and complete'`, () => {
+        expect(onNext.calls.mostRecent().args[0]).toEqual(RETRIEVAL_STATUS.UNAVAILABLE);
+        expect(onCompleted).toHaveBeenCalled();
+      });
+    });
   });
 });
 

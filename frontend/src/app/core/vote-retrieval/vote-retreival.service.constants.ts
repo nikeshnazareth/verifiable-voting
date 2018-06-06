@@ -32,10 +32,13 @@ export const RETRIEVAL_STATUS = {
 export const VoteRetrievalServiceErrors = {
   ipfs: {
     getParametersHash: (addr) => new Error('Unable to retrieve the parameters for the AnonymousVoting contract' +
-      ` at ${addr} from the IPFS hash`)
+      ` at ${addr} from the IPFS hash`),
+    getBlindSignature: (contract, voter) => new Error(`Unable to retrieve the blind signature for the voter ${voter}` +
+      ` at the AnonymousVoting contract at ${contract} from the IPFS hash`)
   },
   format: {
-    parametersHash: (params) => new Error(`Retrieved parameters (${params}) do not match the expected format`)
+    parameters: (params) => new Error(`Retrieved parameters object (${params}) does not match the expected format`),
+    blindSignature: (sig) => new Error(`Retrieved blind signature (${sig} does not match the expected format`)
   }
 };
 
