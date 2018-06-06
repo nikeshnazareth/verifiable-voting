@@ -199,4 +199,112 @@ describe('Service: VoteManagerService', () => {
       });
     });
   });
+
+  describe('method: voteAt$', () => {
+    const init_and_call_voteAt$ = fakeAsync(() => {
+      voteManagerSvc().voteAt$(
+        voteDetails.address,
+        voteDetails.parameters.registration_key,
+        voter.anonymous_address,
+        voter.signed_blinded_address,
+        voter.blinding_factor,
+        voter.vote.candidateIdx
+      )
+        .subscribe(onNext, onError, onCompleted);
+      tick();
+    });
+
+    it('should use the Cryptography service to determine the signed address', () => {
+      spyOn(cryptoSvc, 'unblind').and.callThrough();
+      init_and_call_voteAt$();
+      expect(cryptoSvc.unblind).toHaveBeenCalledWith(
+        voter.signed_blinded_address, voter.blinding_factor, voteDetails.parameters.registration_key
+      );
+    });
+
+    it('should use the Cryptography service to confirm the anonymous address matches the unblinded address', () => {
+      spyOn(cryptoSvc, 'verify').and.callThrough();
+      init_and_call_voteAt$();
+      expect(cryptoSvc.verify).toHaveBeenCalledWith(
+        voter.anonymous_address, voter.vote.signed_address, voteDetails.parameters.registration_key
+      );
+    });
+
+    it('should add the vote to IPFS', () => {
+      spyOn(ipfsSvc, 'addJSON').and.callThrough();
+      init_and_call_voteAt$();
+      expect(ipfsSvc.addJSON).toHaveBeenCalledWith(voter.vote);
+    });
+
+    it('should pass the anonymous address and vote hash to the AnonymousVotingService', () => {
+      spyOn(anonymousVotingSvc, 'voteAt$').and.callThrough();
+      init_and_call_voteAt$();
+      expect(anonymousVotingSvc.voteAt$)
+        .toHaveBeenCalledWith(voteDetails.address, voter.anonymous_address, voter.vote_hash);
+    });
+
+    it('should return an observable that emits the vote receipt and completes', () => {
+      init_and_call_voteAt$();
+      expect(onNext).toHaveBeenCalledTimes(1);
+      expect(onNext).toHaveBeenCalledWith(voter.vote_receipt);
+      expect(onCompleted).toHaveBeenCalled();
+    });
+
+    describe('case: the Cryptography service cannot unblind the signature', () => {
+      beforeEach(() => {
+        spyOn(cryptoSvc, 'unblind').and.returnValue(null);
+        init_and_call_voteAt$();
+      });
+
+      it('should return an empty observable', () => {
+        expect(onNext).not.toHaveBeenCalled();
+        expect(onCompleted).toHaveBeenCalled();
+      });
+    });
+
+    describe('case: the anonymous address does not match the unblinded address', () => {
+      beforeEach(() => {
+        spyOn(cryptoSvc, 'verify').and.returnValue(false);
+        init_and_call_voteAt$();
+      });
+
+      it('should notify the Error Service', () => {
+        expect(errSvc.add).toHaveBeenCalledWith(VoteManagerServiceErrors.unauthorised(), null);
+      });
+
+      it('should return an empty observable', () => {
+        expect(onNext).not.toHaveBeenCalled();
+        expect(onCompleted).toHaveBeenCalled();
+      });
+    });
+
+    describe('case: adding the vote to IPFS fails', () => {
+      const error: Error = new Error('Unable to add vote to IPFS');
+      beforeEach(() => {
+        spyOn(ipfsSvc, 'addJSON').and.returnValue(Promise.reject(error));
+        init_and_call_voteAt$();
+      });
+
+      it('should notify the Error Service', () => {
+        expect(errSvc.add).toHaveBeenCalledWith(VoteManagerServiceErrors.ipfs.addVote(), error);
+      });
+
+      it('should return an empty observable', () => {
+        expect(onNext).not.toHaveBeenCalled();
+        expect(onCompleted).toHaveBeenCalled();
+      });
+    });
+
+    describe('case: the AnonymousVotingService call return an empty observable', () => {
+      beforeEach(() => {
+        spyOn(anonymousVotingSvc, 'voteAt$').and.returnValue(Observable.empty());
+        init_and_call_voteAt$();
+      });
+
+      it('should return an empty observable', () => {
+        expect(onNext).not.toHaveBeenCalled();
+        expect(onCompleted).toHaveBeenCalled();
+      });
+    });
+  });
 });

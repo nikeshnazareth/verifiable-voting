@@ -15,7 +15,7 @@ export class CryptographyService implements ICryptographyService {
   unblind(blinded_signature: string, factor: string, key: IRSAKey): string {
     return Mock.Voters
       .filter(voter => voter.blinding_factor === factor)[0]
-      .signed_anonymous_address;
+      .vote.signed_address;
   }
 
   verify(message: string, signature: string, key: IRSAKey): boolean {
@@ -27,7 +27,7 @@ export class CryptographyService implements ICryptographyService {
     // we might be trying to confirm that the signed address matches the anonymous address
     const colectionsMatchingAnonymousAddress = Mock.Voters.filter(voter => voter.anonymous_address === message);
     if (colectionsMatchingAnonymousAddress.length > 0) {
-      return colectionsMatchingAnonymousAddress[0].signed_anonymous_address === signature;
+      return colectionsMatchingAnonymousAddress[0].vote.signed_address === signature;
     }
 
     return false;

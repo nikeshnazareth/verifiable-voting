@@ -27,4 +27,17 @@ export class VoteManagerService implements IVoteManagerService {
         .register_receipt
     );
   }
+
+  voteAt$(contractAddr: address,
+          registrationKey: IRSAKey,
+          anonymousAddr: address,
+          blindedSignature: string,
+          blindingFactor: string,
+          candidateIdx: number) {
+    return Observable.of(
+      Mock.Voters
+        .filter(voter => voter.anonymous_address === anonymousAddr)[0]
+        .vote_receipt
+    );
+  }
 }

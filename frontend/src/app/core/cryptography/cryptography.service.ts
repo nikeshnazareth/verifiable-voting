@@ -135,17 +135,17 @@ export class CryptographyService implements ICryptographyService {
   verify(rawMessage: string, signature: string, key: IRSAKey): boolean {
     if (!this._validKey(key)) {
       this.errSvc.add(CryptographyServiceErrors.key(key), null);
-      return null;
+      return false;
     }
 
     if (!this._isHexString(signature)) {
       this.errSvc.add(CryptographyServiceErrors.signature(signature), null);
-      return null;
+      return false;
     }
 
     if (!this._isHexString(rawMessage)) {
       this.errSvc.add(CryptographyServiceErrors.rawMessage(rawMessage), null);
-      return null;
+      return false;
     }
 
     // convert the hex strings to BN values

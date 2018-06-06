@@ -143,7 +143,6 @@ export interface IVoter {
   blinded_address_hash: string;
   signed_blinded_address: string;
   signed_blinded_address_hash: string;
-  signed_anonymous_address: string;
   register_receipt: ITransactionReceipt;
   vote: IVote;
   vote_hash: string;
@@ -159,11 +158,10 @@ function generateMockVoter(idx: number): IVoter {
     blinded_address_hash: 'MOCK_BLINDED_ADDRESS_HASH_' + idx,
     signed_blinded_address: 'MOCK_SIGNED_BLINDED_ADDRESS_' + idx,
     signed_blinded_address_hash: 'MOCK_SIGNED_BLINDED_ADDRESS_HASH_' + idx,
-    signed_anonymous_address: 'MOCK_SIGNED_ANONYMOUS_ADDRESS_' + idx,
     register_receipt: 'MOCK_REGISTER_RECEIPT_' + idx,
     vote: {
       signed_address: 'MOCK_SIGNED_ADDRESS_' + idx,
-      candidate: 'MOCK_CHOSEN_CANDIDATE_' + idx
+      candidateIdx: (idx * 7) % 3
     },
     vote_hash: 'MOCK_VOTE_HASH_' + idx,
     vote_receipt: 'MOCK_VOTE_RECEIPT_' + idx
