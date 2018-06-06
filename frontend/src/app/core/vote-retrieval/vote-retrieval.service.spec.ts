@@ -938,26 +938,14 @@ describe('Service: VoteRetrievalService', () => {
       expect(onCompleted).toHaveBeenCalled();
     });
 
-    describe('case: before the blind signature hash is retrieved', () => {
-      beforeEach(() => {
-        spyOn(anonymousVotingSvc, 'blindSignatureHashAt$').and.returnValue(Observable.never());
-        init_blindSignatureAt$_and_subscribe();
-      });
-
-      it(`should emit ${RETRIEVAL_STATUS.RETRIEVING}`, () => {
-        expect(onNext).toHaveBeenCalledTimes(1);
-        expect(onNext).toHaveBeenCalledWith(RETRIEVAL_STATUS.RETRIEVING);
-      });
-    });
-
     describe('case: the blind signature hash cannot be retrieved', () => {
       beforeEach(() => {
         spyOn(anonymousVotingSvc, 'blindSignatureHashAt$').and.returnValue(Observable.empty());
         init_blindSignatureAt$_and_subscribe();
       });
 
-      it(`should emit ${RETRIEVAL_STATUS.UNAVAILABLE} and complete'`, () => {
-        expect(onNext.calls.mostRecent().args[0]).toEqual(RETRIEVAL_STATUS.UNAVAILABLE);
+      it('should return an empty observable', () => {
+        expect(onNext).not.toHaveBeenCalled();
         expect(onCompleted).toHaveBeenCalled();
       });
     });
@@ -976,8 +964,8 @@ describe('Service: VoteRetrievalService', () => {
         );
       });
 
-      it(`should emit ${RETRIEVAL_STATUS.UNAVAILABLE} and complete'`, () => {
-        expect(onNext.calls.mostRecent().args[0]).toEqual(RETRIEVAL_STATUS.UNAVAILABLE);
+      it('should return an empty observable', () => {
+        expect(onNext).not.toHaveBeenCalled();
         expect(onCompleted).toHaveBeenCalled();
       });
     });
@@ -994,8 +982,8 @@ describe('Service: VoteRetrievalService', () => {
         expect(errSvc.add).toHaveBeenCalledWith(VoteRetrievalServiceErrors.format.blindSignature(invalid), null);
       });
 
-      it(`should emit ${RETRIEVAL_STATUS.UNAVAILABLE} and complete'`, () => {
-        expect(onNext.calls.mostRecent().args[0]).toEqual(RETRIEVAL_STATUS.UNAVAILABLE);
+      it('should return an empty observable', () => {
+        expect(onNext).not.toHaveBeenCalled();
         expect(onCompleted).toHaveBeenCalled();
       });
     });

@@ -81,8 +81,7 @@ export class VoteRetrievalService implements IVoteRetrievalService {
    * the blinded signature cannot be obtained from the hash, or the retrieved value is incorrectly formatted
    * @param {address} contractAddr the address of the AnonymousVoting contract
    * @param {address} publicVoterAddr the voter address
-   * @returns {Observable<string>} an observable of the blinded signature <br/>
-   * including intermediate and error states
+   * @returns {Observable<string>} an observable of the blinded signature or an empty observable if there is an error
    */
   blindSignatureAt$(contractAddr: address, publicVoterAddr: address): Observable<string> {
     return this.anonymousVotingSvc.blindSignatureHashAt$(contractAddr, publicVoterAddr)
@@ -94,9 +93,7 @@ export class VoteRetrievalService implements IVoteRetrievalService {
       })
       .map(wrappedBlindedSig => this._confirmBlindSignatureFormat(wrappedBlindedSig))
       .filter(wrappedBlindedSig => wrappedBlindedSig != null)
-      .map(wrappedBlindedSig => wrappedBlindedSig.blinded_signature)
-      .defaultIfEmpty(RETRIEVAL_STATUS.UNAVAILABLE)
-      .startWith(RETRIEVAL_STATUS.RETRIEVING);
+      .map(wrappedBlindedSig => wrappedBlindedSig.blinded_signature);
   }
 
   /**
