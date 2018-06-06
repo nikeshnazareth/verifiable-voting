@@ -44,6 +44,14 @@ export class AnonymousVotingContractService implements IAnonymousVotingContractS
       .concat(<Observable<number>> Observable.never());
   }
 
+  blindSignatureHashAt$(contractAddr: address, publicVoterAddr: address): Observable<string> {
+    return Observable.of(
+      Mock.Voters
+        .filter(voter => voter.public_address === publicVoterAddr)[0]
+        .signed_blinded_address_hash
+    );
+  }
+
   registerAt$(contractAddr: address, voterAddr: address, blindedAddressHash: string): Observable<ITransactionReceipt> {
     return Observable.of(
       Mock.Voters

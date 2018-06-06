@@ -546,6 +546,70 @@ describe('Service: AnonymousVotingContractService', () => {
     });
   });
 
+  describe('method: blindSignatureHashAt$', () => {
+
+    const init_blindSignatureHashAt$_and_subscribe = fakeAsync(() => {
+      anonymousVotingSvc = new AnonymousVotingContractService(web3Svc, contractSvc, errSvc);
+      anonymousVotingSvc.blindSignatureHashAt$(voteCollection.address, voter.public_address)
+        .subscribe(onNext, onError, onCompleted);
+      tick();
+    });
+
+    it('should return an observable that emits the blind signature hash and completes', () => {
+      init_blindSignatureHashAt$_and_subscribe();
+      expect(onNext).toHaveBeenCalledTimes(1);
+      expect(onNext).toHaveBeenCalledWith(voter.signed_blinded_address_hash);
+      expect(onCompleted).toHaveBeenCalled();
+    });
+
+    describe('case: web3 is not injected', () => {
+      beforeEach(() => spyOnProperty(web3Svc, 'isInjected').and.returnValue(false));
+
+      it('should return an empty observable', () => {
+        init_blindSignatureHashAt$_and_subscribe();
+        expect(onNext).not.toHaveBeenCalled();
+        expect(onCompleted).toHaveBeenCalled();
+      });
+    });
+
+    describe('case: AnonymousVoting contract is not deployed at the address', () => {
+
+      const error: Error = new Error('No contract at the specified address');
+
+      beforeEach(() => spyOn(Mock.TruffleAnonymousVotingAbstraction, 'at').and.returnValue(Promise.reject(error)));
+
+      it('should notify the Error Service', () => {
+        init_blindSignatureHashAt$_and_subscribe();
+        expect(errSvc.add).toHaveBeenCalledWith(AnonymousVotingContractErrors.network(voteCollection.address), error);
+      });
+
+      it('should return an empty observable', () => {
+        init_blindSignatureHashAt$_and_subscribe();
+        expect(onNext).not.toHaveBeenCalled();
+        expect(onCompleted).toHaveBeenCalled();
+      });
+    });
+
+    describe('case: contract.blindedAddress.call() fails', () => {
+      const error: Error = new Error('Unable to retrieve blind signature hash');
+
+      beforeEach(() => spyOn(voteCollection.instance.blindedAddress, 'call').and.returnValue(Promise.reject(error)));
+
+      it('should notify the Error Service', () => {
+        init_blindSignatureHashAt$_and_subscribe();
+        expect(errSvc.add).toHaveBeenCalledWith(
+          AnonymousVotingContractErrors.blindSignature(voteCollection.address, voter.public_address), error
+        );
+      });
+
+      it('should return an empty observable', () => {
+        init_blindSignatureHashAt$_and_subscribe();
+        expect(onNext).not.toHaveBeenCalled();
+        expect(onCompleted).toHaveBeenCalled();
+      });
+    });
+  });
+
   describe('method: registerAt$', () => {
 
     const init_registerAt$ = fakeAsync(() => {

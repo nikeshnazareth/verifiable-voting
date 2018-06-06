@@ -30,6 +30,8 @@ export interface IAnonymousVotingContractService {
 
   pendingRegistrationsAt$(addr: address): Observable<number>;
 
+  blindSignatureHashAt$(contractAddr: address, publicVoterAddr: address): Observable<string>;
+
   registerAt$(contractAddr: address, voterAddr: address, blindAddressHash: string): Observable<ITransactionReceipt>;
 
   voteAt$(contractAddr: address, anonymousAddr: address, voteHash: string): Observable<ITransactionReceipt>;
@@ -48,6 +50,8 @@ export const AnonymousVotingContractErrors = {
     `at ${addr}`),
   pendingRegistration: (addr) => new Error('Unable to retrieve the pending registrations from the ' +
     `AnonymousVoting contract at ${addr}`),
+  blindSignature: (contract, voterAddr) => new Error('Unable to retrieve the blind signature hash ' +
+    `for the voter ${voterAddr} from the AnonymousVoting contract ${contract}`),
   registration: (contractAddr, voter) => new Error(`Unable to register voter ${voter} ` +
     `at the AnonymousVoting contract ${contractAddr}`),
   vote: (contractAddr, voter) => new Error(`Unable to vote on from ${voter} ` +
@@ -168,6 +172,27 @@ export class AnonymousVotingContractService implements IAnonymousVotingContractS
       .catch(err => {
         this.errSvc.add(AnonymousVotingContractErrors.pendingRegistration(addr), err);
         return <Observable<number>> Observable.empty();
+      });
+  }
+
+  /**
+   * Queries the signed blinded address hash of the specified voter from the specified AnonymousVoting contract
+   * Notifies the Error Service if there is no contract at the specified address or if the blind signature hash
+   * cannot be retrieved
+   * @param {address} contractAddr the address of the AnonymousVoting contract
+   * @param {address} publicVoterAddr the public address of the voter
+   * @returns {Observable<string>} an observable that emits the blind signature <br/>
+   * or an empty Observable if there was an error
+   */
+  blindSignatureHashAt$(contractAddr: address, publicVoterAddr: address): Observable<string> {
+    const SIG_HASH_IDX: number = 1;
+    return this._contractAt(contractAddr)
+      .map(contract => contract.blindedAddress.call(publicVoterAddr))
+      .switchMap(blindSigPromise => Observable.fromPromise(blindSigPromise))
+      .map(blindSignature => blindSignature[SIG_HASH_IDX])
+      .catch(err => {
+        this.errSvc.add(AnonymousVotingContractErrors.blindSignature(contractAddr, publicVoterAddr), err);
+        return <Observable<string>> Observable.empty();
       });
   }
 

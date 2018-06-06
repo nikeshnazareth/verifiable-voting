@@ -61,7 +61,10 @@ export class AnonymousVotingContract implements AnonymousVotingAPI {
   };
 
   blindedAddress = {
-    call: (addr: address) => Promise.resolve(['', ''])
+    call: (publicVoterAddr: address) => {
+      const voter = Mock.Voters.filter(v => v.public_address === publicVoterAddr)[0];
+      return Promise.resolve([voter.blinded_address_hash, voter.signed_blinded_address_hash]);
+    }
   };
 
   register(_blindedAddressHash: string): Promise<ITransactionReceipt> {
