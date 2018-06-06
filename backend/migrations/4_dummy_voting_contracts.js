@@ -9,7 +9,7 @@ const now = (new Date()).getTime();
 const paramHashes = [
     '137041',
     '612945',
-    '179475'
+    '222511'
 ];
 const registrationAuth = '0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef';
 
