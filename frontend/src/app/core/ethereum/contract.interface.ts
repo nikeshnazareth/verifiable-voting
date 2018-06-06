@@ -2,7 +2,7 @@ import { address } from './type.mappings';
 
 export interface IContract {
   address: address;
-  allEvents(): IContractEventStream;
+  allEvents(filter?: IFilter): IContractEventStream;
 }
 
 export interface IContractEventStream {
@@ -13,4 +13,9 @@ export interface IContractEventStream {
 export interface IContractLog {
   event: string;
   args: object;
+}
+
+interface IFilter {
+  fromBlock: number;
+  toBlock: string;
 }

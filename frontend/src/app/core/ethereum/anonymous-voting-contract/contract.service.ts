@@ -242,7 +242,7 @@ export class AnonymousVotingContractService implements IAnonymousVotingContractS
    */
   private _eventsAt$(addr: address): Observable<IContractLog> {
     return this._contractAt(addr)
-      .map(contract => contract.allEvents())
+      .map(contract => contract.allEvents({fromBlock: 0, toBlock: 'latest'}))
       .switchMap(events => <Observable<IContractLog>> Observable.create(observer => {
         events.watch((err, log) => err ?
           this.errSvc.add(AnonymousVotingContractErrors.events(addr), err) :
