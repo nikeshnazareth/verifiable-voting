@@ -31,7 +31,10 @@ export interface AnonymousVotingAPI extends VotePhasesAPI {
   blindedAddress: {
     call(addr: address): Promise<string[]>
   };
-
+  // mapping(address => string) public voteHashes;
+  voteHashes: {
+    call(addr: address): Promise<string>;
+  };
   // function register(string _blindedAddressHash) public
   register(_blindedAddressHash: string, props?: ITransactionProperties): Promise<ITransactionReceipt>;
 

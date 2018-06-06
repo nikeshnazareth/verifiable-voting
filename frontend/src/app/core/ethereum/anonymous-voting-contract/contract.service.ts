@@ -13,7 +13,7 @@ import { ErrorService } from '../../error-service/error.service';
 import { address } from '../type.mappings';
 import {
   AnonymousVotingAPI, NewPhaseEvent, RegistrationComplete, VotePhases,
-  VoterInitiatedRegistration
+  VoterInitiatedRegistration, VoteSubmitted
 } from './contract.api';
 import { IContractLog } from '../contract.interface';
 import { ITransactionReceipt } from '../transaction.interface';
@@ -31,6 +31,8 @@ export interface IAnonymousVotingContractService {
   pendingRegistrationsAt$(addr: address): Observable<number>;
 
   blindSignatureHashAt$(contractAddr: address, publicVoterAddr: address): Observable<string>;
+
+  voteHashesAt$(addr: address): Observable<string>;
 
   registerAt$(contractAddr: address, voterAddr: address, blindAddressHash: string): Observable<ITransactionReceipt>;
 
@@ -52,6 +54,7 @@ export const AnonymousVotingContractErrors = {
     `AnonymousVoting contract at ${addr}`),
   blindSignature: (contract, voterAddr) => new Error('Unable to retrieve the blind signature hash ' +
     `for the voter ${voterAddr} from the AnonymousVoting contract ${contract}`),
+  voteHashes: (addr) => new Error(`Unable to retrieve the vote hashes from the AnonymousVoting contract at ${addr}`),
   registration: (contractAddr, voter) => new Error(`Unable to register voter ${voter} ` +
     `at the AnonymousVoting contract ${contractAddr}`),
   vote: (contractAddr, voter) => new Error(`Unable to vote on from ${voter} ` +
@@ -192,6 +195,28 @@ export class AnonymousVotingContractService implements IAnonymousVotingContractS
       .map(blindSignature => blindSignature[SIG_HASH_IDX])
       .catch(err => {
         this.errSvc.add(AnonymousVotingContractErrors.blindSignature(contractAddr, publicVoterAddr), err);
+        return <Observable<string>> Observable.empty();
+      });
+  }
+
+  /**
+   * Queries the vote hash whenever a VoteSubmitted event occurs
+   * Notifies the error service if there is no contract at the specified address or if a vote hash cannot be retrieved
+   * @param {address} addr the address of the AnonymousVoting contract
+   * @returns {Observable<string>} an observable that emits vote hashes as they are published<br/>
+   * and closes if there is an error
+   */
+  voteHashesAt$(addr: address): Observable<string> {
+    return this._eventsAt$(addr)
+      .filter(log => log.event === VoteSubmitted.name)
+      .map(log => <VoteSubmitted.Log> log)
+      .switchMap(log =>
+        this._contractAt(addr)
+          .map(contract => contract.voteHashes.call(log.args.voter))
+      )
+      .switchMap(voteHashPromise => Observable.fromPromise(voteHashPromise))
+      .catch(err => {
+        this.errSvc.add(AnonymousVotingContractErrors.voteHashes(addr), err);
         return <Observable<string>> Observable.empty();
       });
   }

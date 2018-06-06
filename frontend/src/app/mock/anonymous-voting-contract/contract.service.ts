@@ -52,6 +52,10 @@ export class AnonymousVotingContractService implements IAnonymousVotingContractS
     );
   }
 
+  voteHashesAt$(addr: address): Observable<string> {
+    return Observable.never();
+  }
+
   registerAt$(contractAddr: address, voterAddr: address, blindedAddressHash: string): Observable<ITransactionReceipt> {
     return Observable.of(
       Mock.Voters
