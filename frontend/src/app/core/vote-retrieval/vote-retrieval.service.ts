@@ -17,7 +17,7 @@ import { AnonymousVotingContractService } from '../ethereum/anonymous-voting-con
 import { VotePhases } from '../ethereum/anonymous-voting-contract/contract.api';
 import { address } from '../ethereum/type.mappings';
 import { IPFSService } from '../ipfs/ipfs.service';
-import { IBlindedSignature, IVoteParameters } from '../vote-manager/vote-manager.service';
+import { IBlindedSignature, IVote, IVoteParameters } from '../vote-manager/vote-manager.service';
 import { ErrorService } from '../error-service/error.service';
 import {
   IVotingContractDetails,
@@ -134,7 +134,7 @@ export class VoteRetrievalService implements IVoteRetrievalService {
         .map(hash => this.ipfsSvc.catJSON(hash))
         .switchMap(paramsPromise => Observable.fromPromise(paramsPromise))
         .catch(err => {
-          this.errSvc.add(VoteRetrievalServiceErrors.ipfs.getParametersHash(addr), err);
+          this.errSvc.add(VoteRetrievalServiceErrors.ipfs.getParameters(addr), err);
           return <Observable<object>> Observable.empty();
         })
         .map(params => this._confirmParametersFormat(params))
@@ -154,14 +154,30 @@ export class VoteRetrievalService implements IVoteRetrievalService {
         .concat(Observable.of(RETRIEVAL_STATUS.UNAVAILABLE))
         .startWith(RETRIEVAL_STATUS.RETRIEVING);
 
+      const votes$: Observable<string | number[]> = this.anonymousVotingSvc.voteHashesAt$(addr)
+        .map(voteHash => this.ipfsSvc.catJSON(voteHash))
+        .switchMap(votePromise => Observable.fromPromise(votePromise))
+        .catch(err => {
+          this.errSvc.add(VoteRetrievalServiceErrors.ipfs.getVote(addr), err);
+          return <Observable<IVote>> Observable.empty();
+        })
+        .map(vote => this._confirmVoteFormat(vote))
+        .filter(vote => vote != null)
+        .map(vote => vote.candidateIdx)
+        .scan((arr, el) => arr.concat(el), [])
+        .defaultIfEmpty(RETRIEVAL_STATUS.UNAVAILABLE)
+        .startWith(RETRIEVAL_STATUS.RETRIEVING);
 
       this._voteCache[addr] = phase$.combineLatest(
         parameters$,
         regDeadline$,
         votingDeadline$,
         pendingRegistrations$,
-        (phase, parameters, regDeadline, votingDeadline, pendingRegistrations) =>
-          this._newContractDetails(idx, addr, phase, parameters, regDeadline, votingDeadline, pendingRegistrations)
+        votes$,
+        (phase, parameters, regDeadline, votingDeadline, pendingRegistrations, votes) =>
+          this._newContractDetails(
+            idx, addr, phase, parameters, regDeadline, votingDeadline, pendingRegistrations, votes
+          )
       )
         .shareReplay(1);
     }
@@ -218,6 +234,23 @@ export class VoteRetrievalService implements IVoteRetrievalService {
     }
   }
 
+  private _confirmVoteFormat(obj: object): IVote {
+    const vote: IVote = <IVote> obj;
+    const valid: boolean =
+      vote &&
+      vote.signed_address &&
+      typeof vote.signed_address === 'string' &&
+      vote.candidateIdx &&
+      typeof vote.candidateIdx === 'number';
+
+    if (valid) {
+      return vote;
+    } else {
+      this.errSvc.add(VoteRetrievalServiceErrors.format.vote(vote), null);
+      return null;
+    }
+  }
+
   /**
    * @param {number} idx the index of the contract in the VoteListingContract array
    * @param {string} placeholder a placeholder value for all string properties
@@ -242,6 +275,10 @@ export class VoteRetrievalService implements IVoteRetrievalService {
       pendingRegistrations: {
         status: placeholder,
         value: null
+      },
+      votes: {
+        status: placeholder,
+        value: null
       }
     };
   }
@@ -264,7 +301,8 @@ export class VoteRetrievalService implements IVoteRetrievalService {
   /**
    * @returns {IVotingContractDetails} a new IVotingContractDetails object with the specified values
    */
-  private _newContractDetails(index, addr, phase, parameters, regDeadline, votingDeadline, pendingRegistrations): IVotingContractDetails {
+  private _newContractDetails(index, addr, phase, parameters, regDeadline, votingDeadline,
+                              pendingRegistrations, votes): IVotingContractDetails {
     return {
       index: index,
       address: addr,
@@ -281,6 +319,10 @@ export class VoteRetrievalService implements IVoteRetrievalService {
       pendingRegistrations: {
         status: typeof pendingRegistrations === 'string' ? pendingRegistrations : RETRIEVAL_STATUS.AVAILABLE,
         value: typeof pendingRegistrations === 'string' ? null : pendingRegistrations
+      },
+      votes: {
+        status: typeof votes === 'string' ? votes : RETRIEVAL_STATUS.AVAILABLE,
+        value: typeof votes === 'string' ? null : votes
       }
     };
   }

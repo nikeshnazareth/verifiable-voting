@@ -61,6 +61,11 @@ export class IPFSService implements IIPFSService {
       });
     }
 
+    const matchingVotersByVote = Mock.Voters.filter(voter => voter.vote_hash === hash);
+    if (matchingVotersByVote.length > 0) {
+      return Promise.resolve(matchingVotersByVote[0].vote)
+    }
+
     throw new Error('Unexpected hash requested from the Mock IPFS service');
   }
 }

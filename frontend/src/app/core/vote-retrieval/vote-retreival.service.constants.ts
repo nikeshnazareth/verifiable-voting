@@ -9,6 +9,7 @@ export interface IVotingContractDetails {
   registrationDeadline: IDynamicValue<Date>;
   votingDeadline: IDynamicValue<Date>;
   pendingRegistrations: IDynamicValue<number>;
+  votes: IDynamicValue<number[]>;
 }
 
 export interface IVotingContractSummary {
@@ -31,14 +32,17 @@ export const RETRIEVAL_STATUS = {
 
 export const VoteRetrievalServiceErrors = {
   ipfs: {
-    getParametersHash: (addr) => new Error('Unable to retrieve the parameters for the AnonymousVoting contract' +
+    getParameters: (addr) => new Error('Unable to retrieve the parameters for the AnonymousVoting contract' +
       ` at ${addr} from the IPFS hash`),
     getBlindSignature: (contract, voter) => new Error(`Unable to retrieve the blind signature for the voter ${voter}` +
-      ` at the AnonymousVoting contract at ${contract} from the IPFS hash`)
+      ` at the AnonymousVoting contract at ${contract} from the IPFS hash`),
+    getVote: (addr) => new Error(`Unable to retrieve the votes for the AnonymousVoting contract at ${addr}` +
+    ' from the IPFS hashes')
   },
   format: {
     parameters: (params) => new Error(`Retrieved parameters object (${params}) does not match the expected format`),
-    blindSignature: (sig) => new Error(`Retrieved blind signature (${sig} does not match the expected format`)
+    blindSignature: (sig) => new Error(`Retrieved blind signature (${sig} does not match the expected format`),
+    vote: (vote) => new Error(`Retrieved vote (${vote}) does not match the expected format`)
   }
 };
 

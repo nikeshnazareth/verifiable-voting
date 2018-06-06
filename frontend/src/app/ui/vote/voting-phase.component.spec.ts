@@ -135,6 +135,10 @@ describe('Component: VotingPhaseComponent', () => {
       pendingRegistrations: {
         status: RETRIEVAL_STATUS.AVAILABLE,
         value: 0
+      },
+      votes: {
+        status: RETRIEVAL_STATUS.AVAILABLE,
+        value: []
       }
     };
     spyOn(page.voteRetrievalSvc, 'detailsAtIndex$').and.returnValue(Observable.of(voteDetails));

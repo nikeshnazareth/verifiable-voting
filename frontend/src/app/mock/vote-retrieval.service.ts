@@ -40,6 +40,10 @@ export class VoteRetrievalService implements IVoteRetrievalService {
         pendingRegistrations: {
           status: RETRIEVAL_STATUS.AVAILABLE,
           value: Mock.AnonymousVotingContractCollections[index].pendingRegistrations
+        },
+        votes: {
+          status: RETRIEVAL_STATUS.AVAILABLE,
+          value: []
         }
       });
   }
@@ -73,6 +77,10 @@ const UnavailableDetails: IVotingContractDetails = {
     value: null
   },
   pendingRegistrations: {
+    status: RETRIEVAL_STATUS.UNAVAILABLE,
+    value: null
+  },
+  votes: {
     status: RETRIEVAL_STATUS.UNAVAILABLE,
     value: null
   }

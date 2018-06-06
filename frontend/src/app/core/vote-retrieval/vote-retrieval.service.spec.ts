@@ -378,7 +378,7 @@ describe('Service: VoteRetrievalService', () => {
 
           it('should notify the Error Service', () => {
             const addr: address = Mock.addresses[failedIndex];
-            expect(errSvc.add).toHaveBeenCalledWith(VoteRetrievalServiceErrors.ipfs.getParametersHash(addr), error);
+            expect(errSvc.add).toHaveBeenCalledWith(VoteRetrievalServiceErrors.ipfs.getParameters(addr), error);
           });
 
           it('should emit UNAVAILABLE', () => {
@@ -920,6 +920,11 @@ describe('Service: VoteRetrievalService', () => {
       });
     });
 
+    describe('parameter: votes', () => {
+      xit('should handle individual vote hash errors individually (so one user cannot invalidate the whole vote)');
+
+      xit('should confirm that all the votes have a valid signature');
+    });
   });
 
   describe('method: blindSignatureAt$', () => {
