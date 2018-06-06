@@ -3,6 +3,7 @@ import { IContractEventStream } from '../../core/ethereum/contract.interface';
 import { address } from '../../core/ethereum/type.mappings';
 import { BigNumber } from '../bignumber';
 import { Mock } from '../module';
+import { ITransactionReceipt } from '../../core/ethereum/transaction.interface';
 
 export class AnonymousVotingContract implements AnonymousVotingAPI {
   private REGISTRATION_DEADLINE: number;
@@ -10,8 +11,6 @@ export class AnonymousVotingContract implements AnonymousVotingAPI {
   private PARAMETERS_IPFS_HASH: string;
   private ELIGIBILITY_CONTRACT: address;
   private REGISTRATION_AUTHORITY: address;
-  private REGISTRATION_PHASE: number = 0;
-
 
   constructor(registrationDeadline: number,
               votingDeadline: number,
@@ -26,7 +25,11 @@ export class AnonymousVotingContract implements AnonymousVotingAPI {
   }
 
   currentPhase = {
-    call: () => Promise.resolve(new BigNumber(this.REGISTRATION_PHASE))
+    call: () => Promise.resolve(new BigNumber(
+      Mock.AnonymousVotingContractCollections
+        .filter(collection => collection.params_hash === this.PARAMETERS_IPFS_HASH)[0]
+        .currentPhase
+    ))
   };
 
   registrationDeadline = {
@@ -48,6 +51,35 @@ export class AnonymousVotingContract implements AnonymousVotingAPI {
   registrationAuthority = {
     call: () => Promise.resolve(this.REGISTRATION_AUTHORITY)
   };
+
+  pendingRegistrations = {
+    call: () => Promise.resolve(new BigNumber(
+      Mock.AnonymousVotingContractCollections
+        .filter(collection => collection.params_hash === this.PARAMETERS_IPFS_HASH)[0]
+        .pendingRegistrations
+    ))
+  };
+
+  blindedAddress = {
+    call: (publicVoterAddr: address) => {
+      const voter = Mock.Voters.filter(v => v.public_address === publicVoterAddr)[0];
+      return Promise.resolve([voter.blinded_address_hash, voter.signed_blinded_address_hash]);
+    }
+  };
+
+  register(_blindedAddressHash: string): Promise<ITransactionReceipt> {
+    return Promise.resolve(
+      Mock.Voters.filter(voter => voter.blinded_address_hash === _blindedAddressHash)[0]
+        .register_receipt
+    );
+  }
+
+  vote(_voteHash: string): Promise<ITransactionReceipt> {
+    return Promise.resolve(
+      Mock.Voters.filter(voter => voter.vote_hash === _voteHash)[0]
+        .vote_receipt
+    );
+  }
 
   // These functions create self-referential loop.
   // Mock.AnonymousVotingContractCollections is instantiated with instances of AnonymousVotingContract

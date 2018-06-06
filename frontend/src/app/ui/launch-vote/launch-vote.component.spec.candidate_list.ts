@@ -6,7 +6,7 @@ import { DebugElement } from '@angular/core';
 
 import { TestLaunchVoteComponent } from './launch-vote.component.spec';
 import { Mock } from '../../mock/module';
-import { DOMInteractionUtility } from '../dom-interaction-utility';
+import { DOMInteractionUtility } from '../../mock/dom-interaction-utility';
 
 export function candidate_list_tests(getFixture) {
 

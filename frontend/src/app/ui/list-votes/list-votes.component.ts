@@ -1,12 +1,9 @@
-import { Component, EventEmitter, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Output } from '@angular/core';
 import { Observable } from 'rxjs/Observable';
-import 'rxjs/add/operator/scan';
-import 'rxjs/add/operator/switch';
-import 'rxjs/add/operator/defaultIfEmpty';
-import 'rxjs/add/operator/startWith';
-import 'rxjs/add/operator/combineLatest';
 
-import { IVotingContractSummary, VoteRetrievalService } from '../../core/vote-retrieval/vote-retrieval.service';
+import { VoteRetrievalService } from '../../core/vote-retrieval/vote-retrieval.service';
+import { IVotingContractSummary, RETRIEVAL_STATUS } from '../../core/vote-retrieval/vote-retreival.service.constants';
+import 'rxjs/add/operator/withLatestFrom';
 
 @Component({
   selector: 'vv-list-votes',
@@ -31,25 +28,45 @@ import { IVotingContractSummary, VoteRetrievalService } from '../../core/vote-re
       </ng-container>
 
       <mat-header-row *matHeaderRowDef="_displayedColumns"></mat-header-row>
-      <mat-row *matRowDef="let row; columns: _displayedColumns" (click)="selectedContract$.emit(row.index)"></mat-row>
+      <mat-row *matRowDef="let row; columns: _displayedColumns" (click)="_rowClicked$.emit(row.index)"></mat-row>
     </mat-table>
   `,
   styleUrls: ['./list-votes.component.scss']
 })
-export class ListVotesComponent implements OnInit {
-  @Output() selectedContract$: EventEmitter<number>;
+export class ListVotesComponent {
+  @Output() selectedContract$: Observable<number>;
 
   private _contractsSummary$: Observable<IVotingContractSummary[]>;
   private _displayedColumns: string[] = ['index', 'phase', 'topic'];
+  private _rowClicked$: EventEmitter<number>;
 
   constructor(private voteRetrievalSvc: VoteRetrievalService) {
-    this.selectedContract$ = new EventEmitter<number>();
+    this._rowClicked$ = new EventEmitter<number>();
+    this._contractsSummary$ = this.voteRetrievalSvc.summaries$;
+    this.selectedContract$ = this._initialiseSelectedContract$();
   }
 
   /**
-   * Initialise the table data source
+   * Pass through row click events when the row is complete
+   * @returns {Observable<number>}
+   * @private
    */
-  ngOnInit() {
-    this._contractsSummary$ = this.voteRetrievalSvc.summaries$;
+  private _initialiseSelectedContract$(): Observable<number> {
+    return this._rowClicked$
+      .withLatestFrom(this._contractsSummary$)
+      .map(([idx, summaries]) => summaries[idx])
+      .filter(summary => this.isCompleteSummary(summary))
+      .map(summary => summary.index);
+  }
+
+  /**
+   * @param {IVotingContractSummary} summary a VotingContract summary to check
+   * @returns {boolean} whether all of the fields are retrieved and available
+   */
+  private isCompleteSummary(summary: IVotingContractSummary): boolean {
+    return summary.phase !== RETRIEVAL_STATUS.RETRIEVING &&
+      summary.phase !== RETRIEVAL_STATUS.UNAVAILABLE &&
+      summary.topic !== RETRIEVAL_STATUS.RETRIEVING &&
+      summary.topic !== RETRIEVAL_STATUS.UNAVAILABLE;
   }
 }

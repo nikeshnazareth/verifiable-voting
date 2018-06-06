@@ -5,7 +5,7 @@
     2. Call the updatePhase modifier
  */
 
-import "./AnonymousVoting.sol";
+import "../AnonymousVoting.sol";
 
 pragma solidity ^0.4.21;
 

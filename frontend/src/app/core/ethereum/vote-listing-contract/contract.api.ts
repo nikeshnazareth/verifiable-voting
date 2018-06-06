@@ -22,8 +22,8 @@ export interface VoteListingAPI extends IContract {
       address _registrationAuthority
     )
   */
-  deploy(_registrationDeadline: uint,
-         _votingDeadline: uint,
+  deploy(_registrationDeadline: number,
+         _votingDeadline: number,
          _paramsHash: string,
          _elibigilityContract: address,
          _registrationAuthority: address,

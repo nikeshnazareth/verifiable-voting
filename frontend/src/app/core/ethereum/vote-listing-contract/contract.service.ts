@@ -1,6 +1,6 @@
-import { EventEmitter, Injectable, OnDestroy } from '@angular/core';
+import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs/Observable';
-import { Subscription } from 'rxjs/Subscription';
+import { ReplaySubject } from 'rxjs/ReplaySubject';
 import 'rxjs/add/observable/fromPromise';
 import 'rxjs/add/observable/empty';
 import 'rxjs/add/observable/range';
@@ -9,6 +9,8 @@ import 'rxjs/add/operator/filter';
 import 'rxjs/add/operator/map';
 import 'rxjs/add/operator/concatMap';
 import 'rxjs/add/operator/concat';
+import 'rxjs/add/operator/switch';
+import 'rxjs/add/operator/bufferCount';
 
 import { APP_CONFIG } from '../../../config';
 import { VoteCreatedEvent, VoteListingAPI } from './contract.api';
@@ -16,8 +18,9 @@ import { Web3Service } from '../web3.service';
 import { ITruffleContractAbstraction, TruffleContractWrapperService } from '../truffle-contract-wrapper.service';
 import { IContractLog } from '../contract.interface';
 import { ErrorService } from '../../error-service/error.service';
-import { address, uint } from '../type.mappings';
+import { address } from '../type.mappings';
 import { ITransactionReceipt } from '../transaction.interface';
+
 
 export interface IVoteTimeframes {
   registrationDeadline: number;
@@ -41,15 +44,14 @@ export const VoteListingContractErrors = {
   eventError: new Error('Unexpected error in the VoteListing contract event stream'),
   deployVote: new Error('Unable to deploy a new AnonymousVoting contract'),
   deployedVotes: new Error('Unable to obtain AnonymousVoting contracts from the VoteListing contract'),
-  contractAddress: (i: uint) => new Error(`Unable to retrieve voting contract ${i} (0-up indexing)`)
+  contractAddress: (i: number) => new Error(`Unable to retrieve voting contract ${i} (0-up indexing)`)
 };
 
 @Injectable()
-export class VoteListingContractService implements IVoteListingContractService, OnDestroy {
-  public deployedVotes$: EventEmitter<address>;
+export class VoteListingContractService implements IVoteListingContractService {
+  public deployedVotes$: ReplaySubject<address>;
   private _contractPromise: Promise<VoteListingAPI>;
   private _voteCreated$: Observable<address>;
-  private _deployedVotesSubscription: Subscription;
 
   constructor(private web3Svc: Web3Service,
               private contractSvc: TruffleContractWrapperService,
@@ -57,17 +59,9 @@ export class VoteListingContractService implements IVoteListingContractService, 
 
     this._contractPromise = this._initContractPromise();
 
-    // pass the addresses from a private observable to a public one so they are only
-    // calculated once and all observers receive the cached values
-    this.deployedVotes$ = new EventEmitter<address>();
-    this._deployedVotesSubscription = this._initDeployedVotes$().subscribe(
-      addr => this.deployedVotes$.emit(addr), err => Observable.throw(err), () => this.deployedVotes$.complete()
-    );
     this._voteCreated$ = this._initVoteCreated$();
-  }
-
-  ngOnDestroy() {
-    this._deployedVotesSubscription.unsubscribe();
+    this.deployedVotes$ = new ReplaySubject<address>();
+    this._initDeployedVotes$().subscribe(this.deployedVotes$);
   }
 
   /**
@@ -106,26 +100,29 @@ export class VoteListingContractService implements IVoteListingContractService, 
    * or an empty observable if the contract cannot be contacted
    */
   private _initDeployedVotes$(): Observable<address> {
-    const p: Promise<Observable<address>> = this._contractPromise
-      .then(contract => contract.numberOfVotingContracts.call())
-      .then(countBN => countBN.toNumber())
-      .then(count => Observable.range(0, count)
-        .map(i => this._contractPromise
-          .then(contract => contract.votingContracts.call(i))
+    return this._voteCreated$
+      .startWith(null)
+      // get the number of votes every time a VoteCreated event is emitted
+      .map(() => this._contractPromise.then(contract => contract.numberOfVotingContracts.call()))
+      .switchMap(promise => Observable.fromPromise(promise))
+      // produce an observable with all the indices not yet processed
+      .map(countBN => countBN.toNumber())
+      .startWith(0)
+      .bufferCount(2, 1)
+      .concatMap(bounds => Observable.range(bounds[0], bounds[1] - bounds[0]))
+      // get the contract address at the index or null if there is an error
+      .map(contractIdx => this._contractPromise
+          .then(contract => contract.votingContracts.call(contractIdx))
           .catch(err => {
-            this.errSvc.add(VoteListingContractErrors.contractAddress(i), err);
+            this.errSvc.add(VoteListingContractErrors.contractAddress(contractIdx), err);
             return Promise.resolve(null);
           })
-        )
-        .concatMap(promise => Observable.fromPromise(promise))
-        .concat(this._voteCreated$)
       )
+      .concatMap(promise => Observable.fromPromise(promise))
       .catch(err => {
         this.errSvc.add(VoteListingContractErrors.deployedVotes, err);
         return <Observable<address>> Observable.empty();
       });
-
-    return Observable.fromPromise(p).switch();
   }
 
 

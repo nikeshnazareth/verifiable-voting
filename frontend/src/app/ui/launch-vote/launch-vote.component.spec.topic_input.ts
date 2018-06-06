@@ -5,7 +5,7 @@ import { By } from '@angular/platform-browser';
 
 import { TestLaunchVoteComponent } from './launch-vote.component.spec';
 import { Mock } from '../../mock/module';
-import { DOMInteractionUtility } from '../dom-interaction-utility';
+import { DOMInteractionUtility } from '../../mock/dom-interaction-utility';
 
 export function topic_input_tests(getFixture) {
 

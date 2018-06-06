@@ -9,6 +9,10 @@ import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material';
 import { MatIconModule } from '@angular/material/icon';
 import { MatStepperModule } from '@angular/material/stepper';
+import { MatExpansionModule } from '@angular/material/expansion';
+import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MatDividerModule } from '@angular/material/divider';
+import { MatRadioModule } from '@angular/material/radio';
 
 
 @NgModule({
@@ -22,7 +26,11 @@ import { MatStepperModule } from '@angular/material/stepper';
     MatDatepickerModule,
     MatNativeDateModule,
     MatIconModule,
-    MatStepperModule
+    MatStepperModule,
+    MatExpansionModule,
+    MatCheckboxModule,
+    MatDividerModule,
+    MatRadioModule
   ],
   exports: [
     MatButtonModule,
@@ -34,7 +42,11 @@ import { MatStepperModule } from '@angular/material/stepper';
     MatDatepickerModule,
     MatNativeDateModule,
     MatIconModule,
-    MatStepperModule
+    MatStepperModule,
+    MatExpansionModule,
+    MatCheckboxModule,
+    MatDividerModule,
+    MatRadioModule
   ],
 })
 

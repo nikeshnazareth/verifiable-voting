@@ -1,6 +1,4 @@
-interface IBigNumber {
-  toNumber(): number;
-}
+import { IBigNumber } from '../core/ethereum/web3.service';
 
 export class BigNumber implements IBigNumber {
   private value: number;

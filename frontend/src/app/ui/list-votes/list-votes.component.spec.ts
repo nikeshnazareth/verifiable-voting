@@ -5,8 +5,11 @@ import { By } from '@angular/platform-browser';
 import { ListVotesComponent } from './list-votes.component';
 import { IVoteRetrievalService, VoteRetrievalService } from '../../core/vote-retrieval/vote-retrieval.service';
 import { MaterialModule } from '../../material/material.module';
-import { DOMInteractionUtility } from '../dom-interaction-utility';
+import { DOMInteractionUtility } from '../../mock/dom-interaction-utility';
 import { Mock } from '../../mock/module';
+import { Observable } from 'rxjs/Observable';
+import { IVotingContractSummary, RETRIEVAL_STATUS } from '../../core/vote-retrieval/vote-retreival.service.constants';
+import { VotePhases } from '../../core/ethereum/anonymous-voting-contract/contract.api';
 import Spy = jasmine.Spy;
 
 describe('Component: ListVotesComponent', () => {
@@ -136,27 +139,32 @@ describe('Component: ListVotesComponent', () => {
       const onError = err => fail(err);
       let onCompleted: Spy;
 
-      beforeEach(fakeAsync(() => {
+      beforeEach(() => {
         onNext = jasmine.createSpy('onNext');
         onCompleted = jasmine.createSpy('onCompleted');
-
-        fixture.detectChanges();
-        fixture.componentInstance.selectedContract$.subscribe(onNext, onError, onCompleted);
-        tick();
-      }));
+      });
 
       it('it should start empty', () => {
+        fixture.detectChanges();
+        fixture.componentInstance.selectedContract$.subscribe(onNext, onError, onCompleted);
+
         expect(onNext).not.toHaveBeenCalled();
         expect(onCompleted).not.toHaveBeenCalled();
       });
 
       it('it should emit the contract index when a table row is selected', () => {
+        fixture.detectChanges();
+        fixture.componentInstance.selectedContract$.subscribe(onNext, onError, onCompleted);
         DOMInteractionUtility.clickOn(Page.getRows()[2]);
+
         expect(onNext).toHaveBeenCalledTimes(1);
         expect(onNext).toHaveBeenCalledWith(2);
       });
 
       it('it should continue to emit indices when table rows are selected', () => {
+        fixture.detectChanges();
+        fixture.componentInstance.selectedContract$.subscribe(onNext, onError, onCompleted);
+
         DOMInteractionUtility.clickOn(Page.getRows()[2]);
         expect(onNext).toHaveBeenCalledTimes(1);
         expect(onNext).toHaveBeenCalledWith(2);
@@ -172,6 +180,179 @@ describe('Component: ListVotesComponent', () => {
         DOMInteractionUtility.clickOn(Page.getRows()[2]);
         expect(onNext).toHaveBeenCalledTimes(4);
         expect(onNext.calls.mostRecent().args[0]).toEqual(2);
+      });
+
+      describe('case: one of the rows is missing information', () => {
+        const incompleteIndex: number = 2;
+
+        const completeSummary = (idx) => ({
+          index: idx,
+          address: Mock.AnonymousVotingContractCollections[idx].address,
+          phase: VotePhases[0],
+          topic: Mock.AnonymousVotingContractCollections[idx].parameters.topic
+        });
+
+        const completeSummaries: IVotingContractSummary[] = Mock.addresses.map((addr, idx) => completeSummary(idx));
+
+        const setPhase = (idx: number, newPhase: string) => {
+          return Mock.addresses.map((addr, i) => {
+            const summary = completeSummary(i);
+            summary.phase = i === idx ? newPhase : summary.phase;
+            return summary;
+          });
+        };
+
+        const setTopic = (idx: number, newTopic: string) => {
+          return Mock.addresses.map((addr, i) => {
+            const summary = completeSummary(i);
+            summary.topic = i === idx ? newTopic : summary.topic;
+            return summary;
+          });
+        };
+
+        describe('case: one of the contracts is retrieving the phase', () => {
+
+          it('should prevent the row from being selected', () => {
+            spyOnProperty(page.voteRetrievalSvc, 'summaries$').and.returnValue(
+              Observable.of(setPhase(incompleteIndex, RETRIEVAL_STATUS.RETRIEVING))
+            );
+            fixture = TestBed.createComponent(ListVotesComponent);
+            fixture.detectChanges();
+            fixture.componentInstance.selectedContract$.subscribe(onNext, onError, onCompleted);
+
+            DOMInteractionUtility.clickOn(Page.getRows()[incompleteIndex]);
+            expect(onNext).not.toHaveBeenCalled();
+          });
+
+          it('should not prevent other rows from being selected', () => {
+            spyOnProperty(page.voteRetrievalSvc, 'summaries$').and.returnValue(
+              Observable.of(setPhase(incompleteIndex, RETRIEVAL_STATUS.RETRIEVING))
+            );
+            fixture = TestBed.createComponent(ListVotesComponent);
+            fixture.detectChanges();
+            fixture.componentInstance.selectedContract$.subscribe(onNext, onError, onCompleted);
+
+            Mock.addresses.map((addr, idx) => {
+              if (idx !== incompleteIndex) {
+                DOMInteractionUtility.clickOn(Page.getRows()[idx]);
+                expect(onNext.calls.mostRecent().args[0]).toEqual(idx);
+              }
+            });
+          });
+
+          it('should enable the row selection once the phase is retrieved', () => {
+            spyOnProperty(page.voteRetrievalSvc, 'summaries$').and.returnValue(
+              Observable.of(setPhase(incompleteIndex, RETRIEVAL_STATUS.RETRIEVING))
+                .concat(Observable.of(completeSummaries))
+            );
+            fixture = TestBed.createComponent(ListVotesComponent);
+            fixture.detectChanges();
+            fixture.componentInstance.selectedContract$.subscribe(onNext, onError, onCompleted);
+
+
+            DOMInteractionUtility.clickOn(Page.getRows()[incompleteIndex]);
+            expect(onNext).toHaveBeenCalledTimes(1);
+            expect(onNext).toHaveBeenCalledWith(incompleteIndex);
+          });
+        });
+
+        describe('case: one of the phases is unavailable', () => {
+          beforeEach(() => {
+            spyOnProperty(page.voteRetrievalSvc, 'summaries$').and.returnValue(
+              Observable.of(setPhase(incompleteIndex, RETRIEVAL_STATUS.UNAVAILABLE))
+            );
+            fixture = TestBed.createComponent(ListVotesComponent);
+            fixture.detectChanges();
+            fixture.componentInstance.selectedContract$.subscribe(onNext, onError, onCompleted);
+          });
+
+          it('should prevent the row from being selected', () => {
+            DOMInteractionUtility.clickOn(Page.getRows()[incompleteIndex]);
+            expect(onNext).not.toHaveBeenCalled();
+          });
+
+          it('should not prevent other rows from being selected', () => {
+            Mock.addresses.map((addr, idx) => {
+              if (idx !== incompleteIndex) {
+                DOMInteractionUtility.clickOn(Page.getRows()[idx]);
+                expect(onNext.calls.mostRecent().args[0]).toEqual(idx);
+              }
+            });
+          });
+        });
+
+        describe('case: one of the contracts is retrieving the topic', () => {
+
+          it('should prevent the row from being selected', () => {
+            spyOnProperty(page.voteRetrievalSvc, 'summaries$').and.returnValue(
+              Observable.of(setTopic(incompleteIndex, RETRIEVAL_STATUS.RETRIEVING))
+            );
+            fixture = TestBed.createComponent(ListVotesComponent);
+            fixture.detectChanges();
+            fixture.componentInstance.selectedContract$.subscribe(onNext, onError, onCompleted);
+
+            DOMInteractionUtility.clickOn(Page.getRows()[incompleteIndex]);
+            expect(onNext).not.toHaveBeenCalled();
+          });
+
+          it('should not prevent other rows from being selected', () => {
+            spyOnProperty(page.voteRetrievalSvc, 'summaries$').and.returnValue(
+              Observable.of(setTopic(incompleteIndex, RETRIEVAL_STATUS.RETRIEVING))
+            );
+            fixture = TestBed.createComponent(ListVotesComponent);
+            fixture.detectChanges();
+            fixture.componentInstance.selectedContract$.subscribe(onNext, onError, onCompleted);
+
+            Mock.addresses.map((addr, idx) => {
+              if (idx !== incompleteIndex) {
+                DOMInteractionUtility.clickOn(Page.getRows()[idx]);
+                expect(onNext.calls.mostRecent().args[0]).toEqual(idx);
+              }
+            });
+          });
+
+          it('should enable the row selection once the topic is retrieved', () => {
+            spyOnProperty(page.voteRetrievalSvc, 'summaries$').and.returnValue(
+              Observable.of(setTopic(incompleteIndex, RETRIEVAL_STATUS.RETRIEVING))
+                .concat(Observable.of(completeSummaries))
+            );
+            fixture = TestBed.createComponent(ListVotesComponent);
+            fixture.detectChanges();
+            fixture.componentInstance.selectedContract$.subscribe(onNext, onError, onCompleted);
+
+
+            DOMInteractionUtility.clickOn(Page.getRows()[incompleteIndex]);
+            expect(onNext).toHaveBeenCalledTimes(1);
+            expect(onNext).toHaveBeenCalledWith(incompleteIndex);
+          });
+        });
+
+        describe('case: one of the topics is unavailable', () => {
+          beforeEach(() => {
+            spyOnProperty(page.voteRetrievalSvc, 'summaries$').and.returnValue(
+              Observable.of(setTopic(incompleteIndex, RETRIEVAL_STATUS.UNAVAILABLE))
+            );
+            fixture = TestBed.createComponent(ListVotesComponent);
+            fixture.detectChanges();
+            fixture.componentInstance.selectedContract$.subscribe(onNext, onError, onCompleted);
+          });
+
+          it('should prevent the row from being selected', () => {
+            DOMInteractionUtility.clickOn(Page.getRows()[incompleteIndex]);
+            expect(onNext).not.toHaveBeenCalled();
+          });
+
+          it('should not prevent other rows from being selected', () => {
+            Mock.addresses.map((addr, idx) => {
+              if (idx !== incompleteIndex) {
+                DOMInteractionUtility.clickOn(Page.getRows()[idx]);
+                expect(onNext.calls.mostRecent().args[0]).toEqual(idx);
+              }
+            });
+          });
+        });
+
+        xit('TODO: it should change the cursor to indicate that selection is not possible');
       });
     });
   });

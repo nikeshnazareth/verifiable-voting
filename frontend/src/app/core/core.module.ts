@@ -9,6 +9,7 @@ import { VoteManagerService } from './vote-manager/vote-manager.service';
 import { AnonymousVotingContractService } from './ethereum/anonymous-voting-contract/contract.service';
 import { NoRestrictionContractService } from './ethereum/no-restriction-contract/contract.service';
 import { VoteRetrievalService } from './vote-retrieval/vote-retrieval.service';
+import { CryptographyService } from './cryptography/cryptography.service';
 
 @NgModule({
   providers: [
@@ -20,7 +21,8 @@ import { VoteRetrievalService } from './vote-retrieval/vote-retrieval.service';
     VoteListingContractService,
     AnonymousVotingContractService,
     VoteManagerService,
-    NoRestrictionContractService
+    NoRestrictionContractService,
+    CryptographyService
   ]
 })
 export class CoreModule {

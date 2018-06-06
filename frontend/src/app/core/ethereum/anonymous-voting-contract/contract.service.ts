@@ -4,20 +4,37 @@ import 'rxjs/add/observable/of';
 import 'rxjs/add/operator/takeWhile';
 import 'rxjs/add/operator/share';
 import 'rxjs/add/operator/do';
+import 'rxjs/add/operator/defaultIfEmpty';
 
 import { APP_CONFIG } from '../../../config';
 import { Web3Service } from '../web3.service';
 import { ITruffleContractAbstraction, TruffleContractWrapperService } from '../truffle-contract-wrapper.service';
 import { ErrorService } from '../../error-service/error.service';
 import { address } from '../type.mappings';
-import { AnonymousVotingAPI, NewPhaseEvent, VotePhases } from './contract.api';
+import {
+  AnonymousVotingAPI, NewPhaseEvent, RegistrationComplete, VotePhases,
+  VoterInitiatedRegistration
+} from './contract.api';
 import { IContractLog } from '../contract.interface';
+import { ITransactionReceipt } from '../transaction.interface';
 
 
 export interface IAnonymousVotingContractService {
   phaseAt$(addr: address): Observable<number>;
 
   paramsHashAt$(addr: address): Observable<string>;
+
+  registrationDeadlineAt$(addr: address): Observable<Date>;
+
+  votingDeadlineAt$(addr: address): Observable<Date>;
+
+  pendingRegistrationsAt$(addr: address): Observable<number>;
+
+  blindSignatureHashAt$(contractAddr: address, publicVoterAddr: address): Observable<string>;
+
+  registerAt$(contractAddr: address, voterAddr: address, blindAddressHash: string): Observable<ITransactionReceipt>;
+
+  voteAt$(contractAddr: address, anonymousAddr: address, voteHash: string): Observable<ITransactionReceipt>;
 }
 
 export const AnonymousVotingContractErrors = {
@@ -26,7 +43,19 @@ export const AnonymousVotingContractErrors = {
     `and MetaMask (or the web3 provider) is connected to the ${APP_CONFIG.network.name}`),
   events: (addr) => new Error(`Unexpected error in the event stream of the AnonymousVoting contract at ${addr}`),
   paramsHash: (addr) => new Error(`Unable to retrieve the parameters hash from the AnonymousVoting contract at ${addr}`),
-  phase: (addr) => new Error(`Unable to retrieve the current phase from the AnonymousVoting contract at ${addr}`)
+  phase: (addr) => new Error(`Unable to retrieve the current phase from the AnonymousVoting contract at ${addr}`),
+  regDeadline: (addr) => new Error('Unable to retrieve the registration deadline from the AnonymousVoting contract' +
+    `at ${addr}`),
+  votingDeadline: (addr) => new Error('Unable to retrieve the voting deadline from the AnonymousVoting contract' +
+    `at ${addr}`),
+  pendingRegistration: (addr) => new Error('Unable to retrieve the pending registrations from the ' +
+    `AnonymousVoting contract at ${addr}`),
+  blindSignature: (contract, voterAddr) => new Error('Unable to retrieve the blind signature hash ' +
+    `for the voter ${voterAddr} from the AnonymousVoting contract ${contract}`),
+  registration: (contractAddr, voter) => new Error(`Unable to register voter ${voter} ` +
+    `at the AnonymousVoting contract ${contractAddr}`),
+  vote: (contractAddr, voter) => new Error(`Unable to vote on from ${voter} ` +
+    `at the AnonymousVoting contract ${contractAddr}`)
 };
 
 @Injectable()
@@ -80,6 +109,126 @@ export class AnonymousVotingContractService implements IAnonymousVotingContractS
       .catch(err => {
         this.errSvc.add(AnonymousVotingContractErrors.paramsHash(addr), err);
         return <Observable<string>> Observable.empty();
+      });
+  }
+
+  /**
+   * Queries the registration deadline from the specified AnonymousVoting contract
+   * Notifies the Error Service if there is no contract at the specified address
+   * or if the deadline cannot be retrieved
+   * @param {address} addr the address of the AnonymousVoting contract
+   * @returns {Observable<Date>} an observable that emits the registration deadline <br/>
+   * or an empty observable if there was an error
+   */
+  registrationDeadlineAt$(addr: address): Observable<Date> {
+    return this._contractAt(addr)
+      .map(contract => contract.registrationDeadline.call())
+      .switchMap(deadlinePromise => Observable.fromPromise(deadlinePromise))
+      .map(deadlineBN => deadlineBN.toNumber())
+      .map(deadlineInt => new Date(deadlineInt))
+      .catch(err => {
+        this.errSvc.add(AnonymousVotingContractErrors.regDeadline(addr), err);
+        return <Observable<Date>> Observable.empty();
+      });
+  }
+
+  /**
+   * Queries the voting deadline from the specified AnonymousVoting contract
+   * Notifies the Error Service if there is no contract at the specified address
+   * or if the deadline cannot be retrieved
+   * @param {address} addr the address of the AnonymousVoting contract
+   * @returns {Observable<Date>} an observable that emits the voting deadline <br/>
+   * or an empty observable if there was an error
+   */
+  votingDeadlineAt$(addr: address): Observable<Date> {
+    return this._contractAt(addr)
+      .map(contract => contract.votingDeadline.call())
+      .switchMap(deadlinePromise => Observable.fromPromise(deadlinePromise))
+      .map(deadlineBN => deadlineBN.toNumber())
+      .map(deadlineInt => new Date(deadlineInt))
+      .catch(err => {
+        this.errSvc.add(AnonymousVotingContractErrors.votingDeadline(addr), err);
+        return <Observable<Date>> Observable.empty();
+      });
+  }
+
+  /**
+   * Queries the number of pending registrations from the specified AnonymousVoting contract whenever
+   * a VoterInitiatedRegistration or RegistrationComplete event occurs on the contract
+   * Notifies the Error Service if there is no contract at the specified address or if the pending registrations
+   * cannot be retrieved
+   * @param {address} addr the address of the AnonymousVoting contract
+   * @returns {Observable<number>} an observable the emits the pending registrations whenever it changes and
+   * closes if there is an error
+   */
+  pendingRegistrationsAt$(addr: address): Observable<number> {
+    return this._eventsAt$(addr)
+      .filter(log => [VoterInitiatedRegistration.name, RegistrationComplete.name].includes(log.event))
+      .startWith(null)
+      .switchMap(() => this._contractAt(addr))
+      .map(contract => contract.pendingRegistrations.call())
+      .switchMap(pendingRegPromise => Observable.fromPromise(pendingRegPromise))
+      .map(pendingRegistration => pendingRegistration.toNumber())
+      .catch(err => {
+        this.errSvc.add(AnonymousVotingContractErrors.pendingRegistration(addr), err);
+        return <Observable<number>> Observable.empty();
+      });
+  }
+
+  /**
+   * Queries the signed blinded address hash of the specified voter from the specified AnonymousVoting contract
+   * Notifies the Error Service if there is no contract at the specified address or if the blind signature hash
+   * cannot be retrieved
+   * @param {address} contractAddr the address of the AnonymousVoting contract
+   * @param {address} publicVoterAddr the public address of the voter
+   * @returns {Observable<string>} an observable that emits the blind signature <br/>
+   * or an empty Observable if there was an error
+   */
+  blindSignatureHashAt$(contractAddr: address, publicVoterAddr: address): Observable<string> {
+    const SIG_HASH_IDX: number = 1;
+    return this._contractAt(contractAddr)
+      .map(contract => contract.blindedAddress.call(publicVoterAddr))
+      .switchMap(blindSigPromise => Observable.fromPromise(blindSigPromise))
+      .map(blindSignature => blindSignature[SIG_HASH_IDX])
+      .catch(err => {
+        this.errSvc.add(AnonymousVotingContractErrors.blindSignature(contractAddr, publicVoterAddr), err);
+        return <Observable<string>> Observable.empty();
+      });
+  }
+
+  /**
+   * Uses the specified AnonymousVoting contract to register the specified voter's blinded address hash
+   * @param {address} contractAddr the address of the AnonymousVoting contract
+   * @param {address} voterAddr the public address of the voter
+   * @param {string} blindAddressHash the IPFS hash of the voter's blinded anonymous address
+   * @returns {Observable<ITransactionReceipt>} an observable that emits the receipt when the voter's registration<br/>
+   * request is published or an empty observable if there was an error
+   */
+  registerAt$(contractAddr: address, voterAddr: address, blindAddressHash: string): Observable<ITransactionReceipt> {
+    return this._contractAt(contractAddr)
+      .map(contract => contract.register(blindAddressHash, {from: voterAddr}))
+      .switchMap(registerPromise => Observable.fromPromise(registerPromise))
+      .catch(err => {
+        this.errSvc.add(AnonymousVotingContractErrors.registration(contractAddr, voterAddr), err);
+        return <Observable<ITransactionReceipt>> Observable.empty();
+      });
+  }
+
+  /**
+   * Uses the specified AnonymousVoting contract to vote from the specified address
+   * @param {address} contractAddr the address of the AnonymousVoting contract
+   * @param {address} anonymousAddr the anonymous address of the voter
+   * @param {string} voteHash the IPFS hash of the voter's vote and proof of registration
+   * @returns {Observable<ITransactionReceipt>} an observable that emits the receipt when the vote is cast<br/>
+   * or an empty observable if there was an error
+   */
+  voteAt$(contractAddr: address, anonymousAddr: address, voteHash: string): Observable<ITransactionReceipt> {
+    return this._contractAt(contractAddr)
+      .map(contract => contract.vote(voteHash, {from: anonymousAddr}))
+      .switchMap(votePromise => Observable.fromPromise(votePromise))
+      .catch(err => {
+        this.errSvc.add(AnonymousVotingContractErrors.vote(contractAddr, anonymousAddr), err);
+        return <Observable<ITransactionReceipt>> Observable.empty();
       });
   }
 

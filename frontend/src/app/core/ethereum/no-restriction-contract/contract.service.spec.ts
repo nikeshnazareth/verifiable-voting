@@ -19,7 +19,7 @@ describe('Service: NoRestrictionContractService', () => {
     TestBed.configureTestingModule({
       providers: [
         NoRestrictionContractService,
-        {provide: ErrorService, useClass: Mock.ErrorService},
+        ErrorService,
         {provide: Web3Service, useClass: Mock.Web3Service},
         {provide: TruffleContractWrapperService, useClass: Mock.TruffleNoRestrictionWrapperService},
       ]
@@ -28,6 +28,7 @@ describe('Service: NoRestrictionContractService', () => {
     web3Svc = TestBed.get(Web3Service);
     contractSvc = TestBed.get(TruffleContractWrapperService);
     errSvc = TestBed.get(ErrorService);
+    spyOn(errSvc, 'add').and.stub();
   });
 
   describe('constructor', () => {

@@ -3,15 +3,16 @@ const AnonymousVoting = artifacts.require('AnonymousVoting');
 
 describe('Contract: VoteListing', () => {
 
-    describe('method: deploy', async (accounts) => {
+    describe('method: deploy', async () => {
 
         let instance;
         const now = web3.eth.getBlock(web3.eth.blockNumber).timestamp;
         const phaseDuration = 1000;
-        const registrationExpiration = now + phaseDuration;
-        const votingExpiration = registrationExpiration + phaseDuration;
+        const registrationDeadline = now + phaseDuration;
+        const votingDeadline = registrationDeadline + phaseDuration;
         const voteParamsHash = 'DUMMY_PARAMS_HASH';
         const voteEligibilityContract = '0x1234567890123456789012345678901234567890';
+        const registrationAuth = '0x2345678901234567890123456789012345678901';
 
         beforeEach(async () => {
             instance = await VoteListing.deployed();
@@ -26,7 +27,7 @@ describe('Contract: VoteListing', () => {
                 let count = await instance.numberOfVotingContracts.call();
                 assert.equal(count, 0);
                 await instance.deploy(
-                    registrationExpiration, votingExpiration, voteParamsHash, voteEligibilityContract
+                    registrationDeadline, votingDeadline, voteParamsHash, voteEligibilityContract, registrationAuth
                 );
                 count = await instance.numberOfVotingContracts.call();
                 assert.equal(count, 1);
@@ -48,12 +49,12 @@ describe('Contract: VoteListing', () => {
 
                 it('should be initialised with the specified registrationExpiration timestamp', async () => {
                     const time = await votingContract.registrationDeadline.call();
-                    assert.equal(time, registrationExpiration);
+                    assert.equal(time, registrationDeadline);
                 });
 
                 it('should be initialised with the specified votingExpiration timestamp', async () => {
                     const time = await votingContract.votingDeadline.call();
-                    assert.equal(time, votingExpiration);
+                    assert.equal(time, votingDeadline);
                 });
 
                 it('should be initialised with the specified hash', async () => {
@@ -65,6 +66,11 @@ describe('Contract: VoteListing', () => {
                     const contract = await votingContract.eligibilityContract.call();
                     assert.equal(contract, voteEligibilityContract);
                 });
+
+                it('should be initialised with the specified registration authority', async () => {
+                    const authority = await votingContract.registrationAuthority.call();
+                    assert.equal(authority, registrationAuth);
+                });
             });
 
 
@@ -73,7 +79,7 @@ describe('Contract: VoteListing', () => {
         contract('[redeploy]', () => {
             it('should emit a VoteCreated event with the specified address', async () => {
                 const tx = await instance.deploy(
-                    registrationExpiration, votingExpiration, voteParamsHash, voteEligibilityContract
+                    registrationDeadline, votingDeadline, voteParamsHash, voteEligibilityContract, registrationAuth
                 );
                 const address = await instance.votingContracts.call(0);
                 assert.equal(tx.logs.length, 1);

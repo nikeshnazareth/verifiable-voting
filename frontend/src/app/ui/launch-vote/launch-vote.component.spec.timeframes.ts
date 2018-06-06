@@ -5,7 +5,7 @@ import { DebugElement } from '@angular/core';
 import { By } from '@angular/platform-browser';
 
 import { TestLaunchVoteComponent } from './launch-vote.component.spec';
-import { DOMInteractionUtility } from '../dom-interaction-utility';
+import { DOMInteractionUtility } from '../../mock/dom-interaction-utility';
 import { Mock } from '../../mock/module';
 
 const msPerDay: number = 1000 * 60 * 60 * 24;

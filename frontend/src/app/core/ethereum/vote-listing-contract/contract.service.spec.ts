@@ -1,5 +1,4 @@
 import { fakeAsync, TestBed, tick } from '@angular/core/testing';
-import { OnDestroy } from '@angular/core';
 
 import { VoteListingContractErrors, VoteListingContractService } from './contract.service';
 import { ITruffleContractWrapperService, TruffleContractWrapperService } from '../truffle-contract-wrapper.service';
@@ -10,11 +9,11 @@ import { IAnonymousVotingContractCollection, Mock } from '../../../mock/module';
 import { IContractLog } from '../contract.interface';
 import { address } from '../type.mappings';
 import { APP_CONFIG } from '../../../config';
-import * as BigNumber from 'bignumber.js';
+import { BigNumber } from '../../../mock/bignumber';
 import Spy = jasmine.Spy;
 
 describe('Service: VoteListingContractService', () => {
-  let voteListingContractSvc: TestVoteListingContractService;
+  let voteListingContractSvc: VoteListingContractService;
   let web3Svc: IWeb3Service;
   let contractSvc: ITruffleContractWrapperService;
   let errSvc: ErrorService;
@@ -22,8 +21,8 @@ describe('Service: VoteListingContractService', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
       providers: [
-        {provide: VoteListingContractService, useClass: TestVoteListingContractService},
-        {provide: ErrorService, useClass: Mock.ErrorService},
+        VoteListingContractService,
+        ErrorService,
         {provide: Web3Service, useClass: Mock.Web3Service},
         {provide: TruffleContractWrapperService, useClass: Mock.TruffleVoteListingWrapperService},
       ]
@@ -42,6 +41,7 @@ describe('Service: VoteListingContractService', () => {
   beforeEach(() => {
     onNext = jasmine.createSpy('onNext');
     onCompleted = jasmine.createSpy('onCompleted');
+    spyOn(errSvc, 'add').and.stub();
   });
 
   describe('constructor', () => {
@@ -73,7 +73,7 @@ describe('Service: VoteListingContractService', () => {
         voteCollection.params_hash,
         voteCollection.eligibilityContract,
         voteCollection.registrationAuthority
-        )
+      )
         .subscribe(onNext, onError, onCompleted);
       tick();
     };
@@ -178,7 +178,13 @@ describe('Service: VoteListingContractService', () => {
       });
     });
 
-    describe('case: VoteCreated events', () => {
+    describe('case: after VoteCreated events', () => {
+      let addresses: string[];
+
+      beforeEach(() => {
+        addresses = Mock.addresses.map(v => v);
+        spyOnProperty(Mock, 'addresses').and.returnValue(addresses);
+      });
 
       const init_and_check_inital_values = () => {
         init_and_call_deployedVotes$();
@@ -192,30 +198,31 @@ describe('Service: VoteListingContractService', () => {
         }
       });
 
+      const triggerVoteCreatedEvent = (i) => {
+        addresses.push(newLog(i).args.contractAddress);
+        Mock.VoteCreatedEventStream.trigger(null, newLog(i));
+        tick();
+      };
+
       it('should emit a new event whenever the VoteListing contract emits a VoteCreated event', fakeAsync(() => {
         init_and_check_inital_values();
-        Mock.VoteCreatedEventStream.trigger(null, newLog(1));
-        expect(onNext).toHaveBeenCalledTimes(Mock.addresses.length + 1);
+        const initialLength: number = Mock.addresses.length;
 
-        Mock.VoteCreatedEventStream.trigger(null, newLog(2));
-        expect(onNext).toHaveBeenCalledTimes(Mock.addresses.length + 2);
+        triggerVoteCreatedEvent(1);
+        expect(onNext).toHaveBeenCalledTimes(initialLength + 1);
+
+        triggerVoteCreatedEvent(2);
+        expect(onNext).toHaveBeenCalledTimes(initialLength + 2);
       }));
 
       it('should emit the address as the event', fakeAsync(() => {
         init_and_check_inital_values();
-        Mock.VoteCreatedEventStream.trigger(null, newLog(1));
+
+        triggerVoteCreatedEvent(1);
         expect(onNext.calls.mostRecent().args[0]).toEqual(newLog(1).args.contractAddress);
 
-        Mock.VoteCreatedEventStream.trigger(null, newLog(2));
+        triggerVoteCreatedEvent(2);
         expect(onNext.calls.mostRecent().args[0]).toEqual(newLog(2).args.contractAddress);
-      }));
-
-      it('should remove the event listener when the service is destroyed', fakeAsync(() => {
-        spyOn(Mock.VoteCreatedEventStream, 'stopWatching').and.stub();
-        init_and_check_inital_values();
-        expect(Mock.VoteCreatedEventStream.stopWatching).not.toHaveBeenCalled();
-        voteListingContractSvc.ngOnDestroy();
-        expect(Mock.VoteCreatedEventStream.stopWatching).toHaveBeenCalled();
       }));
 
       describe('case: the event stream contains an error', () => {
@@ -224,12 +231,14 @@ describe('Service: VoteListingContractService', () => {
         it('should notify the Error Service if the contract event stream contains an error', fakeAsync(() => {
           init_and_check_inital_values();
           Mock.VoteCreatedEventStream.trigger(streamError, null);
+          tick();
           expect(errSvc.add).toHaveBeenCalledWith(VoteListingContractErrors.eventError, streamError);
         }));
 
         it('should not affect the deployedVotes$ stream', fakeAsync(() => {
           init_and_check_inital_values();
           Mock.VoteCreatedEventStream.trigger(streamError, null);
+          tick();
           expect(onNext).toHaveBeenCalledTimes(Mock.addresses.length);
           expect(onCompleted).not.toHaveBeenCalled();
         }));
@@ -245,6 +254,7 @@ describe('Service: VoteListingContractService', () => {
         };
         init_and_check_inital_values();
         Mock.VoteCreatedEventStream.trigger(null, otherEvent);
+        tick();
         expect(onNext).toHaveBeenCalledTimes(Mock.addresses.length);
         expect(onCompleted).not.toHaveBeenCalled();
       }));
@@ -264,7 +274,7 @@ describe('Service: VoteListingContractService', () => {
         };
 
         const logEvent = () => {
-          Mock.VoteCreatedEventStream.trigger(null, newLog(nEvents));
+          triggerVoteCreatedEvent(nEvents);
           lastEvent = newLog(nEvents).args.contractAddress;
           nEvents++;
         };
@@ -331,15 +341,3 @@ describe('Service: VoteListingContractService', () => {
 
   });
 });
-
-
-/**
- * Class to expose lifecycle hook for testing purposes
- */
-export class TestVoteListingContractService extends VoteListingContractService implements OnDestroy {
-
-  ngOnDestroy() {
-    super.ngOnDestroy();
-  }
-}
-

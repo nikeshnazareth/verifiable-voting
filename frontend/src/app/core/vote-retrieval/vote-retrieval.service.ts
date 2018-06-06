@@ -8,39 +8,31 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs/Observable';
 import 'rxjs/add/operator/startWith';
 import 'rxjs/add/operator/shareReplay';
+import 'rxjs/add/operator/scan';
+import 'rxjs/add/operator/combineLatest';
+import 'rxjs/add/operator/switchMap';
 
 import { VoteListingContractService } from '../ethereum/vote-listing-contract/contract.service';
 import { AnonymousVotingContractService } from '../ethereum/anonymous-voting-contract/contract.service';
 import { VotePhases } from '../ethereum/anonymous-voting-contract/contract.api';
 import { address } from '../ethereum/type.mappings';
 import { IPFSService } from '../ipfs/ipfs.service';
-import { IVoteParameters } from '../vote-manager/vote-manager.service';
+import { IBlindedSignature, IVoteParameters } from '../vote-manager/vote-manager.service';
 import { ErrorService } from '../error-service/error.service';
+import {
+  IVotingContractDetails,
+  IVotingContractSummary,
+  RETRIEVAL_STATUS,
+  VoteRetrievalServiceErrors
+} from './vote-retreival.service.constants';
 
 export interface IVoteRetrievalService {
   summaries$: Observable<IVotingContractSummary[]>;
+
+  detailsAtIndex$(idx: number): Observable<IVotingContractDetails>;
+
+  blindSignatureAt$(contractAddr: address, publicVoterAddr: address): Observable<string>;
 }
-
-export interface IVotingContractSummary {
-  index: number;
-  phase: string;
-  topic: string;
-}
-
-export const VoteRetrievalServiceErrors = {
-  ipfs: {
-    getParametersHash: (addr) => new Error('Unable to retrieve the parameters for the AnonymousVoting contract' +
-      ` at ${addr} from the IPFS hash`)
-  },
-  format: {
-    parametersHash: (params) => new Error(`Retrieved parameters (${params}) do not match the expected format`)
-  }
-};
-
-export const RETRIEVAL_STATUS = {
-  UNAVAILABLE: 'UNAVAILABLE',
-  RETRIEVING: 'RETRIEVING'
-};
 
 @Injectable()
 export class VoteRetrievalService implements IVoteRetrievalService {
@@ -57,16 +49,51 @@ export class VoteRetrievalService implements IVoteRetrievalService {
    * Retrieves the vote summary information (from cache if possible) for each deployed
    * contract in the VoteListingService.
    * Merges them all into a single array and emits the result
-   * @returns {Observable<IVotingContractSummary[]>} the summary of all deployed voting contracts
+   * @returns {Observable<IVotingContractSummary[]>} the summary of all deployed voting contracts<br/>
+   * including intermediate and error states
    */
   get summaries$(): Observable<IVotingContractSummary[]> {
     return this.voteListingSvc.deployedVotes$
-      .map((addr, idx) => this._cachedVoteSummary(addr, idx))
+      .map((addr, idx) => this._getVoteSummary(addr, idx))
       .scan(
         (acc, summary$) => acc.combineLatest(summary$, (L, el) => L.concat(el)),
         Observable.of([])
       )
       .switch();
+  }
+
+  /**
+   * Retrieves the vote information (from cache if possible) for the specified contract
+   * @param {number} idx the index of the AnonymousVoting contract in the VoteListingContract
+   * @returns {Observable<IVotingContractDetails>} an observable of the vote details <br/>
+   * including intermediate and error states
+   */
+  detailsAtIndex$(idx: number): Observable<IVotingContractDetails> {
+    return this.voteListingSvc.deployedVotes$
+      .filter((addr, _idx) => _idx === idx)
+      .defaultIfEmpty(null)
+      .switchMap(addr => this._getVoteDetails(addr, idx));
+  }
+
+  /**
+   * Retrieves the blinded signature for the specified voter at the specified contract
+   * Notifies the error service if the hash cannot be obtained from the contract,
+   * the blinded signature cannot be obtained from the hash, or the retrieved value is incorrectly formatted
+   * @param {address} contractAddr the address of the AnonymousVoting contract
+   * @param {address} publicVoterAddr the voter address
+   * @returns {Observable<string>} an observable of the blinded signature or an empty observable if there is an error
+   */
+  blindSignatureAt$(contractAddr: address, publicVoterAddr: address): Observable<string> {
+    return this.anonymousVotingSvc.blindSignatureHashAt$(contractAddr, publicVoterAddr)
+      .map(hash => this.ipfsSvc.catJSON(hash))
+      .switchMap(wrappedBlindSigPromise => Observable.fromPromise(wrappedBlindSigPromise))
+      .catch(err => {
+        this.errSvc.add(VoteRetrievalServiceErrors.ipfs.getBlindSignature(contractAddr, publicVoterAddr), err);
+        return <Observable<object>> Observable.empty();
+      })
+      .map(wrappedBlindedSig => this._confirmBlindSignatureFormat(wrappedBlindedSig))
+      .filter(wrappedBlindedSig => wrappedBlindedSig != null)
+      .map(wrappedBlindedSig => wrappedBlindedSig.blinded_signature);
   }
 
   /**
@@ -78,13 +105,9 @@ export class VoteRetrievalService implements IVoteRetrievalService {
    * or a placeholder value if the information cannot be retrieved
    * @private
    */
-  private _cachedVoteSummary(addr: address, idx: number): Observable<IVotingContractSummary> {
-    return this._cachedVoteDetails(addr, idx)
-      .map(voteDetails => ({
-        index: voteDetails.index,
-        phase: voteDetails.phase,
-        topic: voteDetails.parameters.topic
-      }));
+  private _getVoteSummary(addr: address, idx: number): Observable<IVotingContractSummary> {
+    return this._getVoteDetails(addr, idx)
+      .map(voteDetails => this._summarise(voteDetails));
   }
 
   /**
@@ -95,7 +118,7 @@ export class VoteRetrievalService implements IVoteRetrievalService {
    * or a placeholder value if the information cannot be retrieved
    * @private
    */
-  private _cachedVoteDetails(addr: address, idx: number): Observable<IVotingContractDetails> {
+  private _getVoteDetails(addr: address, idx: number): Observable<IVotingContractDetails> {
     if (!addr) {
       return Observable.of(this._placeholderVotingContractDetails(idx, RETRIEVAL_STATUS.UNAVAILABLE));
     }
@@ -119,9 +142,26 @@ export class VoteRetrievalService implements IVoteRetrievalService {
         .defaultIfEmpty(this._placeholderParameters(RETRIEVAL_STATUS.UNAVAILABLE))
         .startWith(this._placeholderParameters(RETRIEVAL_STATUS.RETRIEVING));
 
+      const regDeadline$: Observable<Date | string> = this.anonymousVotingSvc.registrationDeadlineAt$(addr)
+        .defaultIfEmpty(RETRIEVAL_STATUS.UNAVAILABLE)
+        .startWith(RETRIEVAL_STATUS.RETRIEVING);
+
+      const votingDeadline$: Observable<Date | string> = this.anonymousVotingSvc.votingDeadlineAt$(addr)
+        .defaultIfEmpty(RETRIEVAL_STATUS.UNAVAILABLE)
+        .startWith(RETRIEVAL_STATUS.RETRIEVING);
+
+      const pendingRegistrations$: Observable<number | string> = this.anonymousVotingSvc.pendingRegistrationsAt$(addr)
+        .concat(Observable.of(RETRIEVAL_STATUS.UNAVAILABLE))
+        .startWith(RETRIEVAL_STATUS.RETRIEVING);
+
+
       this._voteCache[addr] = phase$.combineLatest(
         parameters$,
-        (phase, parameters) => this.newContractDetails(idx, phase, parameters)
+        regDeadline$,
+        votingDeadline$,
+        pendingRegistrations$,
+        (phase, parameters, regDeadline, votingDeadline, pendingRegistrations) =>
+          this._newContractDetails(idx, addr, phase, parameters, regDeadline, votingDeadline, pendingRegistrations)
       )
         .shareReplay(1);
     }
@@ -132,10 +172,12 @@ export class VoteRetrievalService implements IVoteRetrievalService {
    * Notifies the Error Service if the params object doesn't match the IVoteParameters interface
    * @param {Object} obj the object to check
    * @returns {IVoteParameters} the parameters object if it matches or null otherwise
+   * @private
    */
   private _confirmParametersFormat(obj: object): IVoteParameters {
     const params: IVoteParameters = <IVoteParameters> obj;
     const valid: boolean =
+      params &&
       params.topic &&
       typeof params.topic === 'string' &&
       params.candidates &&
@@ -148,9 +190,30 @@ export class VoteRetrievalService implements IVoteRetrievalService {
       typeof params.registration_key.public_exp === 'string';
 
     if (valid) {
-      return <IVoteParameters> params;
+      return params;
     } else {
-      this.errSvc.add(VoteRetrievalServiceErrors.format.parametersHash(params), null);
+      this.errSvc.add(VoteRetrievalServiceErrors.format.parameters(params), null);
+      return null;
+    }
+  }
+
+  /**
+   * Notifies the Error Service if the object doesn't match the IBlindedSignature interface
+   * @param {Object} obj the object to check
+   * @returns {IBlindedSignature} the blinded signature object if it matches or null otherwise
+   * @private
+   */
+  private _confirmBlindSignatureFormat(obj: object): IBlindedSignature {
+    const wrappedBlindedSig: IBlindedSignature = <IBlindedSignature> obj;
+    const valid: boolean =
+      wrappedBlindedSig &&
+      wrappedBlindedSig.blinded_signature &&
+      typeof wrappedBlindedSig.blinded_signature === 'string';
+
+    if (valid) {
+      return wrappedBlindedSig;
+    } else {
+      this.errSvc.add(VoteRetrievalServiceErrors.format.blindSignature(wrappedBlindedSig), null);
       return null;
     }
   }
@@ -165,8 +228,21 @@ export class VoteRetrievalService implements IVoteRetrievalService {
     const params: IVoteParameters = this._placeholderParameters(placeholder);
     return {
       index: idx,
-      phase: RETRIEVAL_STATUS.UNAVAILABLE,
-      parameters: params
+      address: placeholder,
+      phase: placeholder,
+      parameters: params,
+      registrationDeadline: {
+        status: placeholder,
+        value: null
+      },
+      votingDeadline: {
+        status: placeholder,
+        value: null
+      },
+      pendingRegistrations: {
+        status: placeholder,
+        value: null
+      }
     };
   }
 
@@ -188,21 +264,39 @@ export class VoteRetrievalService implements IVoteRetrievalService {
   /**
    * @returns {IVotingContractDetails} a new IVotingContractDetails object with the specified values
    */
-  private newContractDetails(index, phase, parameters): IVotingContractDetails {
+  private _newContractDetails(index, addr, phase, parameters, regDeadline, votingDeadline, pendingRegistrations): IVotingContractDetails {
     return {
       index: index,
+      address: addr,
       phase: phase,
-      parameters: parameters
+      parameters: parameters,
+      registrationDeadline: {
+        status: typeof regDeadline === 'string' ? regDeadline : RETRIEVAL_STATUS.AVAILABLE,
+        value: typeof regDeadline === 'string' ? null : regDeadline
+      },
+      votingDeadline: {
+        status: typeof votingDeadline === 'string' ? votingDeadline : RETRIEVAL_STATUS.AVAILABLE,
+        value: typeof votingDeadline === 'string' ? null : votingDeadline
+      },
+      pendingRegistrations: {
+        status: typeof pendingRegistrations === 'string' ? pendingRegistrations : RETRIEVAL_STATUS.AVAILABLE,
+        value: typeof pendingRegistrations === 'string' ? null : pendingRegistrations
+      }
     };
   }
-}
 
-
-
-interface IVotingContractDetails {
-  index: number;
-  phase: string;
-  parameters: IVoteParameters;
+  /**
+   * @param {IVotingContractDetails} details the details of a vote
+   * @returns {IVotingContractSummary} a summarised version that can be displayed in an aggregate list
+   */
+  private _summarise(details: IVotingContractDetails): IVotingContractSummary {
+    return {
+      index: details.index,
+      address: details.address,
+      phase: details.phase,
+      topic: details.parameters.topic
+    };
+  }
 }
 
 interface IVoteCache {

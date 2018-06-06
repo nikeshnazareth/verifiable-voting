@@ -2,14 +2,24 @@ import { NgModule } from '@angular/core';
 import { ReactiveFormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 
+import { MaterialModule } from '../material/material.module';
 import { LaunchVoteComponent } from './launch-vote/launch-vote.component';
 import { ListVotesComponent } from './list-votes/list-votes.component';
-import { MaterialModule } from '../material/material.module';
+import { VoteComponent } from './vote/vote-component';
+import { RegistrationPhaseComponent } from './vote/registration-phase.component';
+import { VotingPhaseComponent } from './vote/voting-phase.component';
+import { CompletePhaseComponent } from './vote/complete-phase-component';
+import { ExplanationComponent } from './explanation/explanation.component';
 
 @NgModule({
   declarations: [
     LaunchVoteComponent,
-    ListVotesComponent
+    ListVotesComponent,
+    VoteComponent,
+    RegistrationPhaseComponent,
+    VotingPhaseComponent,
+    CompletePhaseComponent,
+    ExplanationComponent
   ],
   imports: [
     ReactiveFormsModule,
@@ -18,7 +28,12 @@ import { MaterialModule } from '../material/material.module';
   ],
   exports: [
     LaunchVoteComponent,
-    ListVotesComponent
+    ListVotesComponent,
+    VoteComponent,
+    RegistrationPhaseComponent,
+    VotingPhaseComponent,
+    CompletePhaseComponent,
+    ExplanationComponent
   ]
 })
 export class UiModule {

@@ -4,7 +4,8 @@ import { By } from '@angular/platform-browser';
 import { AbstractControl, FormGroup } from '@angular/forms';
 
 import { TestLaunchVoteComponent } from './launch-vote.component.spec';
-import { DOMInteractionUtility } from '../dom-interaction-utility';
+import { DOMInteractionUtility } from '../../mock/dom-interaction-utility';
+import { address } from '../../core/ethereum/type.mappings';
 
 export function registration_key_tests(getFixture) {
 
@@ -170,6 +171,7 @@ export function registration_key_tests(getFixture) {
 
       describe('form control validity', () => {
         let control: AbstractControl;
+        const addr: address = '1234567890aabbccddee1234567890aabbccddee';
 
         beforeEach(() => {
           control = group.get(regAuthAddress.attributes.formControlName);
@@ -182,9 +184,35 @@ export function registration_key_tests(getFixture) {
           expect(control.valid).toEqual(false);
         });
 
+        it('should be valid when containing exactly 40 hex characters', () => {
+          DOMInteractionUtility.setValueOn(regAuthAddress, addr);
+          fixture.detectChanges();
+          expect(control.valid).toEqual(true);
+        });
+
+        it('should be invalid when containing 38 or 39 hex characters', () => {
+          DOMInteractionUtility.setValueOn(regAuthAddress, addr.slice(1));
+          fixture.detectChanges();
+          expect(control.valid).toEqual(false);
+
+          DOMInteractionUtility.setValueOn(regAuthAddress, addr.slice(2));
+          fixture.detectChanges();
+          expect(control.valid).toEqual(false);
+        });
+
+        it('should be invalid when containing 41 or 42 hex characters', () => {
+          DOMInteractionUtility.setValueOn(regAuthAddress, addr + 'f');
+          fixture.detectChanges();
+          expect(control.valid).toEqual(false);
+
+          DOMInteractionUtility.setValueOn(regAuthAddress, addr + 'ff');
+          fixture.detectChanges();
+          expect(control.valid).toEqual(false);
+        });
+
         it('should be invalid when containing non-hex characters', () => {
           nonHexValues.map(val => {
-            DOMInteractionUtility.setValueOn(regAuthAddress, val);
+            DOMInteractionUtility.setValueOn(regAuthAddress, val + addr.slice(val.length));
             fixture.detectChanges();
             expect(control.valid).toEqual(false);
           });
@@ -192,15 +220,7 @@ export function registration_key_tests(getFixture) {
 
         it('should be VALID when containing upper-case hex characters', () => {
           uppercaseHexValues.map(val => {
-            DOMInteractionUtility.setValueOn(regAuthAddress, val);
-            fixture.detectChanges();
-            expect(control.valid).toEqual(true);
-          });
-        });
-
-        it('should be valid when containing only lower-case hex characters', () => {
-          lowercaseHexValues.map(val => {
-            DOMInteractionUtility.setValueOn(regAuthAddress, val);
+            DOMInteractionUtility.setValueOn(regAuthAddress, val + addr.slice(val.length));
             fixture.detectChanges();
             expect(control.valid).toEqual(true);
           });
