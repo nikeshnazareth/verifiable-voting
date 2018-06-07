@@ -1,7 +1,7 @@
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { TestBed, async, ComponentFixture } from '@angular/core/testing';
-import { DebugElement, OnInit } from '@angular/core';
+import { DebugElement } from '@angular/core';
 import { By } from '@angular/platform-browser';
 
 import { LaunchVoteComponent } from './launch-vote.component';
@@ -19,12 +19,12 @@ import { registration_key_tests } from './launch-vote.component.spec.registratio
 import { submit_button_tests } from './launch-vote-component.spec.submit';
 
 describe('Component: LaunchVoteComponent', () => {
-  let fixture: ComponentFixture<TestLaunchVoteComponent>;
+  let fixture: ComponentFixture<LaunchVoteComponent>;
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
       declarations: [
-        TestLaunchVoteComponent
+        LaunchVoteComponent
       ],
       imports: [
         BrowserAnimationsModule,
@@ -39,7 +39,7 @@ describe('Component: LaunchVoteComponent', () => {
     })
       .compileComponents()
       .then(() => {
-        fixture = TestBed.createComponent(TestLaunchVoteComponent);
+        fixture = TestBed.createComponent(LaunchVoteComponent);
       });
   }));
 
@@ -108,19 +108,3 @@ describe('Component: LaunchVoteComponent', () => {
     describe('Submit button', submit_button_tests(() => fixture));
   });
 });
-
-/**
- * Class to expose protected values for testing purposes
- * It is more correct to confirm the functionality using only public values
- * but testing form validation is a lot easier if we can see the validators directly
- * (instead of testing their effects, which cannot be isolated,
- *  since the relevant effects are synthesised across many components )
- */
-export class TestLaunchVoteComponent extends LaunchVoteComponent implements OnInit {
-  public form: FormGroup;
-
-  ngOnInit() {
-    super.ngOnInit();
-    this.form = this.launchVoteForm;
-  }
-}

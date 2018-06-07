@@ -3,7 +3,7 @@ import { DebugElement } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { AbstractControl } from '@angular/forms';
 
-import { TestLaunchVoteComponent } from './launch-vote.component.spec';
+import { LaunchVoteComponent } from './launch-vote.component';
 import { DOMInteractionUtility } from '../../mock/dom-interaction-utility';
 import { Mock } from '../../mock/module';
 import {
@@ -14,7 +14,7 @@ import {
 export function eligibility_tests(getFixture) {
 
   return () => {
-    let fixture: ComponentFixture<TestLaunchVoteComponent>;
+    let fixture: ComponentFixture<LaunchVoteComponent>;
     let input: () => DebugElement;
     const mockEligibilityAddress: string = Mock.AnonymousVotingContractCollections[0].eligibilityContract;
 

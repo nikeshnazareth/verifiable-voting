@@ -1,16 +1,16 @@
 import { ComponentFixture } from '@angular/core/testing';
-import { FormArray, FormGroup } from '@angular/forms';
+import { FormArray } from '@angular/forms';
 import { DebugElement } from '@angular/core';
 import { By } from '@angular/platform-browser';
 
-import { TestLaunchVoteComponent } from './launch-vote.component.spec';
+import { LaunchVoteComponent } from './launch-vote.component';
 import { DOMInteractionUtility } from '../../mock/dom-interaction-utility';
 import { Mock } from '../../mock/module';
 
 export function new_candidate_tests(getFixture) {
 
   return () => {
-    let fixture: ComponentFixture<TestLaunchVoteComponent>;
+    let fixture: ComponentFixture<LaunchVoteComponent>;
     let step: DebugElement;
     let input: DebugElement;
     let candidates: FormArray;

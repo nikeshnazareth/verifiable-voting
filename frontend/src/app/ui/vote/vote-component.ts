@@ -8,43 +8,44 @@ import { BehaviorSubject } from 'rxjs/BehaviorSubject';
 @Component({
   selector: 'vv-vote',
   template: `
-    <div class="container" [hidden]="!_voteIsSelected">
-      <h2>{{_heading$ | async}}</h2>
+    <div class="container" [hidden]="!voteIsSelected">
+      <h2>{{heading$ | async}}</h2>
       <mat-expansion-panel>
         <mat-expansion-panel-header>REGISTER</mat-expansion-panel-header>
-        <vv-registration-phase [index]="_index$ | async"></vv-registration-phase>
+        <vv-registration-phase [index]="index$ | async"></vv-registration-phase>
       </mat-expansion-panel>
       <mat-expansion-panel>
         <mat-expansion-panel-header>VOTE</mat-expansion-panel-header>
-        <vv-voting-phase [index]="_index$ | async"></vv-voting-phase>
+        <vv-voting-phase [index]="index$ | async"></vv-voting-phase>
       </mat-expansion-panel>
       <mat-expansion-panel>
         <mat-expansion-panel-header>RESULTS</mat-expansion-panel-header>
-        <vv-complete-phase [index]="_index$ | async"></vv-complete-phase>
+        <vv-complete-phase [index]="index$ | async"></vv-complete-phase>
       </mat-expansion-panel>
     </div>
   `,
   styleUrls: ['./vote-component.scss']
 })
 export class VoteComponent implements OnInit {
-  private _voteIsSelected: boolean;
-  private _index$: BehaviorSubject<number>;
+  public voteIsSelected: boolean;
+  public index$: BehaviorSubject<number>;
+  public heading$: Observable<string>;
+
   private _voteDetails$: Observable<IVotingContractDetails>;
-  private _heading$: Observable<string>;
 
   constructor(private voteRetrievalSvc: VoteRetrievalService) {
-    this._index$ = new BehaviorSubject<number>(null);
-    this._voteIsSelected = false;
+    this.index$ = new BehaviorSubject<number>(null);
+    this.voteIsSelected = false;
   }
 
   /**
    * Initialise the observables used by the view
    */
   ngOnInit() {
-    this._voteDetails$ = this._index$
+    this._voteDetails$ = this.index$
       .switchMap(idx => this.voteRetrievalSvc.detailsAtIndex$(idx));
 
-    this._heading$ = this._voteDetails$.map(details => `${details.index}. ${details.parameters.topic}`);
+    this.heading$ = this._voteDetails$.map(details => `${details.index}. ${details.parameters.topic}`);
   }
 
   /**
@@ -54,8 +55,8 @@ export class VoteComponent implements OnInit {
   @Input()
   set index(val: number) {
     if (typeof val !== 'undefined') {
-      this._voteIsSelected = true;
-      this._index$.next(val);
+      this.voteIsSelected = true;
+      this.index$.next(val);
     }
   }
 }

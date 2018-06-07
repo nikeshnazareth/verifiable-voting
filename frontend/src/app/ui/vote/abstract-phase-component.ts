@@ -10,8 +10,8 @@ import { VoteRetrievalService } from '../../core/vote-retrieval/vote-retrieval.s
 
 export abstract class AbstractPhaseComponent implements OnInit, OnDestroy {
   public form: FormGroup;
+  public ready$: Observable<boolean>;
   protected submission$: Subject<any>;
-  protected ready$: Observable<boolean>;
   protected voteDetails: Observable<IVotingContractDetails>;
 
   protected message$: Observable<string>;

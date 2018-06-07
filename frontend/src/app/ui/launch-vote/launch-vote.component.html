@@ -1,4 +1,4 @@
-<form (ngSubmit)="onSubmit()" [formGroup]=launchVoteForm>
+<form (ngSubmit)="onSubmit()" [formGroup]="form">
   <mat-vertical-stepper>
     <mat-step label="Topic">
       <mat-form-field>
@@ -90,7 +90,7 @@
 
   <div>
     <button type="submit"
-            [disabled]="!launchVoteForm.valid"
+            [disabled]="!form.valid"
             mat-raised-button
             color="primary"
             #submit>

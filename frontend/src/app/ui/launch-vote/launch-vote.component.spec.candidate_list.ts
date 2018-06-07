@@ -4,14 +4,14 @@ import { AbstractControl, FormArray } from '@angular/forms';
 import { By } from '@angular/platform-browser';
 import { DebugElement } from '@angular/core';
 
-import { TestLaunchVoteComponent } from './launch-vote.component.spec';
+import { LaunchVoteComponent } from './launch-vote.component';
 import { Mock } from '../../mock/module';
 import { DOMInteractionUtility } from '../../mock/dom-interaction-utility';
 
 export function candidate_list_tests(getFixture) {
 
   return () => {
-    let fixture: ComponentFixture<TestLaunchVoteComponent>;
+    let fixture: ComponentFixture<LaunchVoteComponent>;
     let step: DebugElement;
     let candidates: FormArray;
     let newCandidateInput: DebugElement;

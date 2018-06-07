@@ -3,7 +3,7 @@ import { ComponentFixture } from '@angular/core/testing';
 import { DebugElement } from '@angular/core';
 import { By } from '@angular/platform-browser';
 
-import { TestLaunchVoteComponent } from './launch-vote.component.spec';
+import { LaunchVoteComponent } from './launch-vote.component';
 import { Mock } from '../../mock/module';
 import { DOMInteractionUtility } from '../../mock/dom-interaction-utility';
 
@@ -11,7 +11,7 @@ export function topic_input_tests(getFixture) {
 
   return () => {
     let input: DebugElement;
-    let fixture: ComponentFixture<TestLaunchVoteComponent>;
+    let fixture: ComponentFixture<LaunchVoteComponent>;
 
     beforeEach(() => {
       fixture = getFixture();

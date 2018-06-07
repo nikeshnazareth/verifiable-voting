@@ -4,7 +4,7 @@ import { By } from '@angular/platform-browser';
 import { FormArray, FormBuilder, FormGroup } from '@angular/forms';
 import { Observable } from 'rxjs/Observable';
 
-import { TestLaunchVoteComponent } from './launch-vote.component.spec';
+import { LaunchVoteComponent } from './launch-vote.component';
 import { IVoteParameters, VoteManagerService } from '../../core/vote-manager/vote-manager.service';
 import { DOMInteractionUtility } from '../../mock/dom-interaction-utility';
 import { Mock } from '../../mock/module';
@@ -12,7 +12,7 @@ import { Mock } from '../../mock/module';
 export function submit_button_tests(getFixture) {
 
   return () => {
-    let fixture: ComponentFixture<TestLaunchVoteComponent>;
+    let fixture: ComponentFixture<LaunchVoteComponent>;
     let buttons: DebugElement [];
     let button: DebugElement;
     let form: FormGroup;

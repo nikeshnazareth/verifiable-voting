@@ -8,7 +8,7 @@ import 'rxjs/add/operator/withLatestFrom';
 @Component({
   selector: 'vv-list-votes',
   template: `
-    <mat-table [dataSource]="_contractsSummary$ | async">
+    <mat-table [dataSource]="contractsSummary$ | async">
       <!-- Index column -->
       <ng-container matColumnDef="index">
         <mat-header-cell *matHeaderCellDef>#</mat-header-cell>
@@ -27,22 +27,22 @@ import 'rxjs/add/operator/withLatestFrom';
         <mat-cell *matCellDef="let contract">{{ contract.topic }}</mat-cell>
       </ng-container>
 
-      <mat-header-row *matHeaderRowDef="_displayedColumns"></mat-header-row>
-      <mat-row *matRowDef="let row; columns: _displayedColumns" (click)="_rowClicked$.emit(row.index)"></mat-row>
+      <mat-header-row *matHeaderRowDef="displayedColumns"></mat-header-row>
+      <mat-row *matRowDef="let row; columns: displayedColumns" (click)="_rowClicked$.emit(row.index)"></mat-row>
     </mat-table>
   `,
   styleUrls: ['./list-votes.component.scss']
 })
 export class ListVotesComponent {
   @Output() selectedContract$: Observable<number>;
+  public contractsSummary$: Observable<IVotingContractSummary[]>;
+  public displayedColumns: string[] = ['index', 'phase', 'topic'];
 
-  private _contractsSummary$: Observable<IVotingContractSummary[]>;
-  private _displayedColumns: string[] = ['index', 'phase', 'topic'];
   private _rowClicked$: EventEmitter<number>;
 
   constructor(private voteRetrievalSvc: VoteRetrievalService) {
     this._rowClicked$ = new EventEmitter<number>();
-    this._contractsSummary$ = this.voteRetrievalSvc.summaries$;
+    this.contractsSummary$ = this.voteRetrievalSvc.summaries$;
     this.selectedContract$ = this._initialiseSelectedContract$();
   }
 
@@ -53,7 +53,7 @@ export class ListVotesComponent {
    */
   private _initialiseSelectedContract$(): Observable<number> {
     return this._rowClicked$
-      .withLatestFrom(this._contractsSummary$)
+      .withLatestFrom(this.contractsSummary$)
       .map(([idx, summaries]) => summaries[idx])
       .filter(summary => this.isCompleteSummary(summary))
       .map(summary => summary.index);

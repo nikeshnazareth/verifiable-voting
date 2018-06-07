@@ -3,14 +3,14 @@ import { DebugElement } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { AbstractControl, FormGroup } from '@angular/forms';
 
-import { TestLaunchVoteComponent } from './launch-vote.component.spec';
+import { LaunchVoteComponent } from './launch-vote.component';
 import { DOMInteractionUtility } from '../../mock/dom-interaction-utility';
 import { address } from '../../core/ethereum/type.mappings';
 
 export function registration_key_tests(getFixture) {
 
   return () => {
-    let fixture: ComponentFixture<TestLaunchVoteComponent>;
+    let fixture: ComponentFixture<LaunchVoteComponent>;
     let group: FormGroup;
     let step: DebugElement;
 
