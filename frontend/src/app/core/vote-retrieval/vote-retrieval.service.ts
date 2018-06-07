@@ -164,9 +164,15 @@ export class VoteRetrievalService implements IVoteRetrievalService {
         .map(vote => this._confirmVoteFormat(vote))
         .filter(vote => vote != null)
         .map(vote => vote.candidateIdx)
-        .scan((arr, el) => arr.concat(el), [])
-        .defaultIfEmpty(RETRIEVAL_STATUS.UNAVAILABLE)
-        .startWith(RETRIEVAL_STATUS.RETRIEVING);
+        // create a histogram of the selected candidate indices
+        .scan((arr, el) => {
+            arr[el] = arr[el] ? arr[el] + 1 : 1;
+            return arr;
+          },
+          []
+        )
+        .concat(Observable.of(RETRIEVAL_STATUS.UNAVAILABLE))
+        .startWith([]);
 
       this._voteCache[addr] = phase$.combineLatest(
         parameters$,
@@ -321,8 +327,8 @@ export class VoteRetrievalService implements IVoteRetrievalService {
         value: typeof pendingRegistrations === 'string' ? null : pendingRegistrations
       },
       votes: {
-        status: typeof votes === 'string' ? votes : RETRIEVAL_STATUS.AVAILABLE,
-        value: typeof votes === 'string' ? null : votes
+        status: RETRIEVAL_STATUS.AVAILABLE,
+        value: votes
       }
     };
   }
