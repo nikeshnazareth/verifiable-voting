@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { MatSnackBar, SimpleSnackBar, MatSnackBarRef } from '@angular/material';
+import { MatSnackBar} from '@angular/material';
 
 import { ErrorService } from './core/error-service/error.service';
 
@@ -31,11 +31,11 @@ export class AppComponent {
 
   constructor(private errSvc: ErrorService,
               private snackBar: MatSnackBar) {
-    errSvc.error$.subscribe(err => {
-      const snackbarRef: MatSnackBarRef<SimpleSnackBar> = this.snackBar.open(err.friendly, 'CLOSE');
-      snackbarRef.onAction().subscribe(() => snackbarRef.dismiss());
-      console.log(err.friendly);
-      console.log(err.detailed);
-    });
+
+    this.errSvc.error$
+      .filter(err => err.friendly != null)
+      .do(err => err.detailed ? console.log(err.detailed) : null)
+      .concatMap(err => this.snackBar.open(err.friendly.message, 'CLOSE').onAction())
+      .subscribe();
   }
 }
