@@ -7,7 +7,7 @@ import { AnonymousVotingContractManager, AnonymousVotingContractManagerErrors } 
 import { AnonymousVotingAPI } from './contract.api';
 import Spy = jasmine.Spy;
 
-describe('class: AnonymousVotingContractManager', () => {
+fdescribe('class: AnonymousVotingContractManager', () => {
   const contractManager = () => new AnonymousVotingContractManager(contract$, errSvc);
   let voteCollection: IAnonymousVotingContractCollection;
   let contract$: Observable<AnonymousVotingAPI>;
@@ -38,18 +38,16 @@ describe('class: AnonymousVotingContractManager', () => {
     jasmine.clock().uninstall();
   }));
 
-  describe('property: phase$', () => {
+  describe('property: constants$', () => {
     const retrievalError = new Error('Value cannot be retrieved');
 
-    const init_phase$_and_subscribe = () => {
-      contractManager().phase$.subscribe(onNext, onError, onCompleted);
+    const init_constant$_and_subscribe = () => {
+      contractManager().constants$.subscribe(onNext, onError, onCompleted);
       tick();
     };
 
-    const mostRecentPhase = () => onNext.calls.mostRecent().args[0];
-
-    const vote_constant_error_tests = () => {
-      beforeEach(fakeAsync(() => init_phase$_and_subscribe()));
+    const error_tests = () => {
+      beforeEach(fakeAsync(() => init_constant$_and_subscribe()));
 
       it('should notify the Error Service', () => {
         expect(errSvc.add).toHaveBeenCalledWith(AnonymousVotingContractManagerErrors.constants, retrievalError);
@@ -65,7 +63,7 @@ describe('class: AnonymousVotingContractManager', () => {
 
       beforeEach(fakeAsync(() => {
         contract$ = Observable.empty();
-        init_phase$_and_subscribe();
+        init_constant$_and_subscribe();
       }));
 
       it('should return an empty observable', () => {
@@ -77,32 +75,56 @@ describe('class: AnonymousVotingContractManager', () => {
     describe('case: parameters hash cannot be retrieved', () => {
       beforeEach(() => spyOn(voteCollection.instance.parametersHash, 'call').and
         .returnValue(Promise.reject(retrievalError)));
-      vote_constant_error_tests();
+      error_tests();
     });
 
     describe('case: eligibility contract cannot be retrieved', () => {
       beforeEach(() => spyOn(voteCollection.instance.eligibilityContract, 'call').and
         .returnValue(Promise.reject(retrievalError)));
-      vote_constant_error_tests();
+      error_tests();
     });
 
     describe('case: registration authority cannot be retrieved', () => {
       beforeEach(() => spyOn(voteCollection.instance.registrationAuthority, 'call').and
         .returnValue(Promise.reject(retrievalError)));
-      vote_constant_error_tests();
+      error_tests();
     });
 
     describe('case: registration deadline cannot be retrieved', () => {
       beforeEach(() => spyOn(voteCollection.instance.registrationDeadline, 'call').and
         .returnValue(Promise.reject(retrievalError)));
-      vote_constant_error_tests();
+      error_tests();
     });
 
     describe('case: voting deadline cannot be retrieved', () => {
       beforeEach(() => spyOn(voteCollection.instance.votingDeadline, 'call').and
         .returnValue(Promise.reject(retrievalError)));
-      vote_constant_error_tests();
+      error_tests();
     });
+  });
+
+  describe('property: phase$', () => {
+
+    const init_phase$_and_subscribe = () => {
+      contractManager().phase$.subscribe(onNext, onError, onCompleted);
+      tick();
+    };
+
+    const mostRecentPhase = () => onNext.calls.mostRecent().args[0];
+
+    describe('case: constants$ is an empty observable', () => {
+
+      beforeEach(fakeAsync(() => {
+        contract$ = Observable.empty();
+        init_phase$_and_subscribe();
+      }));
+
+      it('should return an empty observable', () => {
+        expect(onNext).not.toHaveBeenCalled();
+        expect(onCompleted).toHaveBeenCalled();
+      });
+    });
+
 
     describe('case: before the registration deadline', () => {
       beforeEach(() => jasmine.clock().mockDate(
