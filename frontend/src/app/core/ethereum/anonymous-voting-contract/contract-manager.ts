@@ -29,16 +29,13 @@ export class AnonymousVotingContractManager implements IAnonymousVotingContractM
   }
 
   /**
-   * @returns {Observable<number>} An observable of the current phase that does not complete
+   * Determines the phase based on the current time and the phase deadlines
+   * (note the phase variable in the contract may be obsolete, since it won't update until there is a transaction)
+   * @returns {Observable<number>} An observable of the current phase
    */
   get phase$(): Observable<number> {
-    const phaseByEvents$: Observable<number> = this._events$
-      .filter(log => log.event === NewPhaseEvent.name)
-      .map(log => (<NewPhaseEvent.Log> log).args.phase.toNumber())
-      .startWith(0);
-
     const now: number = (new Date()).getTime();
-    const phaseByTiming$: Observable<number> = this._voteConstants$
+    return this._voteConstants$
     // map deadlines to the delay until that deadline (from the previous delay)
       .map(constants => [
         0,
@@ -48,9 +45,6 @@ export class AnonymousVotingContractManager implements IAnonymousVotingContractM
       .switchMap(delays => Observable.from(delays))
       // the phase is the index in the array
       .concatMap((delay, phase) => Observable.timer(delay).map(() => phase));
-
-    return phaseByEvents$.combineLatest(phaseByTiming$)
-      .map(phases => Math.max(phases[0], phases[1]));
   }
 
   /**

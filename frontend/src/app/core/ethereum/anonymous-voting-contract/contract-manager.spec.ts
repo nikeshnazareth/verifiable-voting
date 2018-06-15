@@ -4,11 +4,10 @@ import { Observable } from 'rxjs/Observable';
 import { ErrorService } from '../../error-service/error.service';
 import { IAnonymousVotingContractCollection, Mock } from '../../../mock/module';
 import { AnonymousVotingContractManager, AnonymousVotingContractManagerErrors } from './contract-manager';
-import { AnonymousVotingAPI, NewPhaseEvent } from './contract.api';
-import { BigNumber } from '../../../mock/bignumber';
+import { AnonymousVotingAPI } from './contract.api';
 import Spy = jasmine.Spy;
 
-fdescribe('class: AnonymousVotingContractManager', () => {
+describe('class: AnonymousVotingContractManager', () => {
   const contractManager = () => new AnonymousVotingContractManager(contract$, errSvc);
   let voteCollection: IAnonymousVotingContractCollection;
   let contract$: Observable<AnonymousVotingAPI>;
@@ -47,15 +46,6 @@ fdescribe('class: AnonymousVotingContractManager', () => {
       tick();
     };
 
-    const triggerPhaseEvent = (phase) => {
-      voteCollection.eventStream.trigger(null, {
-        event: NewPhaseEvent.name,
-        args: {
-          phase: new BigNumber(phase)
-        }
-      });
-    };
-
     const mostRecentPhase = () => onNext.calls.mostRecent().args[0];
 
     const vote_constant_error_tests = () => {
@@ -65,10 +55,9 @@ fdescribe('class: AnonymousVotingContractManager', () => {
         expect(errSvc.add).toHaveBeenCalledWith(AnonymousVotingContractManagerErrors.constants, retrievalError);
       });
 
-      it('should not respond to new events', () => {
-        triggerPhaseEvent(1);
+      it('should return an empty observable', () => {
         expect(onNext).not.toHaveBeenCalled();
-        expect(onCompleted).not.toHaveBeenCalled();
+        expect(onCompleted).toHaveBeenCalled();
       });
     };
 
@@ -120,57 +109,93 @@ fdescribe('class: AnonymousVotingContractManager', () => {
         new Date(voteCollection.voteConstants.registrationDeadline - msPerDay)
       ));
 
-      describe('case: before any NewPhase events', () => {
-        it('should start at phase 0', fakeAsync(() => {
+      it('should start at phase 0', fakeAsync(() => {
+        init_phase$_and_subscribe();
+        expect(onNext).toHaveBeenCalledTimes(1);
+        expect(onNext).toHaveBeenCalledWith(0);
+        discardPeriodicTasks();
+      }));
+
+      describe('case: the registration deadline expires', () => {
+        beforeEach(fakeAsync(() => {
           init_phase$_and_subscribe();
-          expect(onNext).toHaveBeenCalledTimes(1);
-          expect(onNext).toHaveBeenCalledWith(0);
+          jasmine.clock().tick(2 * msPerDay);
+          tick();
           discardPeriodicTasks();
         }));
 
-        describe('case: a NewPhase(1) event is emitted', () => {
-          beforeEach(fakeAsync(() => {
-            init_phase$_and_subscribe();
-            triggerPhaseEvent(1);
-            discardPeriodicTasks();
-          }));
+        it('should emit the phase "1"', () => {
+          expect(onNext).toHaveBeenCalledTimes(2);
+          expect(mostRecentPhase()).toEqual(1);
+        });
+      });
 
-          it('should emit the phase "1"', () => {
-            expect(onNext).toHaveBeenCalledTimes(2);
-            expect(mostRecentPhase()).toEqual(1);
-          });
+      describe('case: the voting deadline expires', () => {
+        beforeEach(fakeAsync(() => {
+          init_phase$_and_subscribe();
+          jasmine.clock().tick(20 * msPerDay);
+          tick();
+          discardPeriodicTasks();
+        }));
+
+        it('should emit the phase "2"', () => {
+          expect(onNext).toHaveBeenCalledTimes(3);
+          expect(mostRecentPhase()).toEqual(2);
         });
 
-        describe('case: the registration deadline expires', () => {
-          beforeEach(fakeAsync(() => {
-            init_phase$_and_subscribe();
-            jasmine.clock().tick(2 * msPerDay);
-            tick();
-            discardPeriodicTasks();
-          }));
-
-          it('should emit the phase "1"', fakeAsync(() => {
-            expect(onNext).toHaveBeenCalledTimes(2);
-            expect(mostRecentPhase()).toEqual(1);
-          }));
-        });
-
-        describe('case: the voting deadline expires', () => {
-          beforeEach(fakeAsync(() => {
-            init_phase$_and_subscribe();
-            jasmine.clock().tick(20 * msPerDay);
-            tick();
-            discardPeriodicTasks();
-          }));
-
-          it('should emit the phase "2"', fakeAsync(() => {
-            expect(onNext).toHaveBeenCalledTimes(3);
-            expect(mostRecentPhase()).toEqual(2);
-          }));
+        it('should complete', () => {
+          expect(onCompleted).toHaveBeenCalled();
         });
       });
     });
 
-    xdescribe('case: all combinations of timings, phase events and non-phase events', () => {});
+    describe('case: during the voting phase', () => {
+      beforeEach(() => jasmine.clock().mockDate(
+        new Date(voteCollection.voteConstants.registrationDeadline + msPerDay)
+      ));
+
+      it('should immediately emit phases "0" and "1"', fakeAsync(() => {
+        init_phase$_and_subscribe();
+        expect(onNext).toHaveBeenCalledTimes(2);
+        expect(onNext).toHaveBeenCalledWith(0);
+        expect(mostRecentPhase()).toEqual(1);
+        discardPeriodicTasks();
+      }));
+
+      describe('case: the voting deadline expires', () => {
+        beforeEach(fakeAsync(() => {
+          init_phase$_and_subscribe();
+          jasmine.clock().tick(20 * msPerDay);
+          tick();
+          discardPeriodicTasks();
+        }));
+
+        it('should emit the phase "2"', () => {
+          expect(onNext).toHaveBeenCalledTimes(3);
+          expect(mostRecentPhase()).toEqual(2);
+        });
+
+        it('should complete', () => {
+          expect(onCompleted).toHaveBeenCalled();
+        });
+      });
+    });
+
+    describe('case: after the voting phase', () => {
+      beforeEach(() => jasmine.clock().mockDate(new Date(voteCollection.voteConstants.votingDeadline + msPerDay)));
+
+      beforeEach(fakeAsync(() => init_phase$_and_subscribe()));
+
+      it('should immediately emit phases "0" and "1" amd "2"', () => {
+        expect(onNext).toHaveBeenCalledTimes(3);
+        expect(onNext).toHaveBeenCalledWith(0);
+        expect(onNext).toHaveBeenCalledWith(1);
+        expect(mostRecentPhase()).toEqual(2);
+      });
+
+      it('should complete', () => {
+        expect(onCompleted).toHaveBeenCalled();
+      });
+    });
   });
 });
