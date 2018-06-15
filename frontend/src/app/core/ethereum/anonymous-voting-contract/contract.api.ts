@@ -58,6 +58,7 @@ export namespace VoterInitiatedRegistration {
   export interface Log extends IContractLog {
     args: {
       voter: address;
+      blindedAddressHash: string;
     };
   }
 }
@@ -68,6 +69,7 @@ export namespace RegistrationComplete {
   export interface Log extends IContractLog {
     args: {
       voter: address;
+      signatureHash: string;
     };
   }
 }
@@ -78,6 +80,7 @@ export namespace VoteSubmitted {
   export interface Log extends IContractLog {
     args: {
       voter: address;
+      voteHash: string;
     };
   }
 }
