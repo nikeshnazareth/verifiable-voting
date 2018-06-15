@@ -5,7 +5,7 @@ import { ITruffleContractAbstraction, TruffleContractWrapperService } from '../t
 import { Web3Service } from '../web3.service';
 import { ErrorService } from '../../error-service/error.service';
 import { APP_CONFIG } from '../../../config';
-import { AnonymousVotingContractManager, IAnonymousVotingContractManager } from './contract-state';
+import { AnonymousVotingContractManager, IAnonymousVotingContractManager } from './contract-manager';
 import { address } from '../type.mappings';
 import { AnonymousVotingAPI } from './contract.api';
 
@@ -40,7 +40,7 @@ export class ReplacementAnonymousVotingContractService implements IReplacementAn
    */
   at(addr: address): IAnonymousVotingContractManager {
     if (!this._contractCache[addr]) {
-      this._contractCache[addr] = new AnonymousVotingContractManager(this._contractAt(addr));
+      this._contractCache[addr] = new AnonymousVotingContractManager(this._contractAt(addr), this.errSvc);
     }
     return this._contractCache[addr];
   }
