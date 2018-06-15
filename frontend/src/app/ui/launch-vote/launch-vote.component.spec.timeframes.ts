@@ -185,7 +185,7 @@ export function timeframe_tests(getFixture) {
         votingDeadlineInput = timeframes[2].query(By.css('input'));
         votingDeadlineToggle = timeframes[2].query(By.css('mat-datepicker-toggle'));
         votingDeadlinePicker = timeframes[2].query(By.css('mat-datepicker'));
-        registrationDeadline = new Date(Mock.AnonymousVotingContractCollections[0].timeframes.registrationDeadline);
+        registrationDeadline = new Date(Mock.AnonymousVotingContractCollections[0].voteConstants.registrationDeadline);
       });
 
       describe('input box', () => {

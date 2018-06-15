@@ -27,7 +27,7 @@ export class AnonymousVotingContract implements AnonymousVotingAPI {
   currentPhase = {
     call: () => Promise.resolve(new BigNumber(
       Mock.AnonymousVotingContractCollections
-        .filter(collection => collection.params_hash === this.PARAMETERS_IPFS_HASH)[0]
+        .filter(collection => collection.voteConstants.paramsHash === this.PARAMETERS_IPFS_HASH)[0]
         .currentPhase
     ))
   };
@@ -55,7 +55,7 @@ export class AnonymousVotingContract implements AnonymousVotingAPI {
   pendingRegistrations = {
     call: () => Promise.resolve(new BigNumber(
       Mock.AnonymousVotingContractCollections
-        .filter(collection => collection.params_hash === this.PARAMETERS_IPFS_HASH)[0]
+        .filter(collection => collection.voteConstants.paramsHash === this.PARAMETERS_IPFS_HASH)[0]
         .pendingRegistrations
     ))
   };
@@ -96,13 +96,13 @@ export class AnonymousVotingContract implements AnonymousVotingAPI {
 
   get address(): address {
     return Mock.AnonymousVotingContractCollections
-      .filter(collection => collection.params_hash === this.PARAMETERS_IPFS_HASH)[0]
+      .filter(collection => collection.voteConstants.paramsHash === this.PARAMETERS_IPFS_HASH)[0]
       .address;
   }
 
   allEvents(): IContractEventStream {
     return Mock.AnonymousVotingContractCollections
-      .filter(collection => collection.params_hash === this.PARAMETERS_IPFS_HASH)[0]
+      .filter(collection => collection.voteConstants.paramsHash === this.PARAMETERS_IPFS_HASH)[0]
       .eventStream;
   }
 }

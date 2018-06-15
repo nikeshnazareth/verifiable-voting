@@ -315,7 +315,7 @@ describe('Service: AnonymousVotingContractService', () => {
     it('should return an observable that emits the parameters hash and completed', () => {
       init_paramsHashAt$_and_subscribe();
       expect(onNext).toHaveBeenCalledTimes(1);
-      expect(onNext).toHaveBeenCalledWith(voteCollection.params_hash);
+      expect(onNext).toHaveBeenCalledWith(voteCollection.voteConstants.paramsHash);
       expect(onCompleted).toHaveBeenCalled();
     });
 
@@ -379,7 +379,7 @@ describe('Service: AnonymousVotingContractService', () => {
     it('should return an observable that emits the deadline and completes', () => {
       init_regDeadlineAt$_and_subscribe();
       expect(onNext).toHaveBeenCalledTimes(1);
-      expect(onNext).toHaveBeenCalledWith(new Date(voteCollection.timeframes.registrationDeadline));
+      expect(onNext).toHaveBeenCalledWith(new Date(voteCollection.voteConstants.registrationDeadline));
       expect(onCompleted).toHaveBeenCalled();
     });
 
@@ -444,7 +444,7 @@ describe('Service: AnonymousVotingContractService', () => {
     it('should return an observable that emits the deadline and completes', () => {
       init_votingDeadlineAt$();
       expect(onNext).toHaveBeenCalledTimes(1);
-      expect(onNext).toHaveBeenCalledWith(new Date(voteCollection.timeframes.votingDeadline));
+      expect(onNext).toHaveBeenCalledWith(new Date(voteCollection.voteConstants.votingDeadline));
       expect(onCompleted).toHaveBeenCalled();
     });
 

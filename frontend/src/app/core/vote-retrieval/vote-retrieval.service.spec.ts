@@ -276,7 +276,7 @@ describe('Service: VoteRetrievalService', () => {
       describe('parameter: topic', () => {
 
         const topics: string[] = Mock.AnonymousVotingContractCollections.map(contract => contract.parameters.topic);
-        const mockHashes: string[] = Mock.AnonymousVotingContractCollections.map(contract => contract.params_hash);
+        const mockHashes: string[] = Mock.AnonymousVotingContractCollections.map(contract => contract.voteConstants.paramsHash);
         const mockParams: IVoteParameters[] = Mock.AnonymousVotingContractCollections
           .map(contract => contract.parameters);
 
@@ -754,7 +754,7 @@ describe('Service: VoteRetrievalService', () => {
         });
 
         it('"value" should be set', () => {
-          const deadline = new Date(Mock.AnonymousVotingContractCollections[index].timeframes.registrationDeadline);
+          const deadline = new Date(Mock.AnonymousVotingContractCollections[index].voteConstants.registrationDeadline);
           expect(lastEmitted().registrationDeadline.value).toEqual(deadline);
         });
       });
@@ -814,7 +814,7 @@ describe('Service: VoteRetrievalService', () => {
         });
 
         it('"value" should be set', () => {
-          const deadline = new Date(Mock.AnonymousVotingContractCollections[index].timeframes.votingDeadline);
+          const deadline = new Date(Mock.AnonymousVotingContractCollections[index].voteConstants.votingDeadline);
           expect(lastEmitted().votingDeadline.value).toEqual(deadline);
         });
       });

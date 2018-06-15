@@ -23,7 +23,7 @@ export class VoteListingContract implements VoteListingAPI {
 
     return Promise.resolve(
       Mock.AnonymousVotingContractCollections
-        .filter(collection => collection.params_hash === _paramsHash)[0]
+        .filter(collection => collection.voteConstants.paramsHash === _paramsHash)[0]
         .deploy_receipt
     );
   }

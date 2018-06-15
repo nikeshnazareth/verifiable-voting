@@ -3,7 +3,7 @@ import 'rxjs/add/observable/from';
 
 import {
 IVoteListingContractService,
-IVoteTimeframes
+IVoteConstants
 } from '../../core/ethereum/vote-listing-contract/contract.service';
 import { Mock } from '../module';
 import { address } from '../../core/ethereum/type.mappings';
@@ -14,10 +14,10 @@ export class VoteListingContractService implements IVoteListingContractService {
     return Observable.from(Mock.addresses);
   }
 
-  deployVote$(timeframes: IVoteTimeframes, paramsHash: string): Observable<ITransactionReceipt> {
+  deployVote$(voteConstants: IVoteConstants): Observable<ITransactionReceipt> {
     return Observable.of(
       Mock.AnonymousVotingContractCollections
-        .filter(collection => collection.params_hash === paramsHash)[0]
+        .filter(collection => collection.voteConstants.paramsHash === voteConstants.paramsHash)[0]
         .deploy_receipt
     );
   }

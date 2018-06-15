@@ -22,7 +22,10 @@ import { address } from '../type.mappings';
 import { ITransactionReceipt } from '../transaction.interface';
 
 
-export interface IVoteTimeframes {
+export interface IVoteConstants {
+  paramsHash: string;
+  eligibilityContract: address;
+  registrationAuthority: address;
   registrationDeadline: number;
   votingDeadline: number;
 }
@@ -30,10 +33,7 @@ export interface IVoteTimeframes {
 export interface IVoteListingContractService {
   deployedVotes$: Observable<address>;
 
-  deployVote$(timeframes: IVoteTimeframes,
-              paramsHash: string,
-              eligibilityContract: address,
-              registrationAuthority: address): Observable<ITransactionReceipt>;
+  deployVote$(voteConstants: IVoteConstants): Observable<ITransactionReceipt>;
 }
 
 export const VoteListingContractErrors = {
@@ -66,24 +66,18 @@ export class VoteListingContractService implements IVoteListingContractService {
 
   /**
    * Uses the VoteListing contract to deploy a new vote to the blockchain
-   * @param {IVoteTimeframes} timeframes the unix timestamps of when the vote phases end
-   * @param {string} paramsHash the IPFS hash of the vote parameters
-   * @param {address} eligibilityContract the contract that determines if an address is eligible to vote
-   * @param {address} registrationAuthority the address that can publish the blinded signatures
+   * @param {IVoteConstants} voteConstants constant values required to define the vote
    * @returns {Observable<ITransactionReceipt>} An observable that emits the receipt when the contract is deployed</br>
    * or an empty observable if there was an error
    */
-  deployVote$(timeframes: IVoteTimeframes,
-              paramsHash: string,
-              eligibilityContract: address,
-              registrationAuthority: address): Observable<ITransactionReceipt> {
+  deployVote$(voteConstants: IVoteConstants): Observable<ITransactionReceipt> {
     return Observable.fromPromise(
       this._contractPromise.then(contract => contract.deploy(
-        timeframes.registrationDeadline,
-        timeframes.votingDeadline,
-        paramsHash,
-        eligibilityContract,
-        registrationAuthority,
+        voteConstants.registrationDeadline,
+        voteConstants.votingDeadline,
+        voteConstants.paramsHash,
+        voteConstants.eligibilityContract,
+        voteConstants.registrationAuthority,
         {from: this.web3Svc.defaultAccount}
       ))
     )

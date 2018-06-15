@@ -4,7 +4,7 @@ import { Observable } from 'rxjs/Observable';
 
 import { NoRestrictionContractService } from '../../core/ethereum/no-restriction-contract/contract.service';
 import { IVoteParameters, VoteManagerService } from '../../core/vote-manager/vote-manager.service';
-import { IVoteTimeframes } from '../../core/ethereum/vote-listing-contract/contract.service';
+import { IVoteConstants } from '../../core/ethereum/vote-listing-contract/contract.service';
 import { address } from '../../core/ethereum/type.mappings';
 
 @Component({
@@ -55,10 +55,8 @@ export class LaunchVoteComponent implements OnInit {
   public onSubmit() {
     const voteDetails = this.form.value;
 
-    const timeframes: IVoteTimeframes = {
-      registrationDeadline: new Date(voteDetails.timeframes.registrationCloses).getTime(),
-      votingDeadline: new Date(voteDetails.timeframes.votingCloses).getTime()
-    };
+    const registrationDeadline = new Date(voteDetails.timeframes.registrationCloses).getTime();
+    const votingDeadline = new Date(voteDetails.timeframes.votingCloses).getTime();
     const params: IVoteParameters = {
       topic: voteDetails.topic,
       candidates: voteDetails.candidates.map(candidate => candidate.name),
@@ -70,7 +68,7 @@ export class LaunchVoteComponent implements OnInit {
     const eligibilityContract: address = voteDetails.eligibility;
     const registrationAuthority: address = '0x' + voteDetails.registration_key.registrationAuthority;
 
-    this.voteManagerSvc.deployVote$(timeframes, params, eligibilityContract, registrationAuthority)
+    this.voteManagerSvc.deployVote$(registrationDeadline, votingDeadline, params, eligibilityContract, registrationAuthority)
       .map(receipt => this.form.reset())
       .subscribe(); /// this finishes immediately so we don't need to unsubscribe
   }
@@ -130,7 +128,6 @@ export class LaunchVoteComponent implements OnInit {
       .then(addr => this.form.get('eligibility').setValue(addr)) // addr may be null if there was an error
       .catch(() => null); // do nothing - the NoRestrictionService will notify the error service
   }
-
 
 
   /**

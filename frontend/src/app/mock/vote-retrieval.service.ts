@@ -31,11 +31,11 @@ export class VoteRetrievalService implements IVoteRetrievalService {
         parameters: Mock.AnonymousVotingContractCollections[index].parameters,
         registrationDeadline: {
           status: RETRIEVAL_STATUS.AVAILABLE,
-          value: new Date(Mock.AnonymousVotingContractCollections[index].timeframes.registrationDeadline)
+          value: new Date(Mock.AnonymousVotingContractCollections[index].voteConstants.registrationDeadline)
         },
         votingDeadline: {
           status: RETRIEVAL_STATUS.AVAILABLE,
-          value: new Date(Mock.AnonymousVotingContractCollections[index].timeframes.votingDeadline)
+          value: new Date(Mock.AnonymousVotingContractCollections[index].voteConstants.votingDeadline)
         },
         pendingRegistrations: {
           status: RETRIEVAL_STATUS.AVAILABLE,

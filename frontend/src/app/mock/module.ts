@@ -5,7 +5,7 @@ import { AnonymousVotingContractService } from './anonymous-voting-contract/cont
 import { IPFSService } from './ipfs.service';
 import { ITransactionReceipt } from '../core/ethereum/transaction.interface';
 import { IVote, IVoteParameters } from '../core/vote-manager/vote-manager.service';
-import { IVoteTimeframes } from '../core/ethereum/vote-listing-contract/contract.service';
+import { IVoteConstants } from '../core/ethereum/vote-listing-contract/contract.service';
 import { NoRestrictionContract } from './no-restriction-contract/contract';
 import { ITriggerableEventStream, TriggerableEventStream } from './triggerable-event-stream';
 import {
@@ -68,7 +68,7 @@ export class Mock {
   // for now, the LaunchVote component gets the eligibility address straight from the NoRestriction contract
   // so override the values to match. This hack will be fixed when the LaunchVote component introduces options
     .map(collection => {
-      collection.eligibilityContract = Mock.NO_RESTRICTION_ADDRESS;
+      collection.voteConstants.eligibilityContract = Mock.NO_RESTRICTION_ADDRESS;
       return collection;
     });
   public static Voters = range(4).map(i => generateMockVoter(i));
@@ -84,10 +84,7 @@ export class Mock {
 export interface IAnonymousVotingContractCollection {
   address: string;
   parameters: IVoteParameters;
-  eligibilityContract: address;
-  registrationAuthority: address;
-  timeframes: IVoteTimeframes;
-  params_hash: string;
+  voteConstants: IVoteConstants;
   deploy_receipt: ITransactionReceipt;
   currentPhase: number;
   pendingRegistrations: number;
@@ -116,13 +113,13 @@ function generateMockVoteContract(idx: number): IAnonymousVotingContractCollecti
         public_exp: '10001' + idx
       }
     },
-    eligibilityContract: ELIGIBILITY_CONTRACT,
-    registrationAuthority: REGISTRATION_AUTHORITY,
-    timeframes: {
+    voteConstants: {
+      paramsHash: PARAMS_HASH,
+      eligibilityContract: ELIGIBILITY_CONTRACT,
+      registrationAuthority: REGISTRATION_AUTHORITY,
       registrationDeadline: REGISTRATION_DEADLINE,
       votingDeadline: VOTING_DEADLINE
     },
-    params_hash: PARAMS_HASH,
     deploy_receipt: {
       tx: 'MOCK_DEPLOY_TX_RECEIPT_' + idx
     },

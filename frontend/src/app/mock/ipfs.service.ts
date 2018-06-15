@@ -9,7 +9,7 @@ export class IPFSService implements IIPFSService {
       return Promise.resolve(
         Mock.AnonymousVotingContractCollections
           .filter(collection => collection.parameters.topic === (<IVoteParameters> data).topic)[0]
-          .params_hash
+          .voteConstants.paramsHash
       );
     }
 
@@ -42,7 +42,7 @@ export class IPFSService implements IIPFSService {
 
   catJSON(hash: string): Promise<object> {
     const matchingContracts = Mock.AnonymousVotingContractCollections
-      .filter(collection => collection.params_hash === hash);
+      .filter(collection => collection.voteConstants.paramsHash === hash);
     if (matchingContracts.length > 0) {
       return Promise.resolve(matchingContracts[0].parameters);
     }
@@ -63,7 +63,7 @@ export class IPFSService implements IIPFSService {
 
     const matchingVotersByVote = Mock.Voters.filter(voter => voter.vote_hash === hash);
     if (matchingVotersByVote.length > 0) {
-      return Promise.resolve(matchingVotersByVote[0].vote)
+      return Promise.resolve(matchingVotersByVote[0].vote);
     }
 
     throw new Error('Unexpected hash requested from the Mock IPFS service');

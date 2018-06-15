@@ -55,10 +55,11 @@ describe('Service: VoteManagerService', () => {
 
     const init_and_call_deployVote$ = () => {
       voteManagerSvc().deployVote$(
-        voteDetails.timeframes,
+        voteDetails.voteConstants.registrationDeadline,
+        voteDetails.voteConstants.votingDeadline,
         voteDetails.parameters,
-        voteDetails.eligibilityContract,
-        voteDetails.registrationAuthority
+        voteDetails.voteConstants.eligibilityContract,
+        voteDetails.voteConstants.registrationAuthority
       )
         .subscribe(onNext, onError, onCompleted);
       tick();
@@ -73,12 +74,7 @@ describe('Service: VoteManagerService', () => {
     it('should pass the IPFS hash and other parameters to VoteListingService.deployVote$', fakeAsync(() => {
       spyOn(voteListingSvc, 'deployVote$').and.callThrough();
       init_and_call_deployVote$();
-      expect(voteListingSvc.deployVote$).toHaveBeenCalledWith(
-        voteDetails.timeframes,
-        voteDetails.params_hash,
-        voteDetails.eligibilityContract,
-        voteDetails.registrationAuthority
-      );
+      expect(voteListingSvc.deployVote$).toHaveBeenCalledWith(voteDetails.voteConstants);
     }));
 
     it('should return an observable that emits the transaction receipt and completes', fakeAsync(() => {

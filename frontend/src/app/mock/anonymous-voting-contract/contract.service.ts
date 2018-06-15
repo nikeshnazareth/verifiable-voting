@@ -15,7 +15,8 @@ export class AnonymousVotingContractService implements IAnonymousVotingContractS
     return Observable.of(
       Mock.AnonymousVotingContractCollections
         .filter(collection => collection.address === addr)[0]
-        .params_hash
+        .voteConstants
+        .paramsHash
     );
   }
 
@@ -23,7 +24,7 @@ export class AnonymousVotingContractService implements IAnonymousVotingContractS
     return Observable.of(
       Mock.AnonymousVotingContractCollections
         .filter(collection => collection.address === addr)[0]
-        .timeframes
+        .voteConstants
         .registrationDeadline
     )
       .map(t => new Date(t));
@@ -33,7 +34,7 @@ export class AnonymousVotingContractService implements IAnonymousVotingContractS
     return Observable.of(
       Mock.AnonymousVotingContractCollections
         .filter(collection => collection.address === addr)[0]
-        .timeframes
+        .voteConstants
         .votingDeadline
     )
       .map(t => new Date(t));

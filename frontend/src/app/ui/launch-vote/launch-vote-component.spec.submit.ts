@@ -37,15 +37,15 @@ export function submit_button_tests(getFixture) {
       const registration_key: FormGroup = <FormGroup> form.controls.registration_key;
 
       form.controls.topic.patchValue(voteDetails.parameters.topic);
-      timeframes.controls.registrationCloses.patchValue(new Date(voteDetails.timeframes.registrationDeadline));
-      timeframes.controls.votingCloses.patchValue(new Date(voteDetails.timeframes.votingDeadline));
+      timeframes.controls.registrationCloses.patchValue(new Date(voteDetails.voteConstants.registrationDeadline));
+      timeframes.controls.votingCloses.patchValue(new Date(voteDetails.voteConstants.votingDeadline));
       voteDetails.parameters.candidates.forEach(candidate => {
         candidates.push(fb.group({name: [candidate]}));
       });
-      form.controls.eligibility.patchValue(voteDetails.eligibilityContract);
+      form.controls.eligibility.patchValue(voteDetails.voteConstants.eligibilityContract);
       registration_key.controls.modulus.patchValue(voteDetails.parameters.registration_key.modulus);
       registration_key.controls.exponent.patchValue(voteDetails.parameters.registration_key.public_exp);
-      registration_key.controls.registrationAuthority.patchValue(voteDetails.registrationAuthority);
+      registration_key.controls.registrationAuthority.patchValue(voteDetails.voteConstants.registrationAuthority);
       fixture.detectChanges();
     };
 
@@ -90,10 +90,11 @@ export function submit_button_tests(getFixture) {
           };
 
           expect(voteManagerSvc.deployVote$).toHaveBeenCalledWith(
-            voteDetails.timeframes,
+            voteDetails.voteConstants.registrationDeadline,
+            voteDetails.voteConstants.votingDeadline,
             params,
-            voteDetails.eligibilityContract,
-            '0x' + voteDetails.registrationAuthority
+            voteDetails.voteConstants.eligibilityContract,
+            '0x' + voteDetails.voteConstants.registrationAuthority
           );
         });
 

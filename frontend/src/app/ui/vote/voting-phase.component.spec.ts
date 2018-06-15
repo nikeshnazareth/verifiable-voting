@@ -126,11 +126,11 @@ describe('Component: VotingPhaseComponent', () => {
       },
       registrationDeadline: {
         status: RETRIEVAL_STATUS.AVAILABLE,
-        value: new Date(voteCollection.timeframes.registrationDeadline)
+        value: new Date(voteCollection.voteConstants.registrationDeadline)
       },
       votingDeadline: {
         status: RETRIEVAL_STATUS.AVAILABLE,
-        value: new Date(voteCollection.timeframes.votingDeadline)
+        value: new Date(voteCollection.voteConstants.votingDeadline)
       },
       pendingRegistrations: {
         status: RETRIEVAL_STATUS.AVAILABLE,
