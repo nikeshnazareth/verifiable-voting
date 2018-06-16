@@ -4,10 +4,11 @@ import { BehaviorSubject } from 'rxjs/BehaviorSubject';
 import 'rxjs/add/observable/timer';
 import 'rxjs/add/operator/reduce';
 
-import { AnonymousVotingAPI, RegistrationComplete, VoterInitiatedRegistration } from './contract.api';
+import { AnonymousVotingAPI, RegistrationComplete, VoterInitiatedRegistration, VoteSubmitted } from './contract.api';
 import { IContractLog } from '../contract.interface';
 import { ErrorService } from '../../error-service/error.service';
 import { IVoteConstants } from '../vote-listing-contract/contract.service';
+import { address } from '../type.mappings';
 
 export interface IRegistrationHashes {
   [voter: string]: {
@@ -16,10 +17,16 @@ export interface IRegistrationHashes {
   };
 }
 
+export interface IVoteHash {
+  voter: address;
+  voteHash: string;
+}
+
 export interface IAnonymousVotingContractManager {
   phase$: Observable<number>;
   constants$: Observable<IVoteConstants>;
   registrationHashes$: Observable<IRegistrationHashes>;
+  voteHashes$: Observable<IVoteHash>;
 }
 
 export const AnonymousVotingContractManagerErrors = {
@@ -76,6 +83,15 @@ export class AnonymousVotingContractManager implements IAnonymousVotingContractM
   get registrationHashes$(): Observable<IRegistrationHashes> {
     return this._updatedRegistrationHashes$
       .map(() => this._registrationHashes);
+  }
+
+  /**
+   * @returns {Observable<IVoteHash>} An observable of voters and their vote IPFS hashes as they are published
+   */
+  get voteHashes$(): Observable<IVoteHash> {
+    return this._events$
+      .filter(log => log.event === VoteSubmitted.name)
+      .map(log => (<VoteSubmitted.Log> log).args);
   }
 
   /**

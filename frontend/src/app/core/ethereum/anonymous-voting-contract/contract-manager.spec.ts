@@ -4,7 +4,7 @@ import { Observable } from 'rxjs/Observable';
 import { ErrorService } from '../../error-service/error.service';
 import { IAnonymousVotingContractCollection, Mock } from '../../../mock/module';
 import { AnonymousVotingContractManager, AnonymousVotingContractManagerErrors } from './contract-manager';
-import { AnonymousVotingAPI, RegistrationComplete, VoterInitiatedRegistration } from './contract.api';
+import { AnonymousVotingAPI, RegistrationComplete, VoterInitiatedRegistration, VoteSubmitted } from './contract.api';
 import Spy = jasmine.Spy;
 
 describe('class: AnonymousVotingContractManager', () => {
@@ -222,7 +222,7 @@ describe('class: AnonymousVotingContractManager', () => {
   });
 
   describe('property: registrationHashes$', () => {
-    const init_registrations$_and_subscribe = fakeAsync(() => {
+    const init_registrationHashes$_and_subscribe = fakeAsync(() => {
       contractManager().registrationHashes$.subscribe(onNext, onError, onCompleted);
       tick();
     });
@@ -248,14 +248,14 @@ describe('class: AnonymousVotingContractManager', () => {
     };
 
     it('should start with an empty object', () => {
-      init_registrations$_and_subscribe();
+      init_registrationHashes$_and_subscribe();
       expect(onNext).toHaveBeenCalledTimes(1);
       expect(onNext).toHaveBeenCalledWith({});
     });
 
     describe('case: a voter initiates registration', () => {
       beforeEach(() => {
-        init_registrations$_and_subscribe();
+        init_registrationHashes$_and_subscribe();
         triggerVoterRegistrationEvent(0);
       });
 
@@ -282,7 +282,7 @@ describe('class: AnonymousVotingContractManager', () => {
 
     describe('case: three voters in a row initiate registration', () => {
       beforeEach(() => {
-        init_registrations$_and_subscribe();
+        init_registrationHashes$_and_subscribe();
         triggerVoterRegistrationEvent(0);
         triggerVoterRegistrationEvent(1);
         triggerVoterRegistrationEvent(2);
@@ -322,6 +322,50 @@ describe('class: AnonymousVotingContractManager', () => {
           expect(record.blindedAddress).toEqual(Mock.Voters[1].blinded_address_hash);
           expect(record.signature).toEqual(Mock.Voters[1].signed_blinded_address_hash);
         });
+      });
+    });
+
+    xdescribe('case: there is an error in the event stream', () => {
+    });
+  });
+
+  describe('property: voteHashes$', () => {
+    const init_voteHashes$_and_subscribe = fakeAsync(() => {
+      contractManager().voteHashes$.subscribe(onNext, onError, onCompleted);
+      tick();
+    });
+
+    const triggerVoteSubmittedEvent = (i) => {
+      voteCollection.eventStream.trigger(null, {
+        event: VoteSubmitted.name,
+        args: {
+          voter: Mock.Voters[i].anonymous_address,
+          voteHash: Mock.Voters[i].vote_hash
+        }
+      });
+    };
+
+    it('should start with a waiting observable', () => {
+      init_voteHashes$_and_subscribe();
+      expect(onNext).not.toHaveBeenCalled();
+      expect(onCompleted).not.toHaveBeenCalled();
+    });
+
+    it('should emit an item for every VoteSubmitted event', () => {
+      init_voteHashes$_and_subscribe();
+      Mock.Voters.map((voter, idx) => {
+        triggerVoteSubmittedEvent(idx);
+        expect(onNext).toHaveBeenCalledTimes(idx + 1);
+        expect(onCompleted).not.toHaveBeenCalled();
+      });
+    });
+
+    it('it should emit the voter and vote hash corresponding to the VoteSubmitted event', () => {
+      init_voteHashes$_and_subscribe();
+      Mock.Voters.map((voter, idx) => {
+        triggerVoteSubmittedEvent(idx);
+        expect(mostRecent().voter).toEqual(voter.anonymous_address);
+        expect(mostRecent().voteHash).toEqual(voter.vote_hash);
       });
     });
   });
