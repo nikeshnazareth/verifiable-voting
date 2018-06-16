@@ -4,10 +4,10 @@ import { Observable } from 'rxjs/Observable';
 import { ErrorService } from '../../error-service/error.service';
 import { IAnonymousVotingContractCollection, Mock } from '../../../mock/module';
 import { AnonymousVotingContractManager, AnonymousVotingContractManagerErrors } from './contract-manager';
-import { AnonymousVotingAPI } from './contract.api';
+import { AnonymousVotingAPI, RegistrationComplete, VoterInitiatedRegistration } from './contract.api';
 import Spy = jasmine.Spy;
 
-fdescribe('class: AnonymousVotingContractManager', () => {
+describe('class: AnonymousVotingContractManager', () => {
   const contractManager = () => new AnonymousVotingContractManager(contract$, errSvc);
   let voteCollection: IAnonymousVotingContractCollection;
   let contract$: Observable<AnonymousVotingAPI>;
@@ -18,6 +18,8 @@ fdescribe('class: AnonymousVotingContractManager', () => {
   const onError = (err) => fail(err);
   let onNext: Spy;
   let onCompleted: Spy;
+
+  const mostRecent = () => onNext.calls.mostRecent().args[0];
 
   beforeEach(() => {
     errSvc = new ErrorService();
@@ -110,8 +112,6 @@ fdescribe('class: AnonymousVotingContractManager', () => {
       tick();
     };
 
-    const mostRecentPhase = () => onNext.calls.mostRecent().args[0];
-
     describe('case: constants$ is an empty observable', () => {
 
       beforeEach(fakeAsync(() => {
@@ -148,7 +148,7 @@ fdescribe('class: AnonymousVotingContractManager', () => {
 
         it('should emit the phase "1"', () => {
           expect(onNext).toHaveBeenCalledTimes(2);
-          expect(mostRecentPhase()).toEqual(1);
+          expect(mostRecent()).toEqual(1);
         });
       });
 
@@ -162,7 +162,7 @@ fdescribe('class: AnonymousVotingContractManager', () => {
 
         it('should emit the phase "2"', () => {
           expect(onNext).toHaveBeenCalledTimes(3);
-          expect(mostRecentPhase()).toEqual(2);
+          expect(mostRecent()).toEqual(2);
         });
 
         it('should complete', () => {
@@ -180,7 +180,7 @@ fdescribe('class: AnonymousVotingContractManager', () => {
         init_phase$_and_subscribe();
         expect(onNext).toHaveBeenCalledTimes(2);
         expect(onNext).toHaveBeenCalledWith(0);
-        expect(mostRecentPhase()).toEqual(1);
+        expect(mostRecent()).toEqual(1);
         discardPeriodicTasks();
       }));
 
@@ -194,7 +194,7 @@ fdescribe('class: AnonymousVotingContractManager', () => {
 
         it('should emit the phase "2"', () => {
           expect(onNext).toHaveBeenCalledTimes(3);
-          expect(mostRecentPhase()).toEqual(2);
+          expect(mostRecent()).toEqual(2);
         });
 
         it('should complete', () => {
@@ -212,11 +212,116 @@ fdescribe('class: AnonymousVotingContractManager', () => {
         expect(onNext).toHaveBeenCalledTimes(3);
         expect(onNext).toHaveBeenCalledWith(0);
         expect(onNext).toHaveBeenCalledWith(1);
-        expect(mostRecentPhase()).toEqual(2);
+        expect(mostRecent()).toEqual(2);
       });
 
       it('should complete', () => {
         expect(onCompleted).toHaveBeenCalled();
+      });
+    });
+  });
+
+  describe('property: registrationHashes$', () => {
+    const init_registrations$_and_subscribe = fakeAsync(() => {
+      contractManager().registrationHashes$.subscribe(onNext, onError, onCompleted);
+      tick();
+    });
+
+    const triggerVoterRegistrationEvent = (i) => {
+      voteCollection.eventStream.trigger(null, {
+        event: VoterInitiatedRegistration.name,
+        args: {
+          voter: Mock.Voters[i].public_address,
+          blindedAddressHash: Mock.Voters[i].blinded_address_hash
+        }
+      });
+    };
+
+    const triggerRegistrationComplete = (i) => {
+      voteCollection.eventStream.trigger(null, {
+        event: RegistrationComplete.name,
+        args: {
+          voter: Mock.Voters[i].public_address,
+          signatureHash: Mock.Voters[i].signed_blinded_address_hash
+        }
+      });
+    };
+
+    it('should start with an empty object', () => {
+      init_registrations$_and_subscribe();
+      expect(onNext).toHaveBeenCalledTimes(1);
+      expect(onNext).toHaveBeenCalledWith({});
+    });
+
+    describe('case: a voter initiates registration', () => {
+      beforeEach(() => {
+        init_registrations$_and_subscribe();
+        triggerVoterRegistrationEvent(0);
+      });
+
+      it('should record the blinded address hash in the table', () => {
+        expect(Object.keys(mostRecent()).length).toEqual(1);
+        const record = mostRecent()[Mock.Voters[0].public_address];
+        expect(record).toBeDefined();
+        expect(record.blindedAddress).toEqual(Mock.Voters[0].blinded_address_hash);
+        expect(record.signature).toBeNull();
+      });
+
+      describe('case: the registration authority completes the registration', () => {
+        beforeEach(() => triggerRegistrationComplete(0));
+
+        it('should record the blind signature in the same row of the table', () => {
+          expect(Object.keys(mostRecent()).length).toEqual(1);
+          const record = mostRecent()[Mock.Voters[0].public_address];
+          expect(record).toBeDefined();
+          expect(record.blindedAddress).toEqual(Mock.Voters[0].blinded_address_hash);
+          expect(record.signature).toEqual(Mock.Voters[0].signed_blinded_address_hash);
+        });
+      });
+    });
+
+    describe('case: three voters in a row initiate registration', () => {
+      beforeEach(() => {
+        init_registrations$_and_subscribe();
+        triggerVoterRegistrationEvent(0);
+        triggerVoterRegistrationEvent(1);
+        triggerVoterRegistrationEvent(2);
+      });
+
+      it('should record the blinded address hash in the table', () => {
+        expect(Object.keys(mostRecent()).length).toEqual(3);
+        [0, 1, 2].map(idx => {
+          const record = mostRecent()[Mock.Voters[idx].public_address];
+          expect(record).toBeDefined();
+          expect(record.blindedAddress).toEqual(Mock.Voters[idx].blinded_address_hash);
+          expect(record.signature).toBeNull();
+        });
+      });
+
+      describe('case: the registration authority completes the second registration', () => {
+        beforeEach(() => triggerRegistrationComplete(1));
+
+        it('should not affect the first record', () => {
+          const record = mostRecent()[Mock.Voters[0].public_address];
+          expect(record).toBeDefined();
+          expect(record.blindedAddress).toEqual(Mock.Voters[0].blinded_address_hash);
+          expect(record.signature).toBeNull();
+        });
+
+        it('should not affect the third record', () => {
+          const record = mostRecent()[Mock.Voters[2].public_address];
+          expect(record).toBeDefined();
+          expect(record.blindedAddress).toEqual(Mock.Voters[2].blinded_address_hash);
+          expect(record.signature).toBeNull();
+        });
+
+        it('should record the blind signature in the same row of the table', () => {
+          expect(Object.keys(mostRecent()).length).toEqual(3);
+          const record = mostRecent()[Mock.Voters[1].public_address];
+          expect(record).toBeDefined();
+          expect(record.blindedAddress).toEqual(Mock.Voters[1].blinded_address_hash);
+          expect(record.signature).toEqual(Mock.Voters[1].signed_blinded_address_hash);
+        });
       });
     });
   });
