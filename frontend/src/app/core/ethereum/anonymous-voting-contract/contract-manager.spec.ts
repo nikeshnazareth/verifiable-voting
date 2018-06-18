@@ -432,4 +432,67 @@ describe('class: AnonymousVotingContractManager', () => {
       });
     });
   });
+
+  describe('method: voter$', () => {
+    const voter: IVoter = Mock.Voters[0];
+
+    const init_vote$_and_subscribe = fakeAsync(() => {
+      contractManager().vote$(voter.anonymous_address, voter.vote_hash)
+        .subscribe(onNext, onError, onCompleted);
+      tick();
+    });
+
+    it('should call the "vote" function on the AnonymousVoting contract', () => {
+      spyOn(voteCollection.instance, 'vote').and.callThrough();
+      init_vote$_and_subscribe();
+      expect(voteCollection.instance.vote).toHaveBeenCalled();
+    });
+
+    it('should pass the vote hash to the AnonymousVoting.vote function', () => {
+      spyOn(voteCollection.instance, 'vote').and.callThrough();
+      init_vote$_and_subscribe();
+      expect((<Spy>voteCollection.instance.vote).calls.mostRecent().args[0]).toEqual(voter.vote_hash);
+    });
+
+    it('should set the message sender on the AnonymousVoting.vote call to the specified anonymous address', () => {
+      spyOn(voteCollection.instance, 'vote').and.callThrough();
+      init_vote$_and_subscribe();
+      expect((<Spy>voteCollection.instance.vote).calls.mostRecent().args[1]).toEqual({from: voter.anonymous_address});
+    });
+
+    it('should return the contract register receipt and complete', () => {
+      init_vote$_and_subscribe();
+      expect(onNext).toHaveBeenCalledWith(voter.vote_receipt);
+      expect(onCompleted).toHaveBeenCalled();
+    });
+
+    describe('case: the contract observable is empty', () => {
+      beforeEach(() => {
+        contract$ = Observable.empty();
+        init_vote$_and_subscribe();
+      });
+
+      it('should return an empty observable', () => {
+        expect(onNext).not.toHaveBeenCalled();
+        expect(onCompleted).toHaveBeenCalled();
+      });
+    });
+
+    describe('case: contract.vote fails', () => {
+      const error: Error = new Error('Unable to vote');
+
+      beforeEach(() => spyOn(voteCollection.instance, 'vote').and.returnValue(Promise.reject(error)));
+
+      it('should notify the Error Service', () => {
+        init_vote$_and_subscribe();
+        expect(errSvc.add).toHaveBeenCalledWith(AnonymousVotingContractManagerErrors.vote, error);
+      });
+
+      it('should return an empty observable', () => {
+        init_vote$_and_subscribe();
+        expect(onNext).not.toHaveBeenCalled();
+        expect(onCompleted).toHaveBeenCalled();
+      });
+    });
+  });
 });

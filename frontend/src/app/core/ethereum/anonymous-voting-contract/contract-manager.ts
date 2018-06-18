@@ -30,12 +30,14 @@ export interface IAnonymousVotingContractManager {
   voteHashes$: Observable<IVoteHash>;
 
   register$(voterAddr: address, blindAddressHash: string): Observable<ITransactionReceipt>;
+  vote$(anonymousAddr: address, voteHash: string): Observable<ITransactionReceipt>;
 }
 
 export const AnonymousVotingContractManagerErrors = {
-  events: new Error('Unexpected error in the event stream of an AnonymousVoting contract'),
+  events: new Error('Unexpected error in the AnonymousVoting contract event stream'),
   constants: new Error('Unable to retrieve the defining constants from the AnonymousVoting contract'),
-  registration: new Error('Unable to register the voter at the AnonymousVoting contract')
+  registration: new Error('Unable to register the voter'),
+  vote: new Error('Unable to complete vote')
 };
 
 export class AnonymousVotingContractManager implements IAnonymousVotingContractManager {
@@ -111,6 +113,23 @@ export class AnonymousVotingContractManager implements IAnonymousVotingContractM
       .switchMap(registerPromise => Observable.fromPromise(registerPromise))
       .catch(err => {
         this.errSvc.add(AnonymousVotingContractManagerErrors.registration, err);
+        return <Observable<ITransactionReceipt>> Observable.empty();
+      });
+  }
+
+  /**
+   * Uses the AnonymousVoting contract to vote from the specified address
+   * @param {address} anonymousAddr the anonymous address of the voter
+   * @param {string} voteHash the IPFS hash of the voter's vote and proof of registration
+   * @returns {Observable<ITransactionReceipt>} an observable that emits the receipt when the vote is cast </br>
+   * or an empty observable if there was an error
+   */
+  vote$(anonymousAddr: address, voteHash: string): Observable<ITransactionReceipt> {
+    return this._contract$
+      .map(contract => contract.vote(voteHash, {from: anonymousAddr}))
+      .switchMap(votePromise => Observable.fromPromise(votePromise))
+      .catch(err => {
+        this.errSvc.add(AnonymousVotingContractManagerErrors.vote, err);
         return <Observable<ITransactionReceipt>> Observable.empty();
       });
   }
