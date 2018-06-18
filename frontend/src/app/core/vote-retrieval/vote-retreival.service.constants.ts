@@ -14,9 +14,9 @@ export interface IVotingContractDetails {
 
 export interface IVotingContractSummary {
   index: number;
-  address: address;
-  phase: string;
-  topic: string;
+  address: IDynamicValue<address>;
+  phase: IDynamicValue<string>;
+  topic: IDynamicValue<string>;
 }
 
 export interface IDynamicValue<T> {
@@ -32,6 +32,7 @@ export const RETRIEVAL_STATUS = {
 
 export const VoteRetrievalServiceErrors = {
   ipfs: {
+    parameters: (hash) => new Error(`Unable to retrieve the parameters from the IPFS hash ${hash}`),
     getParameters: (addr) => new Error('Unable to retrieve the parameters for the AnonymousVoting contract' +
       ` at ${addr} from the IPFS hash`),
     getBlindSignature: (contract, voter) => new Error(`Unable to retrieve the blind signature for the voter ${voter}` +

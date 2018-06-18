@@ -3,6 +3,7 @@ import { ReplaySubject } from 'rxjs/ReplaySubject';
 import { BehaviorSubject } from 'rxjs/BehaviorSubject';
 import 'rxjs/add/observable/timer';
 import 'rxjs/add/operator/reduce';
+import 'rxjs/add/observable/from';
 
 import { AnonymousVotingAPI, RegistrationComplete, VoterInitiatedRegistration, VoteSubmitted } from './contract.api';
 import { IContractLog } from '../contract.interface';

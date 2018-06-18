@@ -21,6 +21,7 @@ import { IPFSService } from '../ipfs/ipfs.service';
 import { IBlindedSignature, IVote, IVoteParameters } from '../vote-manager/vote-manager.service';
 import { ErrorService } from '../error-service/error.service';
 import {
+  IDynamicValue,
   IVotingContractDetails,
   IVotingContractSummary,
   RETRIEVAL_STATUS,
@@ -53,20 +54,112 @@ export class VoteRetrievalService implements IVoteRetrievalService {
 
   /**
    * Retrieves the vote summary information (from cache if possible) for each deployed
-   * contract in the VoteListingService.
-   * Merges them all into a single array and emits the result
+   * contract in the VoteListingService, merges them all into a single array and emits the result
+   * The result is designed to be used by the VoteListingService
    * @returns {Observable<IVotingContractSummary[]>} the summary of all deployed voting contracts<br/>
    * including intermediate and error states
    */
   get summaries$(): Observable<IVotingContractSummary[]> {
     return this.voteListingSvc.deployedVotes$
-      .map((addr, idx) => this._getVoteSummary(addr, idx))
+      .map((addr, idx) => {
+        const phase$ = this._wrapRetrieval(
+          this.replacementAnonymousVotingSvc.at(addr).phase$
+            .map(phaseIdx => VotePhases[phaseIdx])
+        );
+
+        const topic$ = this._wrapRetrieval(
+          this.replacementAnonymousVotingSvc.at(addr).constants$
+            .switchMap(constants => this._retrieveVoteParameters(constants.paramsHash))
+            .map(params => params.topic)
+        );
+
+        const address$ = this._wrapRetrieval(addr ? Observable.of(addr) : Observable.empty());
+
+        return phase$.combineLatest(topic$, address$, (phase, topic, contractAddr) => ({
+          index: idx,
+          address: contractAddr,
+          phase: phase,
+          topic: topic
+        }));
+      })
       .scan(
         (acc, summary$) => acc.combineLatest(summary$, (L, el) => L.concat(el)),
         Observable.of([])
       )
-      .switch();
+      .switch()
+      .share();
   }
+
+  /**
+   * Prepend an empty value with status "RETRIEVING" to the source observable and then
+   * apply the status "AVAILABLE" to all values or emit an "UNAVAILABLE" status if the source observable is empty
+   * @param {Observable<T>} obs the source observable
+   * @returns {Observable<IDynamicValue<T>>} an observable the wraps retrieval status information around the source observable
+   * @private
+   */
+  private _wrapRetrieval<T>(obs: Observable<T>): Observable<IDynamicValue<T>> {
+    return obs
+      .map(val => ({status: RETRIEVAL_STATUS.AVAILABLE, value: val}))
+      .defaultIfEmpty({status: RETRIEVAL_STATUS.UNAVAILABLE, value: null})
+      .startWith({status: RETRIEVAL_STATUS.RETRIEVING, value: null});
+  }
+
+  /**
+   * Resolves the IPFS hash (from cache if possible), confirms the retrieved object is valid
+   * and caches the result
+   * @param {string} hash the IPFS hash to resolve
+   * @returns {Observable<IVoteParameters>} An observable of the retrieved vote parameters <br/>
+   * or an empty observable if there is an error
+   * @private
+   */
+  private _retrieveVoteParameters(hash: string): Observable<IVoteParameters> {
+    return Observable.of(
+      this._ipfsCache.parameters[hash] ?
+        this._ipfsCache.parameters[hash] :
+        this.ipfsSvc.catJSON(hash)
+    )
+      .do(promise => {
+        this._ipfsCache.parameters[hash] = <Promise<IVoteParameters>> promise;
+      })
+      .switchMap(promise => Observable.fromPromise(promise))
+      .catch(err => {
+        this.errSvc.add(VoteRetrievalServiceErrors.ipfs.parameters(hash), err);
+        this._ipfsCache.parameters[hash] = null;
+        return <Observable<object>> Observable.empty();
+      })
+      .switchMap(obj => this._filterInvalidParameters(obj));
+  }
+
+  /**
+   * Confirms the specified object matching the IVoteParameters format
+   * @param {Object} obj the object to check
+   * @returns {Observable<IVoteParameters>} An observable of the parameters object <br/>
+   * or an empty observable if there is an error
+   * @private
+   */
+  private _filterInvalidParameters(obj: object): Observable<IVoteParameters> {
+    const params: IVoteParameters = <IVoteParameters> obj;
+    const valid: boolean =
+      params &&
+      params.topic &&
+      typeof params.topic === 'string' &&
+      params.candidates &&
+      Array.isArray(params.candidates) &&
+      params.candidates.every(el => typeof el === 'string') &&
+      params.registration_key &&
+      params.registration_key.modulus &&
+      typeof params.registration_key.modulus === 'string' &&
+      params.registration_key.public_exp &&
+      typeof params.registration_key.public_exp === 'string';
+
+    if (valid) {
+      return Observable.of(params);
+    } else {
+      this.errSvc.add(VoteRetrievalServiceErrors.format.parameters(params), null);
+      return Observable.empty();
+    }
+  }
+
 
   /**
    * Retrieves the vote information (from cache if possible) for the specified contract
@@ -100,20 +193,6 @@ export class VoteRetrievalService implements IVoteRetrievalService {
       .map(wrappedBlindedSig => this._confirmBlindSignatureFormat(wrappedBlindedSig))
       .filter(wrappedBlindedSig => wrappedBlindedSig != null)
       .map(wrappedBlindedSig => wrappedBlindedSig.blinded_signature);
-  }
-
-  /**
-   * Obtains the vote details for the specified AnonmyousVoting contract (from cache if possible)
-   * and summarises them
-   * @param {address} addr the address of the contract
-   * @param {number} idx the index of the contract in the VoteListingContract array
-   * @returns {Observable<IVotingContractSummary>} (an observable of) a summary of the vote <br/>
-   * or a placeholder value if the information cannot be retrieved
-   * @private
-   */
-  private _getVoteSummary(addr: address, idx: number): Observable<IVotingContractSummary> {
-    return this._getVoteDetails(addr, idx)
-      .map(voteDetails => this._summarise(voteDetails));
   }
 
   /**
@@ -338,19 +417,6 @@ export class VoteRetrievalService implements IVoteRetrievalService {
       }
     };
   }
-
-  /**
-   * @param {IVotingContractDetails} details the details of a vote
-   * @returns {IVotingContractSummary} a summarised version that can be displayed in an aggregate list
-   */
-  private _summarise(details: IVotingContractDetails): IVotingContractSummary {
-    return {
-      index: details.index,
-      address: details.address,
-      phase: details.phase,
-      topic: details.parameters.topic
-    };
-  }
 }
 
 interface IVoteCache {
@@ -359,7 +425,7 @@ interface IVoteCache {
 
 interface IIPFSCache {
   parameters: {
-    [addr: string]: IVoteParameters;
+    [addr: string]: Promise<IVoteParameters>;
   };
 }
 

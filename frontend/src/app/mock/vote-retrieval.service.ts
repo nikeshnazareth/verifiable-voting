@@ -14,9 +14,12 @@ export class VoteRetrievalService implements IVoteRetrievalService {
     return Observable.of(
       Mock.AnonymousVotingContractCollections.map((collection, idx) => ({
         index: idx,
-        address: collection.address,
-        phase: VotePhases[Mock.AnonymousVotingContractCollections[idx].currentPhase],
-        topic: collection.parameters.topic
+        address: {status: RETRIEVAL_STATUS.AVAILABLE, value: collection.address},
+        phase: {
+          status: RETRIEVAL_STATUS.AVAILABLE,
+          value: VotePhases[Mock.AnonymousVotingContractCollections[idx].currentPhase]
+        },
+        topic: {status: RETRIEVAL_STATUS.AVAILABLE, value: collection.parameters.topic}
       }))
     );
   }
