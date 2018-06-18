@@ -2,7 +2,7 @@ import { Component, Input, OnInit } from '@angular/core';
 import { Observable } from 'rxjs/Observable';
 
 import { VoteRetrievalService } from '../../core/vote-retrieval/vote-retrieval.service';
-import { IVotingContractDetails } from '../../core/vote-retrieval/vote-retreival.service.constants';
+import { IReplacementVotingContractDetails } from '../../core/vote-retrieval/vote-retreival.service.constants';
 import { BehaviorSubject } from 'rxjs/BehaviorSubject';
 
 @Component({
@@ -31,7 +31,7 @@ export class VoteComponent implements OnInit {
   public index$: BehaviorSubject<number>;
   public heading$: Observable<string>;
 
-  private _voteDetails$: Observable<IVotingContractDetails>;
+  private _voteDetails$: Observable<IReplacementVotingContractDetails>;
 
   constructor(private voteRetrievalSvc: VoteRetrievalService) {
     this.index$ = new BehaviorSubject<number>(null);
@@ -43,9 +43,9 @@ export class VoteComponent implements OnInit {
    */
   ngOnInit() {
     this._voteDetails$ = this.index$
-      .switchMap(idx => this.voteRetrievalSvc.detailsAtIndex$(idx));
+      .switchMap(idx => this.voteRetrievalSvc.replacementDetailsAtIndex$(idx));
 
-    this.heading$ = this._voteDetails$.map(details => `${details.index}. ${details.parameters.topic}`);
+    this.heading$ = this._voteDetails$.map(details => `${details.index}. ${details.topic.value}`);
   }
 
   /**

@@ -12,6 +12,11 @@ export interface IVotingContractDetails {
   votes: IDynamicValue<number[]>;
 }
 
+export interface IReplacementVotingContractDetails {
+  index: number;
+  topic: IDynamicValue<string>;
+}
+
 export interface IVotingContractSummary {
   index: number;
   address: IDynamicValue<address>;

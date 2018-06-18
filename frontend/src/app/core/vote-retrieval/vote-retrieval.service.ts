@@ -11,6 +11,7 @@ import 'rxjs/add/operator/shareReplay';
 import 'rxjs/add/operator/scan';
 import 'rxjs/add/operator/combineLatest';
 import 'rxjs/add/operator/switchMap';
+import 'rxjs/add/operator/elementAt';
 
 import { VoteListingContractService } from '../ethereum/vote-listing-contract/contract.service';
 import { AnonymousVotingContractService } from '../ethereum/anonymous-voting-contract/contract.service';
@@ -21,7 +22,7 @@ import { IPFSService } from '../ipfs/ipfs.service';
 import { IBlindedSignature, IVote, IVoteParameters } from '../vote-manager/vote-manager.service';
 import { ErrorService } from '../error-service/error.service';
 import {
-  IDynamicValue,
+  IDynamicValue, IReplacementVotingContractDetails,
   IVotingContractDetails,
   IVotingContractSummary,
   RETRIEVAL_STATUS,
@@ -32,6 +33,8 @@ export interface IVoteRetrievalService {
   summaries$: Observable<IVotingContractSummary[]>;
 
   detailsAtIndex$(idx: number): Observable<IVotingContractDetails>;
+
+  replacementDetailsAtIndex$(idx: number): Observable<IReplacementVotingContractDetails>;
 
   blindSignatureAt$(contractAddr: address, publicVoterAddr: address): Observable<string>;
 }
@@ -88,6 +91,28 @@ export class VoteRetrievalService implements IVoteRetrievalService {
       )
       .switch()
       .share();
+  }
+
+  /**
+   * Retrieves the vote information (from cache if possible) required to view and participate in the vote
+   * The result is designed to be used by the VoteComponent
+   * @param {number} idx the index of the AnonymousVoting contract in the VoteListingContract
+   * @returns {Observable<IReplacementVotingContractDetails>} an observable of the vote details <br/>
+   * including intermediate and error states
+   */
+  replacementDetailsAtIndex$(idx: number): Observable<IReplacementVotingContractDetails> {
+    return this.voteListingSvc.deployedVotes$
+      .elementAt(idx, null)
+      .map(addr => this.replacementAnonymousVotingSvc.at(addr))
+      .switchMap(contractManager => this._wrapRetrieval(
+        contractManager.constants$
+          .switchMap(constants => this._retrieveVoteParameters(constants.paramsHash))
+          .map(params => params.topic)
+      ))
+      .map(dynamicTopic => ({
+        index: idx,
+        topic: dynamicTopic
+      }));
   }
 
   /**

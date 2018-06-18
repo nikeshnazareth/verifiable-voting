@@ -3,6 +3,7 @@ import { Observable } from 'rxjs/Observable';
 import { IVoteRetrievalService } from '../core/vote-retrieval/vote-retrieval.service';
 import { VotePhases } from '../core/ethereum/anonymous-voting-contract/contract.api';
 import {
+  IReplacementVotingContractDetails,
   IVotingContractDetails,
   IVotingContractSummary, RETRIEVAL_STATUS
 } from '../core/vote-retrieval/vote-retreival.service.constants';
@@ -47,6 +48,21 @@ export class VoteRetrievalService implements IVoteRetrievalService {
         votes: {
           status: RETRIEVAL_STATUS.AVAILABLE,
           value: []
+        }
+      });
+  }
+
+  replacementDetailsAtIndex$(index: number): Observable<IReplacementVotingContractDetails> {
+    return index === null || typeof index === 'undefined' ?
+      Observable.of({
+        index: index,
+        topic: {status: RETRIEVAL_STATUS.UNAVAILABLE, value: null}
+      }) :
+      Observable.of({
+        index: index,
+        topic: {
+          status: RETRIEVAL_STATUS.AVAILABLE,
+          value: Mock.AnonymousVotingContractCollections[index].parameters.topic
         }
       });
   }
