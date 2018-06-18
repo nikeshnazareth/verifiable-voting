@@ -8,7 +8,7 @@ import { BehaviorSubject } from 'rxjs/BehaviorSubject';
 @Component({
   selector: 'vv-vote',
   template: `
-    <div class="container" [hidden]="!voteIsSelected">
+    <div class="container" *ngIf="voteIsSelected">
       <h2>{{heading$ | async}}</h2>
       <mat-expansion-panel>
         <mat-expansion-panel-header>REGISTER</mat-expansion-panel-header>

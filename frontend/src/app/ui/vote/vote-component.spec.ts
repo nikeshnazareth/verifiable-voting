@@ -14,17 +14,22 @@ describe('Component: VoteComponent', () => {
 
   class Page {
     public static ARBITRARY_CONTRACT_INDICES: number[] = [1, 2, 1, 0, 3];
-
-    public container: DebugElement;
-    public title: DebugElement;
-    public expansionPanels: DebugElement[];
     public voteRetrievalSvc: VoteRetrievalService;
 
     constructor() {
-      this.container = fixture.debugElement.query(By.css('.container'));
-      this.title = this.container.query(By.css('h2'));
-      this.expansionPanels = this.container.queryAll(By.css('mat-expansion-panel'));
       this.voteRetrievalSvc = fixture.debugElement.injector.get(VoteRetrievalService);
+    }
+
+    get container(): DebugElement {
+      return fixture.debugElement.query(By.css('.container'));
+    }
+
+    get title(): DebugElement {
+      return this.container.query(By.css('h2'));
+    }
+
+    get expansionPanels(): DebugElement[] {
+      return this.container.queryAll(By.css('mat-expansion-panel'));
     }
   }
 
@@ -52,111 +57,106 @@ describe('Component: VoteComponent', () => {
   }));
 
   describe('Structure', () => {
-
-
-    beforeEach(() => fixture.detectChanges());
-
-    it('should have a container element', () => {
-      expect(page.container).toBeTruthy();
-    });
-
-    it('should have a title element', () => {
-      expect(page.title).toBeTruthy();
-    });
-
-    describe('expansion panels', () => {
-      let panel: DebugElement;
-
-      it('should have three of them', () => {
-        expect(page.expansionPanels.length).toEqual(3);
+    describe('case: after vote is selected', () => {
+      beforeEach(() => {
+        fixture.componentInstance.index = 0;
+        fixture.detectChanges();
       });
 
-      describe('first expansion panel', () => {
-        beforeEach(() => {
-          panel = page.expansionPanels[0];
-        });
-
-        it('should have a header', () => {
-          expect(panel.query(By.css('mat-expansion-panel-header'))).toBeTruthy();
-        });
-
-        it('should set the header contents to "REGISTER"', () => {
-          expect(panel.query(By.css('mat-expansion-panel-header')).nativeElement.innerText).toEqual('REGISTER');
-        });
-
-        it('should have a vv-registration-phase element', () => {
-          expect(panel.query(By.css('vv-registration-phase'))).toBeTruthy();
-        });
+      it('should have a container element', () => {
+        expect(page.container).toBeTruthy();
       });
 
-      describe('second expansion panel', () => {
-        beforeEach(() => {
-          panel = page.expansionPanels[1];
-        });
-
-        it('should have a header', () => {
-          expect(panel.query(By.css('mat-expansion-panel-header'))).toBeTruthy();
-        });
-
-        it('should set the header contents to "VOTE"', () => {
-          expect(panel.query(By.css('mat-expansion-panel-header')).nativeElement.innerText).toEqual('VOTE');
-        });
-
-        it('should have a vv-voting-phase element', () => {
-          expect(panel.query(By.css('vv-voting-phase'))).toBeTruthy();
-        });
+      it('should have a title element', () => {
+        expect(page.title).toBeTruthy();
       });
 
-      describe('third expansion panel', () => {
-        beforeEach(() => {
-          panel = page.expansionPanels[2];
+      describe('expansion panels', () => {
+        let panel: DebugElement;
+
+        it('should have three of them', () => {
+          expect(page.expansionPanels.length).toEqual(3);
         });
 
-        it('should have a header', () => {
-          expect(panel.query(By.css('mat-expansion-panel-header'))).toBeTruthy();
+        describe('first expansion panel', () => {
+          beforeEach(() => {
+            panel = page.expansionPanels[0];
+          });
+
+          it('should have a header', () => {
+            expect(panel.query(By.css('mat-expansion-panel-header'))).toBeTruthy();
+          });
+
+          it('should set the header contents to "REGISTER"', () => {
+            expect(panel.query(By.css('mat-expansion-panel-header')).nativeElement.innerText.trim()).toEqual('REGISTER');
+          });
+
+          it('should have a vv-registration-phase element', () => {
+            expect(panel.query(By.css('vv-registration-phase'))).toBeTruthy();
+          });
         });
 
-        it('should set the header contents to "RESULTS"', () => {
-          expect(panel.query(By.css('mat-expansion-panel-header')).nativeElement.innerText).toEqual('RESULTS');
+        describe('second expansion panel', () => {
+          beforeEach(() => {
+            panel = page.expansionPanels[1];
+          });
+
+          it('should have a header', () => {
+            expect(panel.query(By.css('mat-expansion-panel-header'))).toBeTruthy();
+          });
+
+          it('should set the header contents to "VOTE"', () => {
+            expect(panel.query(By.css('mat-expansion-panel-header')).nativeElement.innerText.trim()).toEqual('VOTE');
+          });
+
+          it('should have a vv-voting-phase element', () => {
+            expect(panel.query(By.css('vv-voting-phase'))).toBeTruthy();
+          });
         });
 
-        it('should have a vv-complete-phase element', () => {
-          expect(panel.query(By.css('vv-complete-phase'))).toBeTruthy();
+        describe('third expansion panel', () => {
+          beforeEach(() => {
+            panel = page.expansionPanels[2];
+          });
+
+          it('should have a header', () => {
+            expect(panel.query(By.css('mat-expansion-panel-header'))).toBeTruthy();
+          });
+
+          it('should set the header contents to "RESULTS"', () => {
+            expect(panel.query(By.css('mat-expansion-panel-header')).nativeElement.innerText.trim()).toEqual('RESULTS');
+          });
+
+          it('should have a vv-complete-phase element', () => {
+            expect(panel.query(By.css('vv-complete-phase'))).toBeTruthy();
+          });
         });
+
       });
-
     });
   });
 
-
   describe('User Interface', () => {
     describe('container', () => {
-      it('should be hidden initially', () => {
+      it('should not exist initially', () => {
         fixture.detectChanges();
-        expect(page.container.nativeElement.hidden).toEqual(true);
+        expect(page.container).toBeFalsy();
       });
 
-      it('should become visible when input is set', () => {
+      it('should be created when the index is set', () => {
         fixture.detectChanges();
         fixture.componentInstance.index = 2;
         fixture.detectChanges();
-        expect(page.container.nativeElement.hidden).toEqual(false);
+        expect(page.container).toBeTruthy();
       });
 
-      it('should become visible when input is set to zero', () => {
-        fixture.detectChanges();
-        fixture.componentInstance.index = 0;
-        fixture.detectChanges();
-        expect(page.container.nativeElement.hidden).toEqual(false);
-      });
-
-      it('should stay visible with subsequent changes to input', () => {
+      it('should stay visible with subsequent changes to the index', () => {
         fixture.detectChanges();
         fixture.componentInstance.index = 2;
         fixture.detectChanges();
         fixture.componentInstance.index = 3;
         fixture.detectChanges();
-        expect(page.container.nativeElement.hidden).toEqual(false);
+        expect(page.container).toBeTruthy();
       });
     });
 
@@ -180,49 +180,37 @@ describe('Component: VoteComponent', () => {
     });
 
     describe('Registration Phase Component', () => {
-      let regPhaseComponent: DebugElement;
-
-      beforeEach(() => {
-        regPhaseComponent = fixture.debugElement.query(By.css('vv-registration-phase'));
-      });
+      const regPhaseComponent = () => fixture.debugElement.query(By.css('vv-registration-phase'));
 
       it('should track the index of the Vote Component', () => {
         Page.ARBITRARY_CONTRACT_INDICES.map(idx => {
           fixture.componentInstance.index = idx;
           fixture.detectChanges();
-          expect(regPhaseComponent.componentInstance.index).toEqual(idx);
+          expect(regPhaseComponent().componentInstance.index).toEqual(idx);
         });
       });
     });
 
     describe('Voting Phase Component', () => {
-      let votingPhaseComp: DebugElement;
-
-      beforeEach(() => {
-        votingPhaseComp = fixture.debugElement.query(By.css('vv-voting-phase'));
-      });
+      const votingPhaseComp = () => fixture.debugElement.query(By.css('vv-voting-phase'));
 
       it('should track the index of the Vote Component', () => {
         Page.ARBITRARY_CONTRACT_INDICES.map(idx => {
           fixture.componentInstance.index = idx;
           fixture.detectChanges();
-          expect(votingPhaseComp.componentInstance.index).toEqual(idx);
+          expect(votingPhaseComp().componentInstance.index).toEqual(idx);
         });
       });
     });
 
     describe('Complete Phase Component', () => {
-      let completePhaseComp: DebugElement;
-
-      beforeEach(() => {
-        completePhaseComp = fixture.debugElement.query(By.css('vv-complete-phase'));
-      });
+      const completePhaseComp = () => fixture.debugElement.query(By.css('vv-complete-phase'));
 
       it('should track the index of the Vote Component', () => {
         Page.ARBITRARY_CONTRACT_INDICES.map(idx => {
           fixture.componentInstance.index = idx;
           fixture.detectChanges();
-          expect(completePhaseComp.componentInstance.index).toEqual(idx);
+          expect(completePhaseComp().componentInstance.index).toEqual(idx);
         });
       });
     });
