@@ -14,6 +14,7 @@ import 'rxjs/add/operator/switchMap';
 
 import { VoteListingContractService } from '../ethereum/vote-listing-contract/contract.service';
 import { AnonymousVotingContractService } from '../ethereum/anonymous-voting-contract/contract.service';
+import { ReplacementAnonymousVotingContractService } from '../ethereum/anonymous-voting-contract/replacement-contract.service';
 import { VotePhases } from '../ethereum/anonymous-voting-contract/contract.api';
 import { address } from '../ethereum/type.mappings';
 import { IPFSService } from '../ipfs/ipfs.service';
@@ -37,12 +38,17 @@ export interface IVoteRetrievalService {
 @Injectable()
 export class VoteRetrievalService implements IVoteRetrievalService {
   private _voteCache: IVoteCache;
+  private _ipfsCache: IIPFSCache;
 
   constructor(private voteListingSvc: VoteListingContractService,
               private anonymousVotingSvc: AnonymousVotingContractService,
+              private replacementAnonymousVotingSvc: ReplacementAnonymousVotingContractService,
               private ipfsSvc: IPFSService,
               private errSvc: ErrorService) {
     this._voteCache = {};
+    this._ipfsCache = {
+      parameters: {}
+    };
   }
 
   /**
@@ -349,5 +355,11 @@ export class VoteRetrievalService implements IVoteRetrievalService {
 
 interface IVoteCache {
   [addr: string]: Observable<IVotingContractDetails>;
+}
+
+interface IIPFSCache {
+  parameters: {
+    [addr: string]: IVoteParameters;
+  };
 }
 

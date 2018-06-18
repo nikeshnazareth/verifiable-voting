@@ -11,6 +11,7 @@ import {
 } from './vote-retreival.service.constants';
 import { VoteListingContractService } from '../ethereum/vote-listing-contract/contract.service';
 import { AnonymousVotingContractService } from '../ethereum/anonymous-voting-contract/contract.service';
+import { ReplacementAnonymousVotingContractService } from '../ethereum/anonymous-voting-contract/replacement-contract.service';
 import { IPFSService } from '../ipfs/ipfs.service';
 import { ErrorService } from '../error-service/error.service';
 import { VotePhases } from '../ethereum/anonymous-voting-contract/contract.api';
@@ -19,13 +20,16 @@ import { address } from '../ethereum/type.mappings';
 import { IAnonymousVotingContractCollection, IVoter, Mock } from '../../mock/module';
 import Spy = jasmine.Spy;
 
-describe('Service: VoteRetrievalService', () => {
+fdescribe('Service: VoteRetrievalService', () => {
 
   let voteListingSvc: VoteListingContractService;
   let anonymousVotingSvc: AnonymousVotingContractService;
+  let replacementAnonymousVotingSvc: ReplacementAnonymousVotingContractService;
   let ipfsSvc: IPFSService;
   let errSvc: ErrorService;
-  const voteRetrievalSvc = () => new VoteRetrievalService(voteListingSvc, anonymousVotingSvc, ipfsSvc, errSvc);
+  const voteRetrievalSvc = () => new VoteRetrievalService(
+    voteListingSvc, anonymousVotingSvc, replacementAnonymousVotingSvc, ipfsSvc, errSvc
+  );
 
   let onNext: Spy;
   let onError: (Error) => void;
@@ -37,11 +41,13 @@ describe('Service: VoteRetrievalService', () => {
         ErrorService,
         {provide: VoteListingContractService, useClass: Mock.VoteListingContractService},
         {provide: AnonymousVotingContractService, useClass: Mock.AnonymousVotingContractService},
+        {provide: ReplacementAnonymousVotingContractService, useClass: Mock.ReplacementAnonymousVotingContractService},
         {provide: IPFSService, useClass: Mock.IPFSService},
       ]
     });
     voteListingSvc = TestBed.get(VoteListingContractService);
     anonymousVotingSvc = TestBed.get(AnonymousVotingContractService);
+    replacementAnonymousVotingSvc = TestBed.get(ReplacementAnonymousVotingContractService);
     ipfsSvc = TestBed.get(IPFSService);
     errSvc = TestBed.get(ErrorService);
 

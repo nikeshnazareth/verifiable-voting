@@ -49,7 +49,7 @@ export class AnonymousVotingContractManager implements IAnonymousVotingContractM
   constructor(private _contract$: Observable<AnonymousVotingAPI>, private errSvc: ErrorService) {
     this._events$ = new ReplaySubject<IContractLog>();
     this._voteConstants$ = new ReplaySubject<IVoteConstants>();
-    this._updatedRegistrationHashes$ = new BehaviorSubject<boolean>(false);
+    this._updatedRegistrationHashes$ = new BehaviorSubject<boolean>(true);
 
     this._initEvents$().subscribe(this._events$);
     this._initVoteConstants$().subscribe(this._voteConstants$);
@@ -153,7 +153,7 @@ export class AnonymousVotingContractManager implements IAnonymousVotingContractM
 
   /**
    * Retrieves the parameters hash from the AnonymousVoting contract
-   * @returns {Observable<string>} An observable that emits the hash and completes<br/>
+   * @returns {Observable<string>} An observable that emits the constants and completes<br/>
    * or an empty observable if there was an error
    * @private
    */
