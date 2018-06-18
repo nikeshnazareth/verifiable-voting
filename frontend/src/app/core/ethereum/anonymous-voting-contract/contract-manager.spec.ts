@@ -2,7 +2,7 @@ import { discardPeriodicTasks, fakeAsync, tick } from '@angular/core/testing';
 import { Observable } from 'rxjs/Observable';
 
 import { ErrorService } from '../../error-service/error.service';
-import { IAnonymousVotingContractCollection, Mock } from '../../../mock/module';
+import { IAnonymousVotingContractCollection, IVoter, Mock } from '../../../mock/module';
 import { AnonymousVotingContractManager, AnonymousVotingContractManagerErrors } from './contract-manager';
 import { AnonymousVotingAPI, RegistrationComplete, VoterInitiatedRegistration, VoteSubmitted } from './contract.api';
 import Spy = jasmine.Spy;
@@ -366,6 +366,69 @@ describe('class: AnonymousVotingContractManager', () => {
         triggerVoteSubmittedEvent(idx);
         expect(mostRecent().voter).toEqual(voter.anonymous_address);
         expect(mostRecent().voteHash).toEqual(voter.vote_hash);
+      });
+    });
+  });
+
+  describe('method: register$', () => {
+    const voter: IVoter = Mock.Voters[0];
+
+    const init_register$_and_subscribe = fakeAsync(() => {
+      contractManager().register$(voter.public_address, voter.blinded_address_hash)
+        .subscribe(onNext, onError, onCompleted);
+      tick();
+    });
+
+    it('should call the "register" function on the AnonymousVoting contract', () => {
+      spyOn(voteCollection.instance, 'register').and.callThrough();
+      init_register$_and_subscribe();
+      expect(voteCollection.instance.register).toHaveBeenCalled();
+    });
+
+    it('should pass the blinded address hash to the AnonymousVoting.register function', () => {
+      spyOn(voteCollection.instance, 'register').and.callThrough();
+      init_register$_and_subscribe();
+      expect((<Spy>voteCollection.instance.register).calls.mostRecent().args[0]).toEqual(voter.blinded_address_hash);
+    });
+
+    it('should set the message sender on the AnonymousVoting.register call to the specified voter address', () => {
+      spyOn(voteCollection.instance, 'register').and.callThrough();
+      init_register$_and_subscribe();
+      expect((<Spy>voteCollection.instance.register).calls.mostRecent().args[1]).toEqual({from: voter.public_address});
+    });
+
+    it('should return the contract register receipt and complete', () => {
+      init_register$_and_subscribe();
+      expect(onNext).toHaveBeenCalledWith(voter.register_receipt);
+      expect(onCompleted).toHaveBeenCalled();
+    });
+
+    describe('case: the contract observable is empty', () => {
+      beforeEach(() => {
+        contract$ = Observable.empty();
+        init_register$_and_subscribe();
+      });
+
+      it('should return an empty observable', () => {
+        expect(onNext).not.toHaveBeenCalled();
+        expect(onCompleted).toHaveBeenCalled();
+      });
+    });
+
+    describe('case: contract.register fails', () => {
+      const error: Error = new Error('Unable to register voter');
+
+      beforeEach(() => spyOn(voteCollection.instance, 'register').and.returnValue(Promise.reject(error)));
+
+      it('should notify the Error Service', () => {
+        init_register$_and_subscribe();
+        expect(errSvc.add).toHaveBeenCalledWith(AnonymousVotingContractManagerErrors.registration, error);
+      });
+
+      it('should return an empty observable', () => {
+        init_register$_and_subscribe();
+        expect(onNext).not.toHaveBeenCalled();
+        expect(onCompleted).toHaveBeenCalled();
       });
     });
   });

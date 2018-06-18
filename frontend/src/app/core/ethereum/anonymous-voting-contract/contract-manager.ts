@@ -9,6 +9,7 @@ import { IContractLog } from '../contract.interface';
 import { ErrorService } from '../../error-service/error.service';
 import { IVoteConstants } from '../vote-listing-contract/contract.service';
 import { address } from '../type.mappings';
+import { ITransactionReceipt } from '../transaction.interface';
 
 export interface IRegistrationHashes {
   [voter: string]: {
@@ -27,11 +28,14 @@ export interface IAnonymousVotingContractManager {
   constants$: Observable<IVoteConstants>;
   registrationHashes$: Observable<IRegistrationHashes>;
   voteHashes$: Observable<IVoteHash>;
+
+  register$(voterAddr: address, blindAddressHash: string): Observable<ITransactionReceipt>;
 }
 
 export const AnonymousVotingContractManagerErrors = {
   events: new Error('Unexpected error in the event stream of an AnonymousVoting contract'),
   constants: new Error('Unable to retrieve the defining constants from the AnonymousVoting contract'),
+  registration: new Error('Unable to register the voter at the AnonymousVoting contract')
 };
 
 export class AnonymousVotingContractManager implements IAnonymousVotingContractManager {
@@ -92,6 +96,23 @@ export class AnonymousVotingContractManager implements IAnonymousVotingContractM
     return this._events$
       .filter(log => log.event === VoteSubmitted.name)
       .map(log => (<VoteSubmitted.Log> log).args);
+  }
+
+  /**
+   * Uses the AnonymousVoting contract to register the specified voter's blinded address hash
+   * @param {address} voterAddr the public address of the voter
+   * @param {string} blindAddressHash the IPFS hash of the voter's blinded anonymous address
+   * @returns {Observable<ITransactionReceipt>} an observable that emits the receipt when the voter's registration <br/>
+   * request is published or an empty observable if there was an error
+   */
+  register$(voterAddr: address, blindAddressHash: string): Observable<ITransactionReceipt> {
+    return this._contract$
+      .map(contract => contract.register(blindAddressHash, {from: voterAddr}))
+      .switchMap(registerPromise => Observable.fromPromise(registerPromise))
+      .catch(err => {
+        this.errSvc.add(AnonymousVotingContractManagerErrors.registration, err);
+        return <Observable<ITransactionReceipt>> Observable.empty();
+      });
   }
 
   /**
