@@ -6,13 +6,10 @@ import { By } from '@angular/platform-browser';
 import { Observable } from 'rxjs/Observable';
 import { MatRadioGroup } from '@angular/material';
 
-import { VoteRetrievalService } from '../../core/vote-retrieval/vote-retrieval.service';
 import { MaterialModule } from '../../material/material.module';
 import { IAnonymousVotingContractCollection, IVoter, Mock } from '../../mock/module';
-import { IVotingContractDetails, RETRIEVAL_STATUS } from '../../core/vote-retrieval/vote-retreival.service.constants';
-import { VotePhases } from '../../core/ethereum/anonymous-voting-contract/contract.api';
 import { ErrorService } from '../../core/error-service/error.service';
-import { VotingPhaseComponent, VotingStatusMessages } from './voting-phase.component';
+import { VotingPhaseComponent } from './voting-phase.component';
 import { Web3Service, Web3ServiceErrors } from '../../core/ethereum/web3.service';
 import { address } from '../../core/ethereum/type.mappings';
 import { DOMInteractionUtility } from '../../mock/dom-interaction-utility';
@@ -25,17 +22,13 @@ describe('Component: VotingPhaseComponent', () => {
   const voteIndex = 0; // a contract in the voting phase
   const voteCollection: IAnonymousVotingContractCollection = Mock.AnonymousVotingContractCollections[voteIndex];
   const voter: IVoter = Mock.Voters[0];
-  let voteDetails: IVotingContractDetails;
 
   class Page {
-    public static MS_PER_DAY: number = 1000 * 60 * 60 * 24;
-    public voteRetrievalSvc: VoteRetrievalService;
     public voteManagerSvc: VoteManagerService;
     public web3Svc: Web3Service;
     public errSvc: ErrorService;
 
     constructor() {
-      this.voteRetrievalSvc = fixture.debugElement.injector.get(VoteRetrievalService);
       this.voteManagerSvc = fixture.debugElement.injector.get(VoteManagerService);
       this.web3Svc = fixture.debugElement.injector.get(Web3Service);
       this.errSvc = fixture.debugElement.injector.get(ErrorService);
@@ -45,14 +38,6 @@ describe('Component: VotingPhaseComponent', () => {
 
     static get form(): FormGroup {
       return fixture.componentInstance.form;
-    }
-
-    static get votingSection(): DebugElement {
-      return fixture.debugElement.query(By.css('#voting'));
-    }
-
-    static get unavailableSection(): DebugElement {
-      return fixture.debugElement.query(By.css('#unavailable'));
     }
 
     static get voterAddressInput(): DebugElement {
@@ -99,7 +84,6 @@ describe('Component: VotingPhaseComponent', () => {
       providers: [
         ErrorService,
         {provide: Web3Service, useClass: Mock.Web3Service},
-        {provide: VoteRetrievalService, useClass: Mock.VoteRetrievalService},
         {provide: VoteManagerService, useClass: Mock.VoteManagerService}
       ]
     })
@@ -111,234 +95,10 @@ describe('Component: VotingPhaseComponent', () => {
   }));
 
   beforeEach(() => {
-    // put us in the Voting phase
-    voteDetails = {
-      index: voteIndex,
-      address: voteCollection.address,
-      phase: VotePhases[voteCollection.currentPhase],
-      parameters: {
-        topic: voteCollection.parameters.topic,
-        registration_key: {
-          modulus: voteCollection.parameters.registration_key.modulus,
-          public_exp: voteCollection.parameters.registration_key.public_exp
-        },
-        candidates: voteCollection.parameters.candidates.map(v => v)
-      },
-      registrationDeadline: {
-        status: RETRIEVAL_STATUS.AVAILABLE,
-        value: new Date(voteCollection.voteConstants.registrationDeadline)
-      },
-      votingDeadline: {
-        status: RETRIEVAL_STATUS.AVAILABLE,
-        value: new Date(voteCollection.voteConstants.votingDeadline)
-      },
-      pendingRegistrations: {
-        status: RETRIEVAL_STATUS.AVAILABLE,
-        value: 0
-      },
-      votes: {
-        status: RETRIEVAL_STATUS.AVAILABLE,
-        value: []
-      }
-    };
-    spyOn(page.voteRetrievalSvc, 'detailsAtIndex$').and.returnValue(Observable.of(voteDetails));
     spyOn(page.errSvc, 'add').and.stub();
-
-    const now = (voteDetails.votingDeadline.value.getTime() + voteDetails.registrationDeadline.value.getTime()) / 2;
-    jasmine.clock().install();
-    jasmine.clock().mockDate(new Date(now));
-  });
-
-  afterEach(() => {
-    jasmine.clock().uninstall();
   });
 
   describe('User Interface', () => {
-    describe('component status', () => {
-      const errorSectionTests = (msg) => {
-        beforeEach(() => fixture.detectChanges());
-
-        it('should remove the "voting" section', () => {
-          expect(Page.votingSection).toEqual(null);
-        });
-
-        it('should create the "unavailable" section', () => {
-          expect(Page.unavailableSection).toBeTruthy();
-        });
-
-        it(`should display "${msg}"`, () => {
-          expect(Page.unavailableSection.nativeElement.innerText).toEqual(msg);
-        });
-      };
-
-      const retrievingTests = () => {
-        errorSectionTests(VotingStatusMessages.retrieving);
-      };
-
-      const unavailableTests = () => {
-        errorSectionTests(VotingStatusMessages.unavailable);
-      };
-
-      const pendingTests = (count) => {
-        errorSectionTests(VotingStatusMessages.pending(count));
-      };
-
-      const notOpenedTests = () => {
-        errorSectionTests(VotingStatusMessages.notOpened);
-      };
-
-      const closedTests = () => {
-        errorSectionTests(VotingStatusMessages.closed);
-      };
-
-      describe('case: the registration deadline is being retrieved', () => {
-        beforeEach(() => {
-          voteDetails.registrationDeadline = {
-            status: RETRIEVAL_STATUS.RETRIEVING,
-            value: null
-          };
-        });
-        retrievingTests();
-      });
-
-      describe('case: the voting deadline is being retrieved', () => {
-        beforeEach(() => {
-          voteDetails.votingDeadline = {
-            status: RETRIEVAL_STATUS.RETRIEVING,
-            value: null
-          };
-        });
-        retrievingTests();
-      });
-
-      describe('case: the contract address is being retrieved', () => {
-        beforeEach(() => {
-          voteDetails.address = RETRIEVAL_STATUS.RETRIEVING;
-        });
-        retrievingTests();
-      });
-
-      describe('case: the registration key modulus is being retrieving', () => {
-        beforeEach(() => {
-          voteDetails.parameters.registration_key.modulus = RETRIEVAL_STATUS.RETRIEVING;
-        });
-        retrievingTests();
-      });
-
-      describe('case: the registration key public exponent is being retrieved', () => {
-        beforeEach(() => {
-          voteDetails.parameters.registration_key.public_exp = RETRIEVAL_STATUS.RETRIEVING;
-        });
-        retrievingTests();
-      });
-
-      describe('case: the number of pending registrations is being retrieved', () => {
-        beforeEach(() => {
-          voteDetails.pendingRegistrations = {
-            status: RETRIEVAL_STATUS.RETRIEVING,
-            value: null
-          };
-        });
-        retrievingTests();
-      });
-
-      describe('case: the registration deadline is unavailable', () => {
-        beforeEach(() => {
-          voteDetails.registrationDeadline = {
-            status: RETRIEVAL_STATUS.UNAVAILABLE,
-            value: null
-          };
-        });
-        unavailableTests();
-      });
-
-      describe('case: the voting deadline is unavailable', () => {
-        beforeEach(() => {
-          voteDetails.votingDeadline = {
-            status: RETRIEVAL_STATUS.UNAVAILABLE,
-            value: null
-          };
-        });
-        unavailableTests();
-      });
-
-      describe('case: the contract address is unavailable', () => {
-        beforeEach(() => {
-          voteDetails.address = RETRIEVAL_STATUS.UNAVAILABLE;
-        });
-        unavailableTests();
-      });
-
-      describe('case: the registration key modulus is unavailable', () => {
-        beforeEach(() => {
-          voteDetails.parameters.registration_key.modulus = RETRIEVAL_STATUS.UNAVAILABLE;
-        });
-        unavailableTests();
-      });
-
-      describe('case: the registration key public exponent is unavailable', () => {
-        beforeEach(() => {
-          voteDetails.parameters.registration_key.public_exp = RETRIEVAL_STATUS.UNAVAILABLE;
-        });
-        unavailableTests();
-      });
-
-      describe('case: the number of pending registrations is unavailable', () => {
-        beforeEach(() => {
-          voteDetails.pendingRegistrations = {
-            status: RETRIEVAL_STATUS.UNAVAILABLE,
-            value: null
-          };
-        });
-        unavailableTests();
-      });
-
-      describe('case: the registration deadline is in the future', () => {
-        beforeEach(() => {
-          jasmine.clock().mockDate(new Date(voteDetails.registrationDeadline.value.getTime() - Page.MS_PER_DAY));
-        });
-        notOpenedTests();
-      });
-
-      describe('case: the voting deadline is in the past', () => {
-        beforeEach(() => {
-          jasmine.clock().mockDate(new Date(voteDetails.votingDeadline.value.getTime() + Page.MS_PER_DAY));
-        });
-        closedTests();
-      });
-
-      describe('case: we are in the Voting phase', () => {
-        describe('case: the number of pending registrations is positive', () => {
-          const numPendingRegistrations = 3;
-
-          beforeEach(() => {
-            voteDetails.pendingRegistrations.value = numPendingRegistrations;
-          });
-
-          pendingTests(numPendingRegistrations);
-        });
-
-        describe('case: the number of pending registrations is zero', () => {
-          beforeEach(() => {
-            fixture.detectChanges();
-          });
-
-          it('should create the "voting" section', () => {
-            expect(Page.votingSection).toBeTruthy();
-          });
-
-          it('should remove the "unavailable" section', () => {
-            expect(Page.unavailableSection).toBeNull();
-          });
-        });
-      });
-
-      xdescribe('case: the registration deadline expires while the component is active', () => {
-      });
-
-      xdescribe('case: the voting deadline expires while the component is active', () => {
-      });
-    });
 
     describe('Voter Address', () => {
       beforeEach(() => fixture.detectChanges());
@@ -533,7 +293,10 @@ describe('Component: VotingPhaseComponent', () => {
     });
 
     describe('Chosen candidate', () => {
-      beforeEach(() => fixture.detectChanges());
+      beforeEach(() => {
+        fixture.componentInstance.candidates = voteCollection.parameters.candidates;
+        fixture.detectChanges();
+      });
 
       it('should exist', () => {
         expect(Page.candidateRadioGroup).not.toBeNull();
@@ -555,18 +318,18 @@ describe('Component: VotingPhaseComponent', () => {
         });
 
         it('should have a radio button per candidate', () => {
-          expect(buttons.length).toEqual(voteDetails.parameters.candidates.length);
+          expect(buttons.length).toEqual(voteCollection.parameters.candidates.length);
         });
 
         describe('each radio button', () => {
           it('should display the candidate', () => {
-            voteDetails.parameters.candidates.forEach((candidate, idx) => {
+            voteCollection.parameters.candidates.forEach((candidate, idx) => {
               expect(buttons[idx].nativeElement.innerText.trim()).toEqual(candidate);
             });
           });
 
           it('should have a value corresponding to its position in the candidate list', () => {
-            voteDetails.parameters.candidates.forEach((candidate, idx) => {
+            voteCollection.parameters.candidates.forEach((candidate, idx) => {
               expect(buttons[idx].componentInstance.value).toEqual(idx);
             });
           });
@@ -632,36 +395,25 @@ describe('Component: VotingPhaseComponent', () => {
       });
 
       describe('form submission', () => {
-        beforeEach(() => populateForm());
-
-        it('should retrieve the blind signature from the VoteRetrievalService', () => {
-          spyOn(page.voteRetrievalSvc, 'blindSignatureAt$').and.callThrough();
-          DOMInteractionUtility.clickOn(button);
-          expect(page.voteRetrievalSvc.blindSignatureAt$)
-            .toHaveBeenCalledWith(voteDetails.address, voter.public_address);
+        beforeEach(() => {
+          fixture.componentInstance.contract = voteCollection.address;
+          fixture.componentInstance.key = voteCollection.parameters.registration_key;
+          fixture.componentInstance.candidates = voteCollection.parameters.candidates;
+          fixture.componentInstance.blindSignature = voter.signed_blinded_address;
+          populateForm();
         });
 
         it('should pass the form details to the VoteManager service', () => {
           spyOn(page.voteManagerSvc, 'voteAt$').and.callThrough();
           DOMInteractionUtility.clickOn(button);
           expect(page.voteManagerSvc.voteAt$).toHaveBeenCalledWith(
-            voteDetails.address,
-            voteDetails.parameters.registration_key,
+            voteCollection.address,
+            voteCollection.parameters.registration_key,
             voter.anonymous_address,
             voter.signed_blinded_address,
             voter.blinding_factor,
             voter.vote.candidateIdx
           );
-        });
-
-        describe('case: the blind signature cannot be retrieved', () => {
-          beforeEach(() => spyOn(page.voteRetrievalSvc, 'blindSignatureAt$').and.returnValue(Observable.empty()));
-
-          it('should not reset the form', () => {
-            Page.form.markAsDirty();
-            DOMInteractionUtility.clickOn(button);
-            expect(Page.form.pristine).toEqual(false);
-          });
         });
 
         describe('case: VoteManager service returns a receipt', () => {
