@@ -16,6 +16,7 @@ export interface IReplacementVotingContractDetails {
   index: number;
   topic: IDynamicValue<string>;
   phase: IDynamicValue<string>;
+  numPendingRegistrations: IDynamicValue<number>;
 }
 
 export interface IVotingContractSummary {

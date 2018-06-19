@@ -11,6 +11,7 @@ import {
   RETRIEVAL_STATUS
 } from '../../core/vote-retrieval/vote-retreival.service.constants';
 import { VotePhases } from '../../core/ethereum/anonymous-voting-contract/contract.api';
+import { VoteComponentMessages } from './VoteComponentMessages';
 import { MaterialModule } from '../../material/material.module';
 import { Mock } from '../../mock/module';
 
@@ -98,8 +99,12 @@ describe('Component: VoteComponent', () => {
             expect(panel.query(By.css('mat-expansion-panel-header'))).toBeTruthy();
           });
 
-          it('should set the header contents to "REGISTER"', () => {
-            expect(panel.query(By.css('mat-expansion-panel-header')).nativeElement.innerText.trim()).toEqual('REGISTER');
+          it('should have a title', () => {
+            expect(panel.query(By.css('mat-panel-title'))).toBeTruthy();
+          });
+
+          it('should set the title contents to "REGISTER"', () => {
+            expect(panel.query(By.css('mat-panel-title')).nativeElement.innerText.trim()).toEqual('REGISTER');
           });
 
           it('should have a description', () => {
@@ -120,8 +125,12 @@ describe('Component: VoteComponent', () => {
             expect(panel.query(By.css('mat-expansion-panel-header'))).toBeTruthy();
           });
 
-          it('should set the header contents to "VOTE"', () => {
-            expect(panel.query(By.css('mat-expansion-panel-header')).nativeElement.innerText.trim()).toEqual('VOTE');
+          it('should have a title', () => {
+            expect(panel.query(By.css('mat-panel-title'))).toBeTruthy();
+          });
+
+          it('should set the title contents to "VOTE"', () => {
+            expect(panel.query(By.css('mat-panel-title')).nativeElement.innerText.trim()).toEqual('VOTE');
           });
 
           it('should have a description', () => {
@@ -142,8 +151,12 @@ describe('Component: VoteComponent', () => {
             expect(panel.query(By.css('mat-expansion-panel-header'))).toBeTruthy();
           });
 
-          it('should set the header contents to "RESULTS"', () => {
-            expect(panel.query(By.css('mat-expansion-panel-header')).nativeElement.innerText.trim()).toEqual('RESULTS');
+          it('should have a title', () => {
+            expect(panel.query(By.css('mat-panel-title'))).toBeTruthy();
+          });
+
+          it('should set the title contents to "RESULTS"', () => {
+            expect(panel.query(By.css('mat-panel-title')).nativeElement.innerText.trim()).toEqual('RESULTS');
           });
 
           it('should have a description', () => {
@@ -211,29 +224,299 @@ describe('Component: VoteComponent', () => {
         details = {
           index: idx,
           topic: {status: RETRIEVAL_STATUS.AVAILABLE, value: collection.parameters.topic},
-          phase: {status: RETRIEVAL_STATUS.AVAILABLE, value: VotePhases[collection.currentPhase]}
+          phase: {status: RETRIEVAL_STATUS.AVAILABLE, value: VotePhases[collection.currentPhase]},
+          numPendingRegistrations: {status: RETRIEVAL_STATUS.AVAILABLE, value: 0}
         };
         fixture.componentInstance.index = idx;
       });
 
-      describe('parameter: phase', () => {
-        describe('case: it is being retrieved', () => {
-          beforeEach(() => {
-            details.phase = { status: RETRIEVAL_STATUS.RETRIEVING, value: null};
-            spyOn(page.voteRetrievalSvc, 'replacementDetailsAtIndex$').and.returnValue(Observable.of(details));
-            fixture.detectChanges();
-          });
+      describe('case: the phase is being retrieved', () => {
+        beforeEach(() => {
+          details.phase = {status: RETRIEVAL_STATUS.RETRIEVING, value: null};
+          spyOn(page.voteRetrievalSvc, 'replacementDetailsAtIndex$').and.returnValue(Observable.of(details));
+          fixture.detectChanges();
+        });
 
-          it(`should state [${RETRIEVAL_STATUS.RETRIEVING}] on all expansion panel descriptions`, () => {
-            page.panelDescriptions.map(description => {
-              expect(description).toEqual(`[${RETRIEVAL_STATUS.RETRIEVING}]`);
-            });
-          });
-
-          it('should disable all expansion panels', () => {
-            page.expansionPanels.map(panel => expect(panel.componentInstance.disabled).toEqual(true));
+        it(`should state "${VoteComponentMessages.retrieving}" on all expansion panel descriptions`, () => {
+          page.panelDescriptions.map(description => {
+            expect(description).toEqual(VoteComponentMessages.retrieving);
           });
         });
+
+        it('should disable all expansion panels', () => {
+          page.expansionPanels.map(panel => expect(panel.componentInstance.disabled).toEqual(true));
+        });
+      });
+
+      describe('case: the number of pending registrations is being retrieved', () => {
+        beforeEach(() => {
+          details.numPendingRegistrations = {status: RETRIEVAL_STATUS.RETRIEVING, value: null};
+          spyOn(page.voteRetrievalSvc, 'replacementDetailsAtIndex$').and.returnValue(Observable.of(details));
+          fixture.detectChanges();
+        });
+
+        it(`should state "${VoteComponentMessages.retrieving}" on all expansion panel descriptions`, () => {
+          page.panelDescriptions.map(description => {
+            expect(description).toEqual(VoteComponentMessages.retrieving);
+          });
+        });
+
+        it('should disable all expansion panels', () => {
+          page.expansionPanels.map(panel => expect(panel.componentInstance.disabled).toEqual(true));
+        });
+      });
+
+      describe('case: the phase is unavailable', () => {
+        beforeEach(() => {
+          details.phase = {status: RETRIEVAL_STATUS.UNAVAILABLE, value: null};
+          spyOn(page.voteRetrievalSvc, 'replacementDetailsAtIndex$').and.returnValue(Observable.of(details));
+          fixture.detectChanges();
+        });
+
+        it(`should state ${VoteComponentMessages.unavailable} on all expansion panel descriptions`, () => {
+          page.panelDescriptions.map(description => {
+            expect(description).toEqual(VoteComponentMessages.unavailable);
+          });
+        });
+
+        it('should disable all expansion panels', () => {
+          page.expansionPanels.map(panel => expect(panel.componentInstance.disabled).toEqual(true));
+        });
+      });
+
+      describe('case: the number of pending registrations is unavailable', () => {
+        beforeEach(() => {
+          details.numPendingRegistrations = {status: RETRIEVAL_STATUS.UNAVAILABLE, value: null};
+          spyOn(page.voteRetrievalSvc, 'replacementDetailsAtIndex$').and.returnValue(Observable.of(details));
+          fixture.detectChanges();
+        });
+
+        it(`should state "${VoteComponentMessages.unavailable}" on all expansion panel descriptions`, () => {
+          page.panelDescriptions.map(description => {
+            expect(description).toEqual(VoteComponentMessages.unavailable);
+          });
+        });
+
+        it('should disable all expansion panels', () => {
+          page.expansionPanels.map(panel => expect(panel.componentInstance.disabled).toEqual(true));
+        });
+      });
+
+      describe('case: phase and number of pending registrations are both available', () => {
+
+       describe('parameter: phase', () => {
+         describe(`case: it is "${VotePhases[0]}"`, () => {
+           beforeEach(() => {
+             details.phase = {status: RETRIEVAL_STATUS.AVAILABLE, value: VotePhases[0]};
+           });
+
+           describe('section: first (Registration) expansion panel', () => {
+             beforeEach(() => {
+               spyOn(page.voteRetrievalSvc, 'replacementDetailsAtIndex$').and.returnValue(Observable.of(details));
+               fixture.detectChanges();
+             });
+
+             it('should have an empty description', () => {
+               expect(page.panelDescriptions[0]).toEqual('');
+             });
+
+             it('should be enabled', () => {
+               expect(page.expansionPanels[0].componentInstance.disabled).toEqual(false);
+             });
+           });
+
+           describe('section: second (Voting) expansion panel', () => {
+             describe('case: there are no pending registrations', () => {
+               beforeEach(() => {
+                 spyOn(page.voteRetrievalSvc, 'replacementDetailsAtIndex$').and.returnValue(Observable.of(details));
+                 fixture.detectChanges();
+               });
+
+               it(`should state ${VoteComponentMessages.votingNotOpened} on the expansion panel description`, () => {
+                 expect(page.panelDescriptions[1]).toEqual(VoteComponentMessages.votingNotOpened);
+               });
+
+               it('should be disabled', () => {
+                 expect(page.expansionPanels[1].componentInstance.disabled).toEqual(true);
+               });
+             });
+
+             describe('case: there are pending registrations', () => {
+               const numPending = 3;
+
+               beforeEach(() => {
+                 details.numPendingRegistrations.value = numPending;
+                 spyOn(page.voteRetrievalSvc, 'replacementDetailsAtIndex$').and.returnValue(Observable.of(details));
+                 fixture.detectChanges();
+               });
+
+               it(`should state ${VoteComponentMessages.votingNotOpened} on the expansion panel description`, () => {
+                 expect(page.panelDescriptions[1]).toEqual(VoteComponentMessages.votingNotOpened);
+               });
+
+               it('should be disabled', () => {
+                 expect(page.expansionPanels[1].componentInstance.disabled).toEqual(true);
+               });
+             });
+           });
+
+           describe('section: third (Results) expansion panel', () => {
+             beforeEach(() => {
+               spyOn(page.voteRetrievalSvc, 'replacementDetailsAtIndex$').and.returnValue(Observable.of(details));
+               fixture.detectChanges();
+             });
+
+             it(`should state ${VoteComponentMessages.resultsNotFinalised} on the expansion panel description`, () => {
+               expect(page.panelDescriptions[2]).toEqual(VoteComponentMessages.resultsNotFinalised);
+             });
+
+             it('should be enabled', () => {
+               expect(page.expansionPanels[2].componentInstance.disabled).toEqual(false);
+             });
+           });
+         });
+
+         describe(`case: it is "${VotePhases[1]}"`, () => {
+           beforeEach(() => {
+             details.phase = {status: RETRIEVAL_STATUS.AVAILABLE, value: VotePhases[1]};
+           });
+
+           describe('section: first (Registration) expansion panel', () => {
+             beforeEach(() => {
+               spyOn(page.voteRetrievalSvc, 'replacementDetailsAtIndex$').and.returnValue(Observable.of(details));
+               fixture.detectChanges();
+             });
+
+             it(`should state ${VoteComponentMessages.registrationClosed} on the expansion panel description`, () => {
+               expect(page.panelDescriptions[0]).toEqual(VoteComponentMessages.registrationClosed);
+             });
+
+             it('should be disabled', () => {
+               expect(page.expansionPanels[0].componentInstance.disabled).toEqual(true);
+             });
+           });
+
+           describe('section: second (Voting) expansion panel', () => {
+             describe('case: there are no pending registrations', () => {
+               beforeEach(() => {
+                 spyOn(page.voteRetrievalSvc, 'replacementDetailsAtIndex$').and.returnValue(Observable.of(details));
+                 fixture.detectChanges();
+               });
+
+               it(`should have an empty description`, () => {
+                 expect(page.panelDescriptions[1]).toEqual('');
+               });
+
+               it('should be enabled', () => {
+                 expect(page.expansionPanels[1].componentInstance.disabled).toEqual(false);
+               });
+             });
+
+             describe('case: there are pending registrations', () => {
+               const numPending = 3;
+
+               beforeEach(() => {
+                 details.numPendingRegistrations.value = numPending;
+                 spyOn(page.voteRetrievalSvc, 'replacementDetailsAtIndex$').and.returnValue(Observable.of(details));
+                 fixture.detectChanges();
+               });
+
+               it(`should state ${VoteComponentMessages.pendingRegistrations(3)} on the expansion panel description`, () => {
+                 expect(page.panelDescriptions[1]).toEqual(VoteComponentMessages.pendingRegistrations(3));
+               });
+
+               it('should be disabled', () => {
+                 expect(page.expansionPanels[1].componentInstance.disabled).toEqual(true);
+               });
+             });
+           });
+
+           describe('section: third (Results) expansion panel', () => {
+             beforeEach(() => {
+               spyOn(page.voteRetrievalSvc, 'replacementDetailsAtIndex$').and.returnValue(Observable.of(details));
+               fixture.detectChanges();
+             });
+
+             it(`should state ${VoteComponentMessages.resultsNotFinalised} on the expansion panel description`, () => {
+               expect(page.panelDescriptions[2]).toEqual(VoteComponentMessages.resultsNotFinalised);
+             });
+
+             it('should be enabled', () => {
+               expect(page.expansionPanels[2].componentInstance.disabled).toEqual(false);
+             });
+           });
+         });
+
+         describe(`case: it is "${VotePhases[2]}"`, () => {
+           beforeEach(() => {
+             details.phase = {status: RETRIEVAL_STATUS.AVAILABLE, value: VotePhases[2]};
+           });
+
+           describe('section: first (Registration) expansion panel', () => {
+             beforeEach(() => {
+               spyOn(page.voteRetrievalSvc, 'replacementDetailsAtIndex$').and.returnValue(Observable.of(details));
+               fixture.detectChanges();
+             });
+
+             it(`should state ${VoteComponentMessages.registrationClosed} on the expansion panel description`, () => {
+               expect(page.panelDescriptions[0]).toEqual(VoteComponentMessages.registrationClosed);
+             });
+
+             it('should be disabled', () => {
+               expect(page.expansionPanels[0].componentInstance.disabled).toEqual(true);
+             });
+           });
+           describe('section: second (Voting) expansion panel', () => {
+             describe('case: there are no pending registrations', () => {
+               beforeEach(() => {
+                 spyOn(page.voteRetrievalSvc, 'replacementDetailsAtIndex$').and.returnValue(Observable.of(details));
+                 fixture.detectChanges();
+               });
+
+               it(`should state ${VoteComponentMessages.votingClosed} on the expansion panel description`, () => {
+                 expect(page.panelDescriptions[1]).toEqual(VoteComponentMessages.votingClosed);
+               });
+
+               it('should be disabled', () => {
+                 expect(page.expansionPanels[1].componentInstance.disabled).toEqual(true);
+               });
+             });
+
+             describe('case: there are pending registrations', () => {
+               const numPending = 3;
+
+               beforeEach(() => {
+                 details.numPendingRegistrations.value = numPending;
+                 spyOn(page.voteRetrievalSvc, 'replacementDetailsAtIndex$').and.returnValue(Observable.of(details));
+                 fixture.detectChanges();
+               });
+
+               it(`should state ${VoteComponentMessages.votingClosed} on the expansion panel description`, () => {
+                 expect(page.panelDescriptions[1]).toEqual(VoteComponentMessages.votingClosed);
+               });
+
+               it('should be disabled', () => {
+                 expect(page.expansionPanels[1].componentInstance.disabled).toEqual(true);
+               });
+             });
+           });
+
+           describe('section: third (Results) expansion panel', () => {
+             beforeEach(() => {
+               spyOn(page.voteRetrievalSvc, 'replacementDetailsAtIndex$').and.returnValue(Observable.of(details));
+               fixture.detectChanges();
+             });
+
+             it('should have an empty description', () => {
+               expect(page.panelDescriptions[2]).toEqual('');
+             });
+
+             it('should be enabled', () => {
+               expect(page.expansionPanels[2].componentInstance.disabled).toEqual(false);
+             });
+           });
+         });
+       });
       });
     });
 

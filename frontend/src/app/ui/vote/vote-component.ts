@@ -5,10 +5,8 @@ import { ReplaySubject } from 'rxjs/ReplaySubject';
 import 'rxjs/add/operator/pluck';
 
 import { VoteRetrievalService } from '../../core/vote-retrieval/vote-retrieval.service';
-import {
-  IReplacementVotingContractDetails,
-  RETRIEVAL_STATUS
-} from '../../core/vote-retrieval/vote-retreival.service.constants';
+import { IReplacementVotingContractDetails, } from '../../core/vote-retrieval/vote-retreival.service.constants';
+import { IPhaseStatus, VoteComponentMessages } from './VoteComponentMessages';
 
 @Component({
   selector: 'vv-vote',
@@ -16,20 +14,26 @@ import {
     <div class="container" *ngIf="voteIsSelected">
       <h2>{{heading$ | async}}</h2>
       <mat-expansion-panel [disabled]="status$.pluck('registration').pluck('disabled') | async">
-        <mat-expansion-panel-header>REGISTER</mat-expansion-panel-header>
-        <mat-panel-description>{{status$.pluck('registration').pluck('message') | async}}</mat-panel-description>
+        <mat-expansion-panel-header>
+          <mat-panel-title>REGISTER</mat-panel-title>
+          <mat-panel-description>{{status$.pluck('registration').pluck('message') | async}}</mat-panel-description>
+        </mat-expansion-panel-header>
         <vv-registration-phase [index]="index$ | async"></vv-registration-phase>
       </mat-expansion-panel>
 
       <mat-expansion-panel [disabled]="status$.pluck('voting').pluck('disabled') | async">
-        <mat-expansion-panel-header>VOTE</mat-expansion-panel-header>
-        <mat-panel-description>{{status$.pluck('voting').pluck('message') | async}}</mat-panel-description>
+        <mat-expansion-panel-header>
+          <mat-panel-title>VOTE</mat-panel-title>
+          <mat-panel-description>{{status$.pluck('voting').pluck('message') | async}}</mat-panel-description>
+        </mat-expansion-panel-header>
         <vv-voting-phase [index]="index$ | async"></vv-voting-phase>
       </mat-expansion-panel>
 
       <mat-expansion-panel [disabled]="status$.pluck('complete').pluck('disabled') | async">
-        <mat-expansion-panel-header>RESULTS</mat-expansion-panel-header>
-        <mat-panel-description>{{status$.pluck('complete').pluck('message') | async}}</mat-panel-description>
+        <mat-expansion-panel-header>
+          <mat-panel-title>RESULTS</mat-panel-title>
+          <mat-panel-description>{{status$.pluck('complete').pluck('message') | async}}</mat-panel-description>
+        </mat-expansion-panel-header>
         <vv-complete-phase [index]="index$ | async"></vv-complete-phase>
       </mat-expansion-panel>
     </div>
@@ -57,7 +61,7 @@ export class VoteComponent implements OnInit {
       .subscribe(this._voteDetails$);
 
     this.heading$ = this._voteDetails$.map(details => `${details.index}. ${details.topic.value}`);
-    this.status$ = this._voteDetails$.map(details => this._getStatus(details));
+    this.status$ = this._voteDetails$.map(details => VoteComponentMessages.status(details));
   }
 
   /**
@@ -71,41 +75,6 @@ export class VoteComponent implements OnInit {
       this.index$.next(val);
     }
   }
-
-  /**
-   * Get the phase status and error messages corresponding to the specified vote details
-   * @param {IReplacementVotingContractDetails} details the details of the vote including retrieval status
-   * @returns {IPhaseStatus} which forms are disabled and why
-   * @private
-   */
-  private _getStatus(details: IReplacementVotingContractDetails): IPhaseStatus {
-    if (details.phase.status === RETRIEVAL_STATUS.RETRIEVING) {
-      const msg: string = `[${RETRIEVAL_STATUS.RETRIEVING}]`;
-      return {
-        registration: {message: msg, disabled: true},
-        voting: {message: msg, disabled: true},
-        complete: {message: msg, disabled: true}
-      };
-    }
-    return {
-      registration: {message: '', disabled: false},
-      voting: {message: '', disabled: false},
-      complete: {message: '', disabled: false}
-    };
-  }
 }
 
-interface IPhaseStatus {
-  registration: {
-    message: string;
-    disabled: boolean;
-  };
-  voting: {
-    message: string;
-    disabled: boolean;
-  };
-  complete: {
-    message: string;
-    disabled: boolean;
-  };
-}
+

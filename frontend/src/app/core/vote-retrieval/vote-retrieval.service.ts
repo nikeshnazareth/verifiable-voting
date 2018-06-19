@@ -115,10 +115,18 @@ export class VoteRetrievalService implements IVoteRetrievalService {
           .map(params => params.topic)
         );
 
-        return phase$.combineLatest(topic$, (phase, topic) => ({
+        const numPendingRegistrations$ = this._wrapRetrieval(
+          contractManager.registrationHashes$
+            .map(regHashes => Object.keys(regHashes).map(voter => regHashes[voter]))
+            .map(regPairs => regPairs.filter(pair => pair.signature === null))
+            .map(pending => pending.length)
+        );
+
+        return phase$.combineLatest(topic$, numPendingRegistrations$, (phase, topic, numPending) => ({
           index: idx,
           topic: topic,
-          phase: phase
+          phase: phase,
+          numPendingRegistrations: numPending
         }));
       })
       .share();
