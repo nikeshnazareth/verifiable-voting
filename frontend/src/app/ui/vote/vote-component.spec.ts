@@ -11,7 +11,7 @@ import {
   RETRIEVAL_STATUS
 } from '../../core/vote-retrieval/vote-retreival.service.constants';
 import { VotePhases } from '../../core/ethereum/anonymous-voting-contract/contract.api';
-import { VoteComponentMessages } from './VoteComponentMessages';
+import { VoteComponentMessages } from './vote-component-messages';
 import { MaterialModule } from '../../material/material.module';
 import { Mock } from '../../mock/module';
 

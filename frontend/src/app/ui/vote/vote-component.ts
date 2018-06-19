@@ -6,7 +6,7 @@ import 'rxjs/add/operator/pluck';
 
 import { VoteRetrievalService } from '../../core/vote-retrieval/vote-retrieval.service';
 import { IReplacementVotingContractDetails, } from '../../core/vote-retrieval/vote-retreival.service.constants';
-import { IPhaseStatus, VoteComponentMessages } from './VoteComponentMessages';
+import { IPhaseStatus, VoteComponentMessages } from './vote-component-messages';
 
 @Component({
   selector: 'vv-vote',
