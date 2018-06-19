@@ -104,15 +104,24 @@ export class VoteRetrievalService implements IVoteRetrievalService {
     return this.voteListingSvc.deployedVotes$
       .elementAt(idx, null)
       .map(addr => this.replacementAnonymousVotingSvc.at(addr))
-      .switchMap(contractManager => this._wrapRetrieval(
-        contractManager.constants$
+      .switchMap(contractManager => {
+        const phase$ = this._wrapRetrieval(
+          contractManager.phase$
+            .map(phaseIdx => VotePhases[phaseIdx])
+        );
+
+        const topic$ = this._wrapRetrieval(contractManager.constants$
           .switchMap(constants => this._retrieveVoteParameters(constants.paramsHash))
           .map(params => params.topic)
-      ))
-      .map(dynamicTopic => ({
-        index: idx,
-        topic: dynamicTopic
-      }));
+        );
+
+        return phase$.combineLatest(topic$, (phase, topic) => ({
+          index: idx,
+          topic: topic,
+          phase: phase
+        }));
+      })
+      .share();
   }
 
   /**

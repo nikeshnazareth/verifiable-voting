@@ -56,13 +56,18 @@ export class VoteRetrievalService implements IVoteRetrievalService {
     return index === null || typeof index === 'undefined' ?
       Observable.of({
         index: index,
-        topic: {status: RETRIEVAL_STATUS.UNAVAILABLE, value: null}
+        topic: {status: RETRIEVAL_STATUS.UNAVAILABLE, value: null},
+        phase: {status: RETRIEVAL_STATUS.UNAVAILABLE, value: null}
       }) :
       Observable.of({
         index: index,
         topic: {
           status: RETRIEVAL_STATUS.AVAILABLE,
           value: Mock.AnonymousVotingContractCollections[index].parameters.topic
+        },
+        phase: {
+          status: RETRIEVAL_STATUS.AVAILABLE,
+          value: Mock.AnonymousVotingContractCollections[index].currentPhase
         }
       });
   }
