@@ -5,12 +5,9 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { AbstractControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { Observable } from 'rxjs/Observable';
 
-import { RegistrationPhaseComponent, RegistrationStatusMessages } from './registration-phase.component';
-import { VoteRetrievalService } from '../../core/vote-retrieval/vote-retrieval.service';
+import { RegistrationPhaseComponent } from './registration-phase.component';
 import { MaterialModule } from '../../material/material.module';
 import { IAnonymousVotingContractCollection, IVoter, Mock } from '../../mock/module';
-import { IVotingContractDetails, RETRIEVAL_STATUS } from '../../core/vote-retrieval/vote-retreival.service.constants';
-import { VotePhases } from '../../core/ethereum/anonymous-voting-contract/contract.api';
 import { address } from '../../core/ethereum/type.mappings';
 import { DOMInteractionUtility } from '../../mock/dom-interaction-utility';
 import { Web3Service, Web3ServiceErrors } from '../../core/ethereum/web3.service';
@@ -22,40 +19,26 @@ describe('Component: RegistrationPhaseComponent', () => {
   let fixture: ComponentFixture<RegistrationPhaseComponent>;
   let page: Page;
 
-  const voteIndex = 1; // a contract in the registration phase
-  const voteCollection: IAnonymousVotingContractCollection = Mock.AnonymousVotingContractCollections[voteIndex];
   const voter: IVoter = Mock.Voters[0];
-  let voteDetails: IVotingContractDetails;
+  const collection: IAnonymousVotingContractCollection = Mock.AnonymousVotingContractCollections[0];
 
   class Page {
-    public static MS_PER_DAY: number = 1000 * 60 * 60 * 24;
-
-    public voteRetrievalSvc: VoteRetrievalService;
     public errSvc: ErrorService;
     public web3Svc: Web3Service;
     public cryptoSvc: CryptographyService;
     public voteManagerSvc: VoteManagerService;
 
     constructor() {
-      this.voteRetrievalSvc = fixture.debugElement.injector.get(VoteRetrievalService);
       this.web3Svc = fixture.debugElement.injector.get(Web3Service);
       this.errSvc = fixture.debugElement.injector.get(ErrorService);
       this.cryptoSvc = fixture.debugElement.injector.get(CryptographyService);
       this.voteManagerSvc = fixture.debugElement.injector.get(VoteManagerService);
     }
 
-    // use getters because the components are added/removed from the DOM
+    // use getters because the components are added to the DOM after initialisation
 
     static get form(): FormGroup {
       return fixture.componentInstance.form;
-    }
-
-    static get registerSection(): DebugElement {
-      return fixture.debugElement.query(By.css('#register'));
-    }
-
-    static get unavailableSection(): DebugElement {
-      return fixture.debugElement.query(By.css('#unavailable'));
     }
 
     static get voterAddressInput(): DebugElement {
@@ -101,8 +84,8 @@ describe('Component: RegistrationPhaseComponent', () => {
     static get submitButtons(): DebugElement[] {
       return fixture.debugElement.queryAll(By.css('button[type="submit"]'));
     }
-  }
 
+  }
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
@@ -118,7 +101,6 @@ describe('Component: RegistrationPhaseComponent', () => {
       providers: [
         ErrorService,
         {provide: CryptographyService, useClass: Mock.CryptographyService},
-        {provide: VoteRetrievalService, useClass: Mock.VoteRetrievalService},
         {provide: VoteManagerService, useClass: Mock.VoteManagerService},
         {provide: Web3Service, useClass: Mock.Web3Service}
       ]
@@ -131,221 +113,10 @@ describe('Component: RegistrationPhaseComponent', () => {
   }));
 
   beforeEach(() => {
-    // put us in the vote registration phase
-    voteDetails = {
-      index: voteIndex,
-      address: voteCollection.address,
-      phase: VotePhases[voteCollection.currentPhase],
-      parameters: {
-        topic: voteCollection.parameters.topic,
-        registration_key: {
-          modulus: voteCollection.parameters.registration_key.modulus,
-          public_exp: voteCollection.parameters.registration_key.public_exp
-        },
-        candidates: voteCollection.parameters.candidates.map(v => v)
-      },
-      registrationDeadline: {
-        status: RETRIEVAL_STATUS.AVAILABLE,
-        value: new Date(voteCollection.voteConstants.registrationDeadline)
-      },
-      votingDeadline: {
-        status: RETRIEVAL_STATUS.AVAILABLE,
-        value: new Date(voteCollection.voteConstants.votingDeadline)
-      },
-      pendingRegistrations: {
-        status: RETRIEVAL_STATUS.AVAILABLE,
-        value: voteCollection.pendingRegistrations
-      },
-      votes: {
-        status: RETRIEVAL_STATUS.AVAILABLE,
-        value: []
-      }
-    };
-    spyOn(page.voteRetrievalSvc, 'detailsAtIndex$').and.returnValue(Observable.of(voteDetails));
     spyOn(page.errSvc, 'add').and.stub();
   });
 
   describe('User Interface', () => {
-    describe('component status', () => {
-      const errorSectionTests = (msg) => {
-        beforeEach(() => fixture.detectChanges());
-
-        it('should remove the "register" section', () => {
-          expect(Page.registerSection).toEqual(null);
-        });
-
-        it('should create the "unavailable" section', () => {
-          expect(Page.unavailableSection).toBeTruthy();
-        });
-
-        it(`should display "${msg}"`, () => {
-          expect(Page.unavailableSection.nativeElement.innerText).toEqual(msg);
-        });
-      };
-
-      const retrievingTests = () => {
-        errorSectionTests(RegistrationStatusMessages.retrieving);
-      };
-
-      const unavailableTests = () => {
-        errorSectionTests(RegistrationStatusMessages.unavailable);
-      };
-
-      const registrationClosedTests = () => {
-        errorSectionTests(RegistrationStatusMessages.closed);
-      };
-
-      describe('case: the phase is being retrieved', () => {
-        beforeEach(() => {
-          voteDetails.phase = RETRIEVAL_STATUS.RETRIEVING;
-        });
-        retrievingTests();
-      });
-
-      describe('case: the registration deadline is being retrieved', () => {
-        beforeEach(() => {
-          voteDetails.registrationDeadline = {
-            status: RETRIEVAL_STATUS.RETRIEVING,
-            value: null
-          };
-        });
-        retrievingTests();
-      });
-
-      describe('case: the contract address is being retrieved', () => {
-        beforeEach(() => {
-          voteDetails.address = RETRIEVAL_STATUS.RETRIEVING;
-        });
-        retrievingTests();
-      });
-
-      describe('case: the registration key modulus is being retrieving', () => {
-        beforeEach(() => {
-          voteDetails.parameters.registration_key.modulus = RETRIEVAL_STATUS.RETRIEVING;
-        });
-        retrievingTests();
-      });
-
-      describe('case: the registration key public exponent is being retrieved', () => {
-        beforeEach(() => {
-          voteDetails.parameters.registration_key.public_exp = RETRIEVAL_STATUS.RETRIEVING;
-        });
-        retrievingTests();
-      });
-
-      describe('case: the phase is unavailable', () => {
-        beforeEach(() => {
-          voteDetails.phase = RETRIEVAL_STATUS.UNAVAILABLE;
-        });
-        unavailableTests();
-      });
-
-      describe('case: the registration deadline is unavailable', () => {
-        beforeEach(() => {
-          voteDetails.registrationDeadline = {
-            status: RETRIEVAL_STATUS.UNAVAILABLE,
-            value: null
-          };
-        });
-        unavailableTests();
-      });
-
-      describe('case: the contract address is unavailable', () => {
-        beforeEach(() => {
-          voteDetails.address = RETRIEVAL_STATUS.UNAVAILABLE;
-        });
-        unavailableTests();
-      });
-
-      describe('case: the registration key modulus is unavailable', () => {
-        beforeEach(() => {
-          voteDetails.parameters.registration_key.modulus = RETRIEVAL_STATUS.UNAVAILABLE;
-        });
-        unavailableTests();
-      });
-
-      describe('case: the registration key public exponent is unavailable', () => {
-        beforeEach(() => {
-          voteDetails.parameters.registration_key.public_exp = RETRIEVAL_STATUS.UNAVAILABLE;
-        });
-        unavailableTests();
-      });
-
-      describe('case: phase = "REGISTRATION"', () => {
-
-        beforeEach(() => {
-          voteDetails.phase = 'REGISTRATION';
-        });
-
-        describe('case: the registration deadline is in the past', () => {
-          beforeEach(() => {
-            jasmine.clock().install();
-            jasmine.clock().mockDate(new Date(voteDetails.registrationDeadline.value.getTime() + Page.MS_PER_DAY));
-            fixture.detectChanges();
-          });
-
-          afterEach(() => {
-            jasmine.clock().uninstall();
-          });
-
-          registrationClosedTests();
-        });
-
-        describe('case: the registration deadline is in the future', () => {
-          beforeEach(() => {
-            jasmine.clock().install();
-            jasmine.clock().mockDate(new Date(voteDetails.registrationDeadline.value.getTime() - Page.MS_PER_DAY));
-            fixture.detectChanges();
-          });
-
-          afterEach(() => {
-            jasmine.clock().uninstall();
-          });
-
-          it('should create the "register" section', () => {
-            expect(Page.registerSection).toBeTruthy();
-          });
-
-          it('should remove the "unavailable" section', () => {
-            expect(Page.unavailableSection).toEqual(null);
-          });
-
-          xdescribe('case: the deadline expires while the component is active', () => {
-            it('should transition to a removed "register" section', () => {
-              expect(Page.registerSection).toBeTruthy();
-              jasmine.clock().tick(2 * Page.MS_PER_DAY);
-              expect(Page.registerSection).toEqual(null);
-            });
-
-            it('should create the "unavailable" section', () => {
-              expect(Page.unavailableSection).toEqual(null);
-              jasmine.clock().tick(2 * Page.MS_PER_DAY);
-              expect(Page.unavailableSection).toBeTruthy();
-            });
-
-            it(`should display ${RegistrationStatusMessages.closed}`, () => {
-              jasmine.clock().tick(2 * Page.MS_PER_DAY);
-              expect(Page.unavailableSection.nativeElement.innerText).toEqual(RegistrationStatusMessages.closed);
-            });
-          });
-        });
-      });
-
-      describe(`case: in ${VotePhases[1]} phase`, () => {
-        beforeEach(() => {
-          voteDetails.phase = VotePhases[1];
-        });
-        registrationClosedTests();
-      });
-
-      describe(`case: in ${VotePhases[2]} phase`, () => {
-        beforeEach(() => {
-          voteDetails.phase = VotePhases[2];
-        });
-        registrationClosedTests();
-      });
-    });
-
     describe('Voter Address', () => {
       beforeEach(() => fixture.detectChanges());
 
@@ -745,14 +516,18 @@ describe('Component: RegistrationPhaseComponent', () => {
       });
 
       describe('form submission', () => {
-        beforeEach(() => populateForm());
+        beforeEach(() => {
+          fixture.componentInstance.contract = collection.address;
+          fixture.componentInstance.key = collection.parameters.registration_key;
+          populateForm();
+        });
 
         it('should pass the form details to the VoteManager service', () => {
           spyOn(page.voteManagerSvc, 'registerAt$').and.callThrough();
           DOMInteractionUtility.clickOn(button);
           expect(page.voteManagerSvc.registerAt$).toHaveBeenCalledWith(
-            voteDetails.address,
-            voteDetails.parameters.registration_key,
+            collection.address,
+            collection.parameters.registration_key,
             voter.public_address,
             voter.anonymous_address,
             voter.blinding_factor
