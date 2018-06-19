@@ -8,7 +8,7 @@ import { ListVotesComponent } from './list-votes/list-votes.component';
 import { VoteComponent } from './vote/vote-component';
 import { RegistrationPhaseComponent } from './vote/registration-phase.component';
 import { VotingPhaseComponent } from './vote/voting-phase.component';
-import { CompletePhaseComponent } from './vote/complete-phase-component';
+import { ResultsComponent } from './vote/results-component';
 import { ExplanationComponent } from './explanation/explanation.component';
 
 @NgModule({
@@ -18,7 +18,7 @@ import { ExplanationComponent } from './explanation/explanation.component';
     VoteComponent,
     RegistrationPhaseComponent,
     VotingPhaseComponent,
-    CompletePhaseComponent,
+    ResultsComponent,
     ExplanationComponent
   ],
   imports: [
@@ -32,7 +32,7 @@ import { ExplanationComponent } from './explanation/explanation.component';
     VoteComponent,
     RegistrationPhaseComponent,
     VotingPhaseComponent,
-    CompletePhaseComponent,
+    ResultsComponent,
     ExplanationComponent
   ]
 })

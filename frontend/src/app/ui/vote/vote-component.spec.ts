@@ -51,7 +51,7 @@ describe('Component: VoteComponent', () => {
         VoteComponent,
         StubRegistrationPhaseComponent,
         StubVotingPhaseComponent,
-        StubCompletePhaseComponent
+        StubResultsComponent
       ],
       imports: [
         MaterialModule,
@@ -163,8 +163,8 @@ describe('Component: VoteComponent', () => {
             expect(panel.query(By.css('mat-panel-description'))).toBeTruthy();
           });
 
-          it('should have a vv-complete-phase element', () => {
-            expect(panel.query(By.css('vv-complete-phase'))).toBeTruthy();
+          it('should have a vv-results element', () => {
+            expect(panel.query(By.css('vv-results'))).toBeTruthy();
           });
         });
 
@@ -544,14 +544,14 @@ describe('Component: VoteComponent', () => {
       });
     });
 
-    describe('Complete Phase Component', () => {
-      const completePhaseComp = () => fixture.debugElement.query(By.css('vv-complete-phase'));
+    describe('Results Component', () => {
+      const resultsComponent = () => fixture.debugElement.query(By.css('vv-results'));
 
       it('should track the index of the Vote Component', () => {
         Page.ARBITRARY_CONTRACT_INDICES.map(idx => {
           fixture.componentInstance.index = idx;
           fixture.detectChanges();
-          expect(completePhaseComp().componentInstance.index).toEqual(idx);
+          expect(resultsComponent().componentInstance.index).toEqual(idx);
         });
       });
     });
@@ -577,10 +577,10 @@ class StubVotingPhaseComponent {
 
 
 @Component({
-  selector: 'vv-complete-phase',
+  selector: 'vv-results',
   template: ''
 })
-class StubCompletePhaseComponent {
+class StubResultsComponent {
   @Input() index;
 }
 

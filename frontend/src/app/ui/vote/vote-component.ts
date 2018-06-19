@@ -34,7 +34,7 @@ import { IPhaseStatus, VoteComponentMessages } from './VoteComponentMessages';
           <mat-panel-title>RESULTS</mat-panel-title>
           <mat-panel-description>{{status$.pluck('complete').pluck('message') | async}}</mat-panel-description>
         </mat-expansion-panel-header>
-        <vv-complete-phase [index]="index$ | async"></vv-complete-phase>
+        <vv-results [index]="index$ | async"></vv-results>
       </mat-expansion-panel>
     </div>
   `,

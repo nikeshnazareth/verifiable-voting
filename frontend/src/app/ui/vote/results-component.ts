@@ -7,14 +7,14 @@ export interface ICandidateTotal {
 }
 
 @Component({
-  selector: 'vv-complete-phase',
+  selector: 'vv-results',
   template: `
     <div *ngFor="let candidateTotal of tally$ | async">
       {{candidateTotal.candidate}} : {{candidateTotal.count}}
     </div>
   `,
 })
-export class CompletePhaseComponent {
+export class ResultsComponent {
   @Input() tally: ICandidateTotal[];
 }
 
