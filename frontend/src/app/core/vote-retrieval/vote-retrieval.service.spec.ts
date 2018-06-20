@@ -577,6 +577,9 @@ describe('Service: VoteRetrievalService', () => {
 
       xdescribe('parameter: key', () => {
       });
+
+      xdescribe('parameter: candidates', () => {
+      });
     });
 
   });

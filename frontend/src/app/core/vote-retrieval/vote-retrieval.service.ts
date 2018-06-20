@@ -106,26 +106,27 @@ export class VoteRetrievalService implements IVoteRetrievalService {
       .map(summaries => summaries[idx])
       .switchMap(summary => {
         const contractManager = this.replacementAnonymousVotingSvc.at(summary.address.value);
+        const params$ = contractManager.constants$
+          .switchMap(constants => this._retrieveVoteParameters(constants.paramsHash))
         const numPendingRegistrations$ = this._wrapRetrieval(
           contractManager.registrationHashes$
             .map(regHashes => Object.keys(regHashes).map(voter => regHashes[voter]))
             .map(regPairs => regPairs.filter(pair => pair.signature === null))
             .map(pending => pending.length)
         );
-        const key$ = this._wrapRetrieval(
-          contractManager.constants$
-            .switchMap(constants => this._retrieveVoteParameters(constants.paramsHash))
-            .map(params => params.registration_key)
-        );
-        
-        return numPendingRegistrations$.combineLatest(key$, (numPending, key) => ({
-          index: idx,
-          address: summary.address,
-          topic: summary.topic,
-          phase: summary.phase,
-          numPendingRegistrations: numPending,
-          key: key
-        }));
+        const key$ = this._wrapRetrieval(params$.map(params => params.registration_key));
+        const candidates$ = this._wrapRetrieval(params$.map(params => params.candidates));
+
+        return numPendingRegistrations$.combineLatest(key$, candidates$,
+          (numPending, key, candidates) => ({
+            index: idx,
+            address: summary.address,
+            topic: summary.topic,
+            phase: summary.phase,
+            numPendingRegistrations: numPending,
+            key: key,
+            candidates: candidates
+          }));
       })
       .share();
   }

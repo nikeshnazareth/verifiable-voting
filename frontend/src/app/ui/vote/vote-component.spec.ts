@@ -226,7 +226,8 @@ fdescribe('Component: VoteComponent', () => {
         topic: {status: RETRIEVAL_STATUS.AVAILABLE, value: collection.parameters.topic},
         phase: {status: RETRIEVAL_STATUS.AVAILABLE, value: VotePhases[collection.currentPhase]},
         numPendingRegistrations: {status: RETRIEVAL_STATUS.AVAILABLE, value: 0},
-        key: {status: RETRIEVAL_STATUS.AVAILABLE, value: collection.parameters.registration_key}
+        key: {status: RETRIEVAL_STATUS.AVAILABLE, value: collection.parameters.registration_key},
+        candidates: {status: RETRIEVAL_STATUS.AVAILABLE, value: collection.parameters.candidates}
       });
 
       beforeEach(() => {
@@ -277,6 +278,7 @@ fdescribe('Component: VoteComponent', () => {
       availabilityTests('number of pending registrations', 'numPendingRegistrations');
       availabilityTests('contract address', 'address');
       availabilityTests('registration key', 'key');
+      availabilityTests('candidates list', 'candidates');
 
       describe('case: all parameters are available', () => {
 
@@ -580,6 +582,25 @@ fdescribe('Component: VoteComponent', () => {
           });
         });
       });
+
+      describe('input: candidates', () => {
+        it('should be set to the candidates list', () => {
+          fixture.componentInstance.index = 0;
+          fixture.detectChanges();
+          expect(votingPhaseComponent().componentInstance.candidates)
+            .toEqual(Mock.AnonymousVotingContractCollections[0].parameters.candidates);
+        });
+
+        it('should track the index of the Vote Component', () => {
+          Page.ARBITRARY_CONTRACT_INDICES.map(idx => {
+            fixture.componentInstance.index = idx;
+            fixture.detectChanges();
+            expect(votingPhaseComponent().componentInstance.candidates)
+              .toEqual(Mock.AnonymousVotingContractCollections[idx].parameters.candidates);
+          });
+        });
+      });
+
     });
   });
 });
