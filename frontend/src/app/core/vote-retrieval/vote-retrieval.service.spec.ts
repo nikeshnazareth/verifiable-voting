@@ -8,7 +8,8 @@ import { VoteRetrievalService } from './vote-retrieval.service';
 import {
   IDynamicValue,
   IVotingContractDetails, RETRIEVAL_STATUS,
-  VoteRetrievalServiceErrors
+  VoteRetrievalServiceErrors,
+  IReplacementVotingContractDetails,
 } from './vote-retreival.service.constants';
 import { VoteListingContractService } from '../ethereum/vote-listing-contract/contract.service';
 import { AnonymousVotingContractService } from '../ethereum/anonymous-voting-contract/contract.service';
@@ -221,7 +222,7 @@ describe('Service: VoteRetrievalService', () => {
 
           it(`should emit ${RETRIEVAL_STATUS.UNAVAILABLE}`, () => {
             expect(individualNextHandler[emptyIndex].calls.mostRecent().args[0].phase)
-              .toEqual({status: RETRIEVAL_STATUS.UNAVAILABLE, value: null})
+              .toEqual({status: RETRIEVAL_STATUS.UNAVAILABLE, value: null});
           });
 
           it('should not affect other contract phase observables', () => {
@@ -506,6 +507,75 @@ describe('Service: VoteRetrievalService', () => {
 
       });
     });
+  });
+
+  describe('method: replacementDetailsAtIndex$', () => {
+    let index: number;
+
+    const init_replacementDetailsAtIndex$_and_subscribe = fakeAsync(() => {
+      voteRetrievalSvc().replacementDetailsAtIndex$(index)
+        .subscribe(onNext, onError, onCompleted);
+      tick();
+    });
+
+    const lastEmitted: (() => IReplacementVotingContractDetails) = () => onNext.calls.mostRecent().args[0];
+
+
+    describe('case: idx is out of range', () => {
+      beforeEach(() => {
+        index = Mock.addresses.length;
+        init_replacementDetailsAtIndex$_and_subscribe();
+      });
+
+      it('should return a waiting observable', () => {
+        expect(onNext).not.toHaveBeenCalled();
+        expect(onCompleted).not.toHaveBeenCalled();
+      });
+    });
+
+    describe('case: idx is in range', () => {
+      beforeEach(() => {
+        index = 0;
+        init_replacementDetailsAtIndex$_and_subscribe();
+      });
+
+      xdescribe('it should repeat the "summary" tests', () => {
+      });
+
+      describe('parameter: numPendingRegistrations', () => {
+        xdescribe('case: before the registration hashes are returned', () => {
+        });
+
+        xdescribe('case: the registration hashes are unavailable', () => {
+        });
+
+        describe('case: the registration authority has completed 1 of 3 registrations', () => {
+          beforeEach(() => {
+            const mockRegHashes = {};
+            [0, 1, 2].map(i => {
+              mockRegHashes[Mock.Voters[i].public_address] = {
+                blindedAddress: Mock.Voters[i].blinded_address_hash,
+                signature: null
+              };
+            });
+            mockRegHashes[Mock.Voters[1].public_address].signature = Mock.Voters[1].signed_blinded_address_hash;
+
+            spyOn(replacementAnonymousVotingSvc, 'at').and.callFake(addr => {
+              const contractManager = new Mock.AnonymousVotingContractManager(addr);
+              spyOnProperty(contractManager, 'registrationHashes$').and.returnValue(Observable.of(mockRegHashes));
+              return contractManager;
+            });
+            init_replacementDetailsAtIndex$_and_subscribe();
+          });
+
+          it('should return "2"', () => {
+            expect(lastEmitted().numPendingRegistrations.status).toEqual(RETRIEVAL_STATUS.AVAILABLE);
+            expect(lastEmitted().numPendingRegistrations.value).toEqual(2);
+          });
+        });
+      });
+    });
+
   });
 
   describe('method: detailsAtIndex$', () => {

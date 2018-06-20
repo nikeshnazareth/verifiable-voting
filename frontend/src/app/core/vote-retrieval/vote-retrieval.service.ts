@@ -101,31 +101,22 @@ export class VoteRetrievalService implements IVoteRetrievalService {
    * including intermediate and error states
    */
   replacementDetailsAtIndex$(idx: number): Observable<IReplacementVotingContractDetails> {
-    return this.voteListingSvc.deployedVotes$
-      .elementAt(idx, null)
-      .map(addr => this.replacementAnonymousVotingSvc.at(addr))
-      .switchMap(contractManager => {
-        const phase$ = this._wrapRetrieval(
-          contractManager.phase$
-            .map(phaseIdx => VotePhases[phaseIdx])
-        );
-
-        const topic$ = this._wrapRetrieval(contractManager.constants$
-          .switchMap(constants => this._retrieveVoteParameters(constants.paramsHash))
-          .map(params => params.topic)
-        );
-
+    return this.summaries$
+      .filter(summaries => idx < summaries.length)
+      .map(summaries => summaries[idx])
+      .switchMap(summary => {
+        const contractManager = this.replacementAnonymousVotingSvc.at(summary.address.value);
         const numPendingRegistrations$ = this._wrapRetrieval(
           contractManager.registrationHashes$
             .map(regHashes => Object.keys(regHashes).map(voter => regHashes[voter]))
             .map(regPairs => regPairs.filter(pair => pair.signature === null))
             .map(pending => pending.length)
         );
-
-        return phase$.combineLatest(topic$, numPendingRegistrations$, (phase, topic, numPending) => ({
+        return numPendingRegistrations$.map(numPending => ({
           index: idx,
-          topic: topic,
-          phase: phase,
+          address: summary.address,
+          topic: summary.topic,
+          phase: summary.phase,
           numPendingRegistrations: numPending
         }));
       })
@@ -206,7 +197,7 @@ export class VoteRetrievalService implements IVoteRetrievalService {
   /**
    * Retrieves the vote information (from cache if possible) for the specified contract
    * @param {number} idx the index of the AnonymousVoting contract in the VoteListingContract
-   * @returns {Observable<IVotingContractDetails>} an observable of the vote details <br/>
+   * @returns {Observable<IReplacementVotingContractDetails>} an observable of the vote details <br/>
    * including intermediate and error states
    */
   detailsAtIndex$(idx: number): Observable<IVotingContractDetails> {
@@ -241,7 +232,7 @@ export class VoteRetrievalService implements IVoteRetrievalService {
    * Obtains the vote details for the specified AnonymousVoting contract (from cache if possible)
    * @param {address} addr the address of the contract
    * @param {number} idx the index of the contract in the VoteListingContract array
-   * @returns {Observable<IVotingContractDetails>} (an observable of) the vote details <br/>
+   * @returns {Observable<IReplacementVotingContractDetails>} (an observable of) the vote details <br/>
    * or a placeholder value if the information cannot be retrieved
    * @private
    */
@@ -387,7 +378,7 @@ export class VoteRetrievalService implements IVoteRetrievalService {
   /**
    * @param {number} idx the index of the contract in the VoteListingContract array
    * @param {string} placeholder a placeholder value for all string properties
-   * @returns {IVotingContractDetails} a stub IVotingContractDetails object<br/>
+   * @returns {IReplacementVotingContractDetails} a stub IVotingContractDetails object<br/>
    * to be used when the details are not yet available (or unavailable)
    */
   private _placeholderVotingContractDetails(idx: number, placeholder: string): IVotingContractDetails {
@@ -432,7 +423,7 @@ export class VoteRetrievalService implements IVoteRetrievalService {
   }
 
   /**
-   * @returns {IVotingContractDetails} a new IVotingContractDetails object with the specified values
+   * @returns {IReplacementVotingContractDetails} a new IVotingContractDetails object with the specified values
    */
   private _newContractDetails(index, addr, phase, parameters, regDeadline, votingDeadline,
                               pendingRegistrations, votes): IVotingContractDetails {
