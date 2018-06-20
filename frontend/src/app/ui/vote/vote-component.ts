@@ -10,34 +10,7 @@ import { IPhaseStatus, VoteComponentMessages } from './vote-component-messages';
 
 @Component({
   selector: 'vv-vote',
-  template: `
-    <div class="container" *ngIf="voteIsSelected">
-      <h2>{{heading$ | async}}</h2>
-      <mat-expansion-panel [disabled]="status$.pluck('registration').pluck('disabled') | async">
-        <mat-expansion-panel-header>
-          <mat-panel-title>REGISTER</mat-panel-title>
-          <mat-panel-description>{{status$.pluck('registration').pluck('message') | async}}</mat-panel-description>
-        </mat-expansion-panel-header>
-        <vv-registration-phase [index]="index$ | async"></vv-registration-phase>
-      </mat-expansion-panel>
-
-      <mat-expansion-panel [disabled]="status$.pluck('voting').pluck('disabled') | async">
-        <mat-expansion-panel-header>
-          <mat-panel-title>VOTE</mat-panel-title>
-          <mat-panel-description>{{status$.pluck('voting').pluck('message') | async}}</mat-panel-description>
-        </mat-expansion-panel-header>
-        <vv-voting-phase [index]="index$ | async"></vv-voting-phase>
-      </mat-expansion-panel>
-
-      <mat-expansion-panel [disabled]="status$.pluck('complete').pluck('disabled') | async">
-        <mat-expansion-panel-header>
-          <mat-panel-title>RESULTS</mat-panel-title>
-          <mat-panel-description>{{status$.pluck('complete').pluck('message') | async}}</mat-panel-description>
-        </mat-expansion-panel-header>
-        <vv-results [index]="index$ | async"></vv-results>
-      </mat-expansion-panel>
-    </div>
-  `,
+  templateUrl: './vote-component.html',
   styleUrls: ['./vote-component.scss']
 })
 export class VoteComponent implements OnInit {
@@ -45,7 +18,7 @@ export class VoteComponent implements OnInit {
   public index$: BehaviorSubject<number>;
   public heading$: Observable<string>;
   public status$: Observable<IPhaseStatus>;
-  private _voteDetails$: ReplaySubject<IReplacementVotingContractDetails>;
+  public voteDetails$: ReplaySubject<IReplacementVotingContractDetails>;
 
   constructor(private voteRetrievalSvc: VoteRetrievalService) {
     this.index$ = new BehaviorSubject<number>(null);
@@ -56,12 +29,12 @@ export class VoteComponent implements OnInit {
    * Initialise the observables used by the view
    */
   ngOnInit() {
-    this._voteDetails$ = new ReplaySubject<IReplacementVotingContractDetails>();
+    this.voteDetails$ = new ReplaySubject<IReplacementVotingContractDetails>();
     this.index$.switchMap(idx => this.voteRetrievalSvc.replacementDetailsAtIndex$(idx))
-      .subscribe(this._voteDetails$);
+      .subscribe(this.voteDetails$);
 
-    this.heading$ = this._voteDetails$.map(details => `${details.index}. ${details.topic.value}`);
-    this.status$ = this._voteDetails$.map(details => VoteComponentMessages.status(details));
+    this.heading$ = this.voteDetails$.map(details => `${details.index}. ${details.topic.value}`);
+    this.status$ = this.voteDetails$.map(details => VoteComponentMessages.status(details));
   }
 
   /**

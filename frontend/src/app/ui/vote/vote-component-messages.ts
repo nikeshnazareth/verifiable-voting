@@ -56,10 +56,16 @@ export class VoteComponentMessages {
    * @private
    */
   static status(details: IReplacementVotingContractDetails): IPhaseStatus {
-    if ([details.phase.status, details.numPendingRegistrations.status].includes(RETRIEVAL_STATUS.RETRIEVING)) {
+    const required = [
+      details.phase.status,
+      details.numPendingRegistrations.status,
+      details.address.status
+    ];
+
+    if (required.includes(RETRIEVAL_STATUS.RETRIEVING)) {
       return VoteComponentMessages.disableAllPanels(VoteComponentMessages.retrieving);
     }
-    if ([details.phase.status, details.numPendingRegistrations.status].includes(RETRIEVAL_STATUS.UNAVAILABLE)) {
+    if (required.includes(RETRIEVAL_STATUS.UNAVAILABLE)) {
       return VoteComponentMessages.disableAllPanels(VoteComponentMessages.unavailable);
     }
     const status: IPhaseStatus = VoteComponentMessages.enableAllPanels();

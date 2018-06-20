@@ -1,0 +1,26 @@
+<div class="container" *ngIf="voteIsSelected">
+  <h2>{{heading$ | async}}</h2>
+  <mat-expansion-panel [disabled]="status$.pluck('registration').pluck('disabled') | async">
+    <mat-expansion-panel-header>
+      <mat-panel-title>REGISTER</mat-panel-title>
+      <mat-panel-description>{{status$.pluck('registration').pluck('message') | async}}</mat-panel-description>
+    </mat-expansion-panel-header>
+    <vv-registration-phase [contract]="voteDetails$.pluck('address').pluck('value') | async"></vv-registration-phase>
+  </mat-expansion-panel>
+
+  <mat-expansion-panel [disabled]="status$.pluck('voting').pluck('disabled') | async">
+    <mat-expansion-panel-header>
+      <mat-panel-title>VOTE</mat-panel-title>
+      <mat-panel-description>{{status$.pluck('voting').pluck('message') | async}}</mat-panel-description>
+    </mat-expansion-panel-header>
+    <vv-voting-phase></vv-voting-phase>
+  </mat-expansion-panel>
+
+  <mat-expansion-panel [disabled]="status$.pluck('complete').pluck('disabled') | async">
+    <mat-expansion-panel-header>
+      <mat-panel-title>RESULTS</mat-panel-title>
+      <mat-panel-description>{{status$.pluck('complete').pluck('message') | async}}</mat-panel-description>
+    </mat-expansion-panel-header>
+    <vv-results></vv-results>
+  </mat-expansion-panel>
+</div>

@@ -14,8 +14,10 @@ import { VotePhases } from '../../core/ethereum/anonymous-voting-contract/contra
 import { VoteComponentMessages } from './vote-component-messages';
 import { MaterialModule } from '../../material/material.module';
 import { Mock } from '../../mock/module';
+import { address } from '../../core/ethereum/type.mappings';
+import { IRSAKey } from '../../core/cryptography/cryptography.service';
 
-describe('Component: VoteComponent', () => {
+fdescribe('Component: VoteComponent', () => {
   let fixture: ComponentFixture<VoteComponent>;
   let page: Page;
 
@@ -172,7 +174,7 @@ describe('Component: VoteComponent', () => {
     });
   });
 
-  describe('User Interface', () => {
+  fdescribe('User Interface', () => {
     describe('container', () => {
       it('should not exist initially', () => {
         fixture.detectChanges();
@@ -223,6 +225,7 @@ describe('Component: VoteComponent', () => {
         const collection = Mock.AnonymousVotingContractCollections[idx];
         details = {
           index: idx,
+          address: { status: RETRIEVAL_STATUS.AVAILABLE, value: collection.address },
           topic: {status: RETRIEVAL_STATUS.AVAILABLE, value: collection.parameters.topic},
           phase: {status: RETRIEVAL_STATUS.AVAILABLE, value: VotePhases[collection.currentPhase]},
           numPendingRegistrations: {status: RETRIEVAL_STATUS.AVAILABLE, value: 0}
@@ -251,6 +254,24 @@ describe('Component: VoteComponent', () => {
       describe('case: the number of pending registrations is being retrieved', () => {
         beforeEach(() => {
           details.numPendingRegistrations = {status: RETRIEVAL_STATUS.RETRIEVING, value: null};
+          spyOn(page.voteRetrievalSvc, 'replacementDetailsAtIndex$').and.returnValue(Observable.of(details));
+          fixture.detectChanges();
+        });
+
+        it(`should state "${VoteComponentMessages.retrieving}" on all expansion panel descriptions`, () => {
+          page.panelDescriptions.map(description => {
+            expect(description).toEqual(VoteComponentMessages.retrieving);
+          });
+        });
+
+        it('should disable all expansion panels', () => {
+          page.expansionPanels.map(panel => expect(panel.componentInstance.disabled).toEqual(true));
+        });
+      });
+
+      describe('case: the contract address is being retrieved', () => {
+        beforeEach(() => {
+          details.address = {status: RETRIEVAL_STATUS.RETRIEVING, value: null};
           spyOn(page.voteRetrievalSvc, 'replacementDetailsAtIndex$').and.returnValue(Observable.of(details));
           fixture.detectChanges();
         });
@@ -302,7 +323,25 @@ describe('Component: VoteComponent', () => {
         });
       });
 
-      describe('case: phase and number of pending registrations are both available', () => {
+      describe('case: the contract address is unavailable', () => {
+        beforeEach(() => {
+          details.address = {status: RETRIEVAL_STATUS.UNAVAILABLE, value: null};
+          spyOn(page.voteRetrievalSvc, 'replacementDetailsAtIndex$').and.returnValue(Observable.of(details));
+          fixture.detectChanges();
+        });
+
+        it(`should state ${VoteComponentMessages.unavailable} on all expansion panel descriptions`, () => {
+          page.panelDescriptions.map(description => {
+            expect(description).toEqual(VoteComponentMessages.unavailable);
+          });
+        });
+
+        it('should disable all expansion panels', () => {
+          page.expansionPanels.map(panel => expect(panel.componentInstance.disabled).toEqual(true));
+        });
+      });
+
+      describe('case: all parameters are available', () => {
 
        describe('parameter: phase', () => {
          describe(`case: it is "${VotePhases[0]}"`, () => {
@@ -523,39 +562,22 @@ describe('Component: VoteComponent', () => {
     describe('Registration Phase Component', () => {
       const regPhaseComponent = () => fixture.debugElement.query(By.css('vv-registration-phase'));
 
-      it('should track the index of the Vote Component', () => {
-        Page.ARBITRARY_CONTRACT_INDICES.map(idx => {
-          fixture.componentInstance.index = idx;
+      describe('input: contract', () => {
+        it('should be set to the VoteComponent contract address', () => {
+          fixture.componentInstance.index = 0;
           fixture.detectChanges();
-          expect(regPhaseComponent().componentInstance.index).toEqual(idx);
+          expect(regPhaseComponent().componentInstance.contract).toEqual(Mock.addresses[0]);
+        });
+
+        it('should track the index of the Vote Component', () => {
+          Page.ARBITRARY_CONTRACT_INDICES.map(idx => {
+            fixture.componentInstance.index = idx;
+            fixture.detectChanges();
+            expect(regPhaseComponent().componentInstance.contract).toEqual(Mock.addresses[idx]);
+          });
         });
       });
     });
-
-    describe('Voting Phase Component', () => {
-      const votingPhaseComp = () => fixture.debugElement.query(By.css('vv-voting-phase'));
-
-      it('should track the index of the Vote Component', () => {
-        Page.ARBITRARY_CONTRACT_INDICES.map(idx => {
-          fixture.componentInstance.index = idx;
-          fixture.detectChanges();
-          expect(votingPhaseComp().componentInstance.index).toEqual(idx);
-        });
-      });
-    });
-
-    describe('Results Component', () => {
-      const resultsComponent = () => fixture.debugElement.query(By.css('vv-results'));
-
-      it('should track the index of the Vote Component', () => {
-        Page.ARBITRARY_CONTRACT_INDICES.map(idx => {
-          fixture.componentInstance.index = idx;
-          fixture.detectChanges();
-          expect(resultsComponent().componentInstance.index).toEqual(idx);
-        });
-      });
-    });
-
   });
 });
 
@@ -564,24 +586,22 @@ describe('Component: VoteComponent', () => {
   template: ''
 })
 class StubRegistrationPhaseComponent {
-  @Input() index;
+  @Input() contract: address;
+  @Input() key: IRSAKey;
 }
+
 
 @Component({
   selector: 'vv-voting-phase',
   template: ''
 })
-class StubVotingPhaseComponent {
-  @Input() index;
-}
+class StubVotingPhaseComponent {}
 
 
 @Component({
   selector: 'vv-results',
   template: ''
 })
-class StubResultsComponent {
-  @Input() index;
-}
+class StubResultsComponent {}
 
 
