@@ -15,7 +15,9 @@
       <mat-panel-title>VOTE</mat-panel-title>
       <mat-panel-description>{{status$.pluck('voting').pluck('message') | async}}</mat-panel-description>
     </mat-expansion-panel-header>
-    <vv-voting-phase></vv-voting-phase>
+    <vv-voting-phase [contract]="voteDetails$.pluck('address').pluck('value') | async"
+                     [key]="voteDetails$.pluck('key').pluck('value') | async">
+    </vv-voting-phase>
   </mat-expansion-panel>
 
   <mat-expansion-panel [disabled]="status$.pluck('complete').pluck('disabled') | async">

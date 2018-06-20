@@ -543,6 +543,44 @@ fdescribe('Component: VoteComponent', () => {
         });
       });
     });
+
+    describe('Voting Phase Component', () => {
+      const votingPhaseComponent = () => fixture.debugElement.query(By.css('vv-voting-phase'));
+
+      describe('input: contract', () => {
+        it('should be set to the VoteComponent contract address', () => {
+          fixture.componentInstance.index = 0;
+          fixture.detectChanges();
+          expect(votingPhaseComponent().componentInstance.contract).toEqual(Mock.addresses[0]);
+        });
+
+        it('should track the index of the Vote Component', () => {
+          Page.ARBITRARY_CONTRACT_INDICES.map(idx => {
+            fixture.componentInstance.index = idx;
+            fixture.detectChanges();
+            expect(votingPhaseComponent().componentInstance.contract).toEqual(Mock.addresses[idx]);
+          });
+        });
+      });
+
+      describe('input: key', () => {
+        it('should be set to the registration key', () => {
+          fixture.componentInstance.index = 0;
+          fixture.detectChanges();
+          expect(votingPhaseComponent().componentInstance.key)
+            .toEqual(Mock.AnonymousVotingContractCollections[0].parameters.registration_key);
+        });
+
+        it('should track the index of the Vote Component', () => {
+          Page.ARBITRARY_CONTRACT_INDICES.map(idx => {
+            fixture.componentInstance.index = idx;
+            fixture.detectChanges();
+            expect(votingPhaseComponent().componentInstance.key)
+              .toEqual(Mock.AnonymousVotingContractCollections[idx].parameters.registration_key);
+          });
+        });
+      });
+    });
   });
 });
 
@@ -555,14 +593,16 @@ class StubRegistrationPhaseComponent {
   @Input() key: IRSAKey;
 }
 
-
 @Component({
   selector: 'vv-voting-phase',
   template: ''
 })
 class StubVotingPhaseComponent {
+  @Input() contract: address;
+  @Input() key: IRSAKey;
+  @Input() candidates: string[];
+  @Input() blindSignature: string;
 }
-
 
 @Component({
   selector: 'vv-results',
