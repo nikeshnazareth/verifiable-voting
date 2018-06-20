@@ -59,7 +59,8 @@ export class VoteComponentMessages {
     const required = [
       details.phase.status,
       details.numPendingRegistrations.status,
-      details.address.status
+      details.address.status,
+      details.key.status
     ];
 
     if (required.includes(RETRIEVAL_STATUS.RETRIEVING)) {

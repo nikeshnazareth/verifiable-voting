@@ -1,5 +1,6 @@
 import { IVoteParameters } from '../vote-manager/vote-manager.service';
 import { address } from '../ethereum/type.mappings';
+import { IRSAKey } from '../cryptography/cryptography.service';
 
 export interface IVotingContractDetails {
   index: number;
@@ -18,6 +19,7 @@ export interface IReplacementVotingContractDetails {
   topic: IDynamicValue<string>;
   phase: IDynamicValue<string>;
   numPendingRegistrations: IDynamicValue<number>;
+  key: IDynamicValue<IRSAKey>;
 }
 
 export interface IVotingContractSummary {

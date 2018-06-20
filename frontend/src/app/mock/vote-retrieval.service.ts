@@ -59,7 +59,8 @@ export class VoteRetrievalService implements IVoteRetrievalService {
         address: {status: RETRIEVAL_STATUS.UNAVAILABLE, value: null},
         topic: {status: RETRIEVAL_STATUS.UNAVAILABLE, value: null},
         phase: {status: RETRIEVAL_STATUS.UNAVAILABLE, value: null},
-        numPendingRegistrations: {status: RETRIEVAL_STATUS.UNAVAILABLE, value: null}
+        numPendingRegistrations: {status: RETRIEVAL_STATUS.UNAVAILABLE, value: null},
+        key: {status: RETRIEVAL_STATUS.UNAVAILABLE, value: null}
       }) :
       Observable.of({
         index: index,
@@ -72,7 +73,11 @@ export class VoteRetrievalService implements IVoteRetrievalService {
           status: RETRIEVAL_STATUS.AVAILABLE,
           value: VotePhases[Mock.AnonymousVotingContractCollections[index].currentPhase]
         },
-        numPendingRegistrations: {status: RETRIEVAL_STATUS.AVAILABLE, value: 0}
+        numPendingRegistrations: {status: RETRIEVAL_STATUS.AVAILABLE, value: 0},
+        key: {
+          status: RETRIEVAL_STATUS.AVAILABLE,
+          value: Mock.AnonymousVotingContractCollections[index].parameters.registration_key
+        }
       });
   }
 

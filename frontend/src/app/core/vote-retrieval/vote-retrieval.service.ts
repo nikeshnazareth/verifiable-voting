@@ -112,12 +112,19 @@ export class VoteRetrievalService implements IVoteRetrievalService {
             .map(regPairs => regPairs.filter(pair => pair.signature === null))
             .map(pending => pending.length)
         );
-        return numPendingRegistrations$.map(numPending => ({
+        const key$ = this._wrapRetrieval(
+          contractManager.constants$
+            .switchMap(constants => this._retrieveVoteParameters(constants.paramsHash))
+            .map(params => params.registration_key)
+        );
+        
+        return numPendingRegistrations$.combineLatest(key$, (numPending, key) => ({
           index: idx,
           address: summary.address,
           topic: summary.topic,
           phase: summary.phase,
-          numPendingRegistrations: numPending
+          numPendingRegistrations: numPending,
+          key: key
         }));
       })
       .share();

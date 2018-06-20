@@ -574,6 +574,9 @@ describe('Service: VoteRetrievalService', () => {
           });
         });
       });
+
+      xdescribe('parameter: key', () => {
+      });
     });
 
   });

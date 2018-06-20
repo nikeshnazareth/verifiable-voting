@@ -5,7 +5,9 @@
       <mat-panel-title>REGISTER</mat-panel-title>
       <mat-panel-description>{{status$.pluck('registration').pluck('message') | async}}</mat-panel-description>
     </mat-expansion-panel-header>
-    <vv-registration-phase [contract]="voteDetails$.pluck('address').pluck('value') | async"></vv-registration-phase>
+    <vv-registration-phase [contract]="voteDetails$.pluck('address').pluck('value') | async"
+                           [key]="voteDetails$.pluck('key').pluck('value') | async">
+    </vv-registration-phase>
   </mat-expansion-panel>
 
   <mat-expansion-panel [disabled]="status$.pluck('voting').pluck('disabled') | async">
