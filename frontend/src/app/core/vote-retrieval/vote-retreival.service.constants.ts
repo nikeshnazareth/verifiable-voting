@@ -22,6 +22,7 @@ export interface IReplacementVotingContractDetails {
   key: IDynamicValue<IRSAKey>;
   candidates: IDynamicValue<string[]>;
   registration: IDynamicValue<IRegistration>;
+  results: IDynamicValue<number[]>;
 }
 
 export interface IVotingContractSummary {

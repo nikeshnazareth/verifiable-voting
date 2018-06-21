@@ -539,8 +539,11 @@ describe('Service: VoteRetrievalService', () => {
     });
 
     describe('case: idx is in range', () => {
+      let voteCollection: IAnonymousVotingContractCollection;
+
       beforeEach(() => {
         index = 0;
+        voteCollection = Mock.AnonymousVotingContractCollections[index];
       });
 
       xdescribe('it should repeat the "summary" tests', () => {
@@ -656,6 +659,12 @@ describe('Service: VoteRetrievalService', () => {
           });
         });
 
+        xdescribe('case: one of the blind address hashes cannot be resolved', () => {
+        });
+
+        xdescribe('case: one of the blind signature hashes cannot be resolved', () => {
+        });
+
         describe('case: one of the blind signatures does not match the blind address', () => {
           beforeEach(() => {
             completeRegHashes[Mock.Voters[1].public_address].signature = Mock.Voters[2].signed_blinded_address_hash;
@@ -686,6 +695,127 @@ describe('Service: VoteRetrievalService', () => {
           });
         });
       });
+
+      describe('parameter: results', () => {
+
+        const create_voteHash_spy = (voteHashes) => {
+          spyOn(replacementAnonymousVotingSvc, 'at').and.callFake(addr => {
+            const contractManager = new Mock.AnonymousVotingContractManager(addr);
+            spyOnProperty(contractManager, 'voteHashes$').and.returnValue(Observable.from(voteHashes));
+            return contractManager;
+          });
+        };
+
+        xdescribe('case: before the vote hashes are retrieved', () => {
+        });
+
+        xdescribe('case: the vote hashes are unavailable', () => {
+        });
+
+        describe('case: there are no vote hashes', () => {
+          beforeEach(() => {
+            create_voteHash_spy([]);
+            init_replacementDetailsAtIndex$_and_subscribe();
+          });
+
+          it('should return an empty list', () => {
+            expect(lastEmitted().results.status).toEqual(RETRIEVAL_STATUS.AVAILABLE);
+            expect(lastEmitted().results.value).toEqual([]);
+          });
+        });
+
+        describe('case: one of the vote hashes is null', () => {
+          beforeEach(() => {
+            const voteHashes = Mock.Voters.map(voter => ({
+              voter: voter.anonymous_address,
+              voteHash: voter.vote_hash
+            }));
+            voteHashes[1].voteHash = null;
+            create_voteHash_spy(voteHashes);
+            init_replacementDetailsAtIndex$_and_subscribe();
+          });
+
+          it('should notify the error service', () => {
+            expect(errSvc.add).toHaveBeenCalledWith(VoteRetrievalServiceErrors.ipfs.nullHash, null);
+          });
+
+          it('should be unavailable', () => {
+            expect(lastEmitted().results.status).toEqual(RETRIEVAL_STATUS.UNAVAILABLE);
+            expect(lastEmitted().results.value).toEqual(null);
+          });
+        });
+
+        describe('case: one of the vote hashes does not resolve', () => {
+          beforeEach(() => {
+            const voteHashes = Mock.Voters.map(voter => ({
+              voter: voter.anonymous_address,
+              voteHash: voter.vote_hash
+            }));
+            voteHashes[1].voteHash = 'INVALID_HASH';
+            create_voteHash_spy(voteHashes);
+            init_replacementDetailsAtIndex$_and_subscribe();
+          });
+
+          it('should notify the error service', () => {
+            expect(errSvc.add).toHaveBeenCalledWith(VoteRetrievalServiceErrors.ipfs.retrieval, jasmine.any(Error));
+          });
+
+          it('should be unavailable', () => {
+            expect(lastEmitted().results.status).toEqual(RETRIEVAL_STATUS.UNAVAILABLE);
+            expect(lastEmitted().results.value).toEqual(null);
+          });
+        });
+
+        describe('case: one of the vote hashes resolves to an incorrectly formatted value', () => {
+          const invalid = {
+            voter: Mock.Voters[1].anonymous_address,
+            voteHash: Mock.Voters[1].blinded_address_hash // an arbitrary hash that resolves to something else
+          };
+
+          beforeEach(() => {
+            const voteHashes = Mock.Voters.map(voter => ({
+              voter: voter.anonymous_address,
+              voteHash: voter.vote_hash
+            }));
+            voteHashes[1] = invalid;
+            create_voteHash_spy(voteHashes);
+            init_replacementDetailsAtIndex$_and_subscribe();
+          });
+
+          it('should notify the error service', () => {
+            expect(errSvc.add).toHaveBeenCalledWith(VoteRetrievalServiceErrors.format.vote(invalid), null);
+          });
+
+          it('should be unavailable', () => {
+            expect(lastEmitted().results.status).toEqual(RETRIEVAL_STATUS.UNAVAILABLE);
+            expect(lastEmitted().results.value).toEqual(null);
+          });
+        });
+
+        xdescribe('case: on of the vote hashes resolves to an invalid candidate index', () => {
+        });
+
+        describe('case: valid vote hashes', () => {
+          beforeEach(() => {
+            const voteHashes = Mock.Voters.map(voter => ({
+              voter: voter.anonymous_address,
+              voteHash: voter.vote_hash
+            }));
+            create_voteHash_spy(voteHashes);
+            init_replacementDetailsAtIndex$_and_subscribe();
+          });
+
+          it('should return a histogram of the voter choices', () => {
+            expect(lastEmitted().results.status).toEqual(RETRIEVAL_STATUS.AVAILABLE);
+            const results = lastEmitted().results.value;
+            voteCollection.parameters.candidates.map((candidate, idx) => {
+              const candidateVotes = Mock.Voters.filter(voter => voter.vote.candidateIdx === idx).length;
+              expect(results[idx]).toEqual(candidateVotes);
+            });
+          });
+        });
+      });
+
 
     });
 

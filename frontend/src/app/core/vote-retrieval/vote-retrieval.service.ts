@@ -13,6 +13,7 @@ import 'rxjs/add/operator/combineLatest';
 import 'rxjs/add/operator/switchMap';
 import 'rxjs/add/operator/elementAt';
 import 'rxjs/add/operator/mergeMap';
+import 'rxjs/add/observable/throw';
 
 import { VoteListingContractService } from '../ethereum/vote-listing-contract/contract.service';
 import { AnonymousVotingContractService } from '../ethereum/anonymous-voting-contract/contract.service';
@@ -163,8 +164,27 @@ export class VoteRetrievalService implements IVoteRetrievalService {
             .catch(err => <Observable<IRegistration>> Observable.empty())
         );
 
-        return numPendingRegistrations$.combineLatest(key$, candidates$, registration$,
-          (numPending, key, candidates, registration) => ({
+
+        const tally$ = this._wrapRetrieval(
+          contractManager.voteHashes$
+            .mergeMap(voteHashEvent =>
+              this._retrieveIPFSHash(voteHashEvent.voteHash, this._voteFormatError)
+                .defaultIfEmpty(null)
+                .switchMap(vote => vote === null ? Observable.throw(null) : Observable.of(vote))
+            )
+            .map(vote => vote.candidateIdx)
+            // create a histogram of the selected candidate indices
+            .scan((arr, el) => {
+                arr[el] = arr[el] ? arr[el] + 1 : 1;
+                return arr;
+              }, []
+            )
+            .defaultIfEmpty([])
+            .catch(err => Observable.of(null))
+        );
+
+        return numPendingRegistrations$.combineLatest(key$, candidates$, registration$, tally$,
+          (numPending, key, candidates, registration, tally) => ({
             index: idx,
             address: summary.address,
             topic: summary.topic,
@@ -172,7 +192,8 @@ export class VoteRetrievalService implements IVoteRetrievalService {
             numPendingRegistrations: numPending,
             key: key,
             candidates: candidates,
-            registration: registration
+            registration: registration,
+            results: tally
           }));
       })
       .share();
@@ -180,14 +201,17 @@ export class VoteRetrievalService implements IVoteRetrievalService {
 
   /**
    * Prepend an empty value with status "RETRIEVING" to the source observable and then
-   * apply the status "AVAILABLE" to all values or emit an "UNAVAILABLE" status if the source observable is empty
+   * apply the status "AVAILABLE" to all values or emit an "UNAVAILABLE" status if the source observable is empty or null
    * @param {Observable<T>} obs the source observable
    * @returns {Observable<IDynamicValue<T>>} an observable the wraps retrieval status information around the source observable
    * @private
    */
   private _wrapRetrieval<T>(obs: Observable<T>): Observable<IDynamicValue<T>> {
     return obs
-      .map(val => ({status: RETRIEVAL_STATUS.AVAILABLE, value: val}))
+      .map(val => val ?
+        {status: RETRIEVAL_STATUS.AVAILABLE, value: val} :
+        {status: RETRIEVAL_STATUS.UNAVAILABLE, value: null}
+      )
       .defaultIfEmpty({status: RETRIEVAL_STATUS.UNAVAILABLE, value: null})
       .startWith({status: RETRIEVAL_STATUS.RETRIEVING, value: null});
   }
@@ -271,6 +295,20 @@ export class VoteRetrievalService implements IVoteRetrievalService {
     const valid = blindSignature &&
       blindSignature.blinded_signature && typeof blindSignature.blinded_signature === 'string';
     return valid ? null : VoteRetrievalServiceErrors.format.blindSignature(obj);
+  }
+
+  /**
+   * Confirms the specified object matches the IVote format
+   * @param {Object} obj the object to check
+   * @returns {Error} null if the object matches or an appropriate error otherwise
+   * @private
+   */
+  private _voteFormatError(obj: object): Error {
+    const vote: IVote = <IVote> obj;
+    const valid = vote &&
+      vote.signed_address && typeof vote.signed_address === 'string' &&
+      typeof vote.candidateIdx === 'number';
+    return valid ? null : VoteRetrievalServiceErrors.format.vote(obj);
   }
 
   /**

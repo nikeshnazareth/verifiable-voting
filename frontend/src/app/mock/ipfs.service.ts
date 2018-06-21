@@ -37,7 +37,7 @@ export class IPFSService implements IIPFSService {
       );
     }
 
-    throw new Error('Unexpected data added to the Mock IPFS service');
+    return Promise.reject(new Error('Unexpected data added to the Mock IPFS service'));
   }
 
   catJSON(hash: string): Promise<object> {
@@ -66,6 +66,6 @@ export class IPFSService implements IIPFSService {
       return Promise.resolve(matchingVotersByVote[0].vote);
     }
 
-    throw new Error('Unexpected hash requested from the Mock IPFS service');
+    return Promise.reject(new Error('Unexpected hash requested from the Mock IPFS service'));
   }
 }

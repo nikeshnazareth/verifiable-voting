@@ -229,7 +229,8 @@ describe('Component: VoteComponent', () => {
         numPendingRegistrations: {status: RETRIEVAL_STATUS.AVAILABLE, value: 0},
         key: {status: RETRIEVAL_STATUS.AVAILABLE, value: collection.parameters.registration_key},
         candidates: {status: RETRIEVAL_STATUS.AVAILABLE, value: collection.parameters.candidates},
-        registration: {status: RETRIEVAL_STATUS.AVAILABLE, value: {}}
+        registration: {status: RETRIEVAL_STATUS.AVAILABLE, value: {}},
+        results: {status: RETRIEVAL_STATUS.AVAILABLE, value: []}
       });
 
       beforeEach(() => {
