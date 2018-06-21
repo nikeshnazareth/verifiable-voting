@@ -399,7 +399,12 @@ describe('Component: VotingPhaseComponent', () => {
           fixture.componentInstance.contract = voteCollection.address;
           fixture.componentInstance.key = voteCollection.parameters.registration_key;
           fixture.componentInstance.candidates = voteCollection.parameters.candidates;
-          fixture.componentInstance.blindSignature = voter.signed_blinded_address;
+          fixture.componentInstance.registration = {};
+          Mock.Voters.map(v => {
+            fixture.componentInstance.registration[v.public_address] = {
+              blindSignature: v.signed_blinded_address
+            };
+          });
           populateForm();
         });
 

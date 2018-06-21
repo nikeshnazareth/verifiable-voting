@@ -17,7 +17,8 @@
     </mat-expansion-panel-header>
     <vv-voting-phase [contract]="voteDetails$.pluck('address').pluck('value') | async"
                      [key]="voteDetails$.pluck('key').pluck('value') | async"
-                     [candidates]="voteDetails$.pluck('candidates').pluck('value') | async">
+                     [candidates]="voteDetails$.pluck('candidates').pluck('value') | async"
+                     [registration]="voteDetails$.pluck('registration').pluck('value') | async">
     </vv-voting-phase>
   </mat-expansion-panel>
 

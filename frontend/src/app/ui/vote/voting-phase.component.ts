@@ -11,6 +11,7 @@ import { ErrorService } from '../../core/error-service/error.service';
 import { VoteManagerService } from '../../core/vote-manager/vote-manager.service';
 import { address } from '../../core/ethereum/type.mappings';
 import { IRSAKey } from '../../core/cryptography/cryptography.service';
+import { IRegistration } from '../../core/vote-retrieval/vote-retreival.service.constants';
 
 @Component({
   selector: 'vv-voting-phase',
@@ -21,7 +22,7 @@ export class VotingPhaseComponent implements OnInit, OnDestroy {
   @Input() contract: address;
   @Input() key: IRSAKey;
   @Input() candidates: string[];
-  @Input() blindSignature: string;
+  @Input() registration: IRegistration;
 
   public form: FormGroup;
   public submission$: Subject<IVotingForm>;
@@ -67,7 +68,7 @@ export class VotingPhaseComponent implements OnInit, OnDestroy {
         this.contract,
         this.key,
         form.anonymousAddress,
-        this.blindSignature,
+        this.registration[form.voterAddress].blindSignature,
         form.blindingFactor,
         form.chosenCandidate
       ))
@@ -89,6 +90,7 @@ export class VotingPhaseComponent implements OnInit, OnDestroy {
 }
 
 interface IVotingForm {
+  voterAddress: address;
   anonymousAddress: address;
   blindingFactor: string;
   chosenCandidate: number;

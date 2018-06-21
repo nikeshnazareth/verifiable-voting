@@ -7,6 +7,7 @@ import { Observable } from 'rxjs/Observable';
 import { VoteComponent } from './vote-component';
 import { VoteRetrievalService } from '../../core/vote-retrieval/vote-retrieval.service';
 import {
+  IRegistration,
   IReplacementVotingContractDetails,
   RETRIEVAL_STATUS
 } from '../../core/vote-retrieval/vote-retreival.service.constants';
@@ -17,7 +18,7 @@ import { Mock } from '../../mock/module';
 import { address } from '../../core/ethereum/type.mappings';
 import { IRSAKey } from '../../core/cryptography/cryptography.service';
 
-fdescribe('Component: VoteComponent', () => {
+describe('Component: VoteComponent', () => {
   let fixture: ComponentFixture<VoteComponent>;
   let page: Page;
 
@@ -174,7 +175,7 @@ fdescribe('Component: VoteComponent', () => {
     });
   });
 
-  fdescribe('User Interface', () => {
+  describe('User Interface', () => {
     describe('container', () => {
       it('should not exist initially', () => {
         fixture.detectChanges();
@@ -227,7 +228,8 @@ fdescribe('Component: VoteComponent', () => {
         phase: {status: RETRIEVAL_STATUS.AVAILABLE, value: VotePhases[collection.currentPhase]},
         numPendingRegistrations: {status: RETRIEVAL_STATUS.AVAILABLE, value: 0},
         key: {status: RETRIEVAL_STATUS.AVAILABLE, value: collection.parameters.registration_key},
-        candidates: {status: RETRIEVAL_STATUS.AVAILABLE, value: collection.parameters.candidates}
+        candidates: {status: RETRIEVAL_STATUS.AVAILABLE, value: collection.parameters.candidates},
+        registration: {status: RETRIEVAL_STATUS.AVAILABLE, value: {}}
       });
 
       beforeEach(() => {
@@ -279,6 +281,7 @@ fdescribe('Component: VoteComponent', () => {
       availabilityTests('contract address', 'address');
       availabilityTests('registration key', 'key');
       availabilityTests('candidates list', 'candidates');
+      availabilityTests('registration', 'registration');
 
       describe('case: all parameters are available', () => {
 
@@ -601,6 +604,40 @@ fdescribe('Component: VoteComponent', () => {
         });
       });
 
+      describe('input: registration', () => {
+        let mockRegistration;
+
+        beforeEach(() => {
+          mockRegistration = Mock.addresses.map(() => ({arbitrary: 'MOCK REGISTRATION '}));
+          spyOn(page.voteRetrievalSvc, 'replacementDetailsAtIndex$').and.callFake((idx) => {
+            const collection = Mock.AnonymousVotingContractCollections[idx];
+            return Observable.of({
+              index: idx,
+              address: {status: RETRIEVAL_STATUS.AVAILABLE, value: collection.address},
+              topic: {status: RETRIEVAL_STATUS.AVAILABLE, value: collection.parameters.topic},
+              phase: {status: RETRIEVAL_STATUS.AVAILABLE, value: VotePhases[collection.currentPhase]},
+              numPendingRegistrations: {status: RETRIEVAL_STATUS.AVAILABLE, value: 0},
+              key: {status: RETRIEVAL_STATUS.AVAILABLE, value: collection.parameters.registration_key},
+              candidates: {status: RETRIEVAL_STATUS.AVAILABLE, value: collection.parameters.candidates},
+              registration: {status: RETRIEVAL_STATUS.AVAILABLE, value: mockRegistration[idx]}
+            });
+          });
+        });
+
+        it('should be a mapping from public voter addresses to blind signatures', () => {
+          fixture.componentInstance.index = 0;
+          fixture.detectChanges();
+          expect(votingPhaseComponent().componentInstance.registration).toEqual(mockRegistration[0]);
+        });
+
+        it('should track the index of the Vote Component', () => {
+          Page.ARBITRARY_CONTRACT_INDICES.map(idx => {
+            fixture.componentInstance.index = idx;
+            fixture.detectChanges();
+            expect(votingPhaseComponent().componentInstance.registration).toEqual(mockRegistration[idx]);
+          });
+        });
+      });
     });
   });
 });
@@ -622,7 +659,7 @@ class StubVotingPhaseComponent {
   @Input() contract: address;
   @Input() key: IRSAKey;
   @Input() candidates: string[];
-  @Input() blindSignature: string;
+  @Input() registration: IRegistration;
 }
 
 @Component({
