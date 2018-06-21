@@ -27,7 +27,7 @@ export interface IBlindedAddress {
   blinded_address: string;
 }
 
-export interface IBlindedSignature {
+export interface IBlindSignature {
   blinded_signature: string;
 }
 

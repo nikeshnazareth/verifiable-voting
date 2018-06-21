@@ -1,6 +1,6 @@
 import { IIPFSService } from '../core/ipfs/ipfs.service';
 import { Mock } from './module';
-import { IBlindedAddress, IBlindedSignature, IVote, IVoteParameters } from '../core/vote-manager/vote-manager.service';
+import { IBlindedAddress, IBlindSignature, IVote, IVoteParameters } from '../core/vote-manager/vote-manager.service';
 
 export class IPFSService implements IIPFSService {
 
@@ -24,7 +24,7 @@ export class IPFSService implements IIPFSService {
     if (data.hasOwnProperty('blinded_signature')) {
       return Promise.resolve(
         Mock.Voters
-          .filter(voter => voter.signed_blinded_address === (<IBlindedSignature> data).blinded_signature)[0]
+          .filter(voter => voter.signed_blinded_address === (<IBlindSignature> data).blinded_signature)[0]
           .signed_blinded_address_hash
       );
     }

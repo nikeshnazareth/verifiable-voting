@@ -9,7 +9,7 @@ import {
   IDynamicValue,
   IVotingContractDetails, RETRIEVAL_STATUS,
   VoteRetrievalServiceErrors,
-  IReplacementVotingContractDetails,
+  IReplacementVotingContractDetails, IRegistration,
 } from './vote-retreival.service.constants';
 import { VoteListingContractService } from '../ethereum/vote-listing-contract/contract.service';
 import { AnonymousVotingContractService } from '../ethereum/anonymous-voting-contract/contract.service';
@@ -18,6 +18,8 @@ import { IPFSService } from '../ipfs/ipfs.service';
 import { ErrorService } from '../error-service/error.service';
 import { VotePhases } from '../ethereum/anonymous-voting-contract/contract.api';
 import { IVoteParameters } from '../vote-manager/vote-manager.service';
+import { CryptographyService } from '../cryptography/cryptography.service';
+import { IRegistrationHashes } from '../ethereum/anonymous-voting-contract/contract-manager';
 import { address } from '../ethereum/type.mappings';
 import { IAnonymousVotingContractCollection, IVoter, Mock } from '../../mock/module';
 import Spy = jasmine.Spy;
@@ -27,10 +29,11 @@ describe('Service: VoteRetrievalService', () => {
   let voteListingSvc: VoteListingContractService;
   let anonymousVotingSvc: AnonymousVotingContractService;
   let replacementAnonymousVotingSvc: ReplacementAnonymousVotingContractService;
+  let cryptoSvc: CryptographyService;
   let ipfsSvc: IPFSService;
   let errSvc: ErrorService;
   const voteRetrievalSvc = () => new VoteRetrievalService(
-    voteListingSvc, anonymousVotingSvc, replacementAnonymousVotingSvc, ipfsSvc, errSvc
+    voteListingSvc, anonymousVotingSvc, replacementAnonymousVotingSvc, cryptoSvc, ipfsSvc, errSvc
   );
 
   let onNext: Spy;
@@ -44,12 +47,14 @@ describe('Service: VoteRetrievalService', () => {
         {provide: VoteListingContractService, useClass: Mock.VoteListingContractService},
         {provide: AnonymousVotingContractService, useClass: Mock.AnonymousVotingContractService},
         {provide: ReplacementAnonymousVotingContractService, useClass: Mock.ReplacementAnonymousVotingContractService},
+        {provide: CryptographyService, useClass: Mock.CryptographyService},
         {provide: IPFSService, useClass: Mock.IPFSService},
       ]
     });
     voteListingSvc = TestBed.get(VoteListingContractService);
     anonymousVotingSvc = TestBed.get(AnonymousVotingContractService);
     replacementAnonymousVotingSvc = TestBed.get(ReplacementAnonymousVotingContractService);
+    cryptoSvc = TestBed.get(CryptographyService);
     ipfsSvc = TestBed.get(IPFSService);
     errSvc = TestBed.get(ErrorService);
 
@@ -400,7 +405,7 @@ describe('Service: VoteRetrievalService', () => {
 
           it('should notify the Error Service', () => {
             const hash: string = mockHashes[failedIndex];
-            expect(errSvc.add).toHaveBeenCalledWith(VoteRetrievalServiceErrors.ipfs.parameters(hash), error);
+            expect(errSvc.add).toHaveBeenCalledWith(VoteRetrievalServiceErrors.ipfs.retrieval, error);
           });
 
           it(`should emit ${RETRIEVAL_STATUS.UNAVAILABLE}`, () => {
@@ -536,7 +541,6 @@ describe('Service: VoteRetrievalService', () => {
     describe('case: idx is in range', () => {
       beforeEach(() => {
         index = 0;
-        init_replacementDetailsAtIndex$_and_subscribe();
       });
 
       xdescribe('it should repeat the "summary" tests', () => {
@@ -580,6 +584,109 @@ describe('Service: VoteRetrievalService', () => {
 
       xdescribe('parameter: candidates', () => {
       });
+
+      describe('parameter: registration', () => {
+        let completeRegHashes: IRegistrationHashes;
+
+        beforeEach(() => {
+          completeRegHashes = {};
+          Mock.Voters.map(voter => {
+            completeRegHashes[voter.public_address] = {
+              blindedAddress: voter.blinded_address_hash,
+              signature: voter.signed_blinded_address_hash
+            };
+          });
+
+          spyOn(replacementAnonymousVotingSvc, 'at').and.callFake(addr => {
+            const contractManager = new Mock.AnonymousVotingContractManager(addr);
+            spyOnProperty(contractManager, 'registrationHashes$').and.returnValue(Observable.of(completeRegHashes));
+            return contractManager;
+          });
+        });
+
+        xdescribe('case: before the registration hashes are retrieved', () => {
+        });
+
+        xdescribe('case: the registration hashes are unavailable', () => {
+        });
+
+        describe('case: there are no registration hashes', () => {
+          beforeEach(() => {
+            Object.keys(completeRegHashes).map(voter => {
+              delete completeRegHashes[voter];
+            });
+            init_replacementDetailsAtIndex$_and_subscribe();
+          });
+
+          it('should return an empty object', () => {
+            expect(lastEmitted().registration.status).toEqual(RETRIEVAL_STATUS.AVAILABLE);
+            expect(lastEmitted().registration.value).toEqual({});
+          });
+        });
+
+        describe('case: one of the blind address hashes is null', () => {
+          beforeEach(() => {
+            completeRegHashes[Mock.Voters[1].public_address].blindedAddress = null;
+            init_replacementDetailsAtIndex$_and_subscribe();
+          });
+
+          it('should notify the error service', () => {
+            expect(errSvc.add).toHaveBeenCalledWith(VoteRetrievalServiceErrors.ipfs.nullHash, null);
+          });
+
+          it('should be unavailable', () => {
+            expect(lastEmitted().registration.status).toEqual(RETRIEVAL_STATUS.UNAVAILABLE);
+            expect(lastEmitted().registration.value).toEqual(null);
+          });
+        });
+
+        describe('case: one of the blind signature hashes is null', () => {
+          beforeEach(() => {
+            completeRegHashes[Mock.Voters[1].public_address].signature = null;
+            init_replacementDetailsAtIndex$_and_subscribe();
+          });
+
+          it('should notify the error service', () => {
+            expect(errSvc.add).toHaveBeenCalledWith(VoteRetrievalServiceErrors.ipfs.nullHash, null);
+          });
+
+          it('should be unavailable', () => {
+            expect(lastEmitted().registration.status).toEqual(RETRIEVAL_STATUS.UNAVAILABLE);
+            expect(lastEmitted().registration.value).toEqual(null);
+          });
+        });
+
+        describe('case: one of the blind signatures does not match the blind address', () => {
+          beforeEach(() => {
+            completeRegHashes[Mock.Voters[1].public_address].signature = Mock.Voters[2].signed_blinded_address_hash;
+            init_replacementDetailsAtIndex$_and_subscribe();
+          });
+
+          it('should notify the error service', () => {
+            expect(errSvc.add).toHaveBeenCalledWith(VoteRetrievalServiceErrors.registration, null);
+          });
+
+          it('should be unavailable', () => {
+            expect(lastEmitted().registration.status).toEqual(RETRIEVAL_STATUS.UNAVAILABLE);
+            expect(lastEmitted().registration.value).toEqual(null);
+          });
+        });
+
+        describe('case: valid registration', () => {
+          beforeEach(() => init_replacementDetailsAtIndex$_and_subscribe());
+
+          it('should return all blind signatures', () => {
+            const reg: IDynamicValue<IRegistration> = lastEmitted().registration;
+            expect(reg.status).toEqual(RETRIEVAL_STATUS.AVAILABLE);
+            expect(Object.keys(reg.value).length).toEqual(Mock.Voters.length);
+            Mock.Voters.map(voter => {
+              expect(reg.value[voter.public_address]).toBeDefined();
+              expect(reg.value[voter.public_address].blindSignature).toEqual(voter.signed_blinded_address);
+            });
+          });
+        });
+      });
+
     });
 
   });

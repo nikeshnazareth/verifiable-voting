@@ -12,6 +12,7 @@ import 'rxjs/add/operator/scan';
 import 'rxjs/add/operator/combineLatest';
 import 'rxjs/add/operator/switchMap';
 import 'rxjs/add/operator/elementAt';
+import 'rxjs/add/operator/mergeMap';
 
 import { VoteListingContractService } from '../ethereum/vote-listing-contract/contract.service';
 import { AnonymousVotingContractService } from '../ethereum/anonymous-voting-contract/contract.service';
@@ -19,10 +20,11 @@ import { ReplacementAnonymousVotingContractService } from '../ethereum/anonymous
 import { VotePhases } from '../ethereum/anonymous-voting-contract/contract.api';
 import { address } from '../ethereum/type.mappings';
 import { IPFSService } from '../ipfs/ipfs.service';
-import { IBlindedSignature, IVote, IVoteParameters } from '../vote-manager/vote-manager.service';
+import { IBlindedAddress, IBlindSignature, IVote, IVoteParameters } from '../vote-manager/vote-manager.service';
+import { CryptographyService } from '../cryptography/cryptography.service';
 import { ErrorService } from '../error-service/error.service';
 import {
-  IDynamicValue, IReplacementVotingContractDetails,
+  IDynamicValue, IRegistration, IReplacementVotingContractDetails,
   IVotingContractDetails,
   IVotingContractSummary,
   RETRIEVAL_STATUS,
@@ -47,12 +49,11 @@ export class VoteRetrievalService implements IVoteRetrievalService {
   constructor(private voteListingSvc: VoteListingContractService,
               private anonymousVotingSvc: AnonymousVotingContractService,
               private replacementAnonymousVotingSvc: ReplacementAnonymousVotingContractService,
+              private cryptoSvc: CryptographyService,
               private ipfsSvc: IPFSService,
               private errSvc: ErrorService) {
     this._voteCache = {};
-    this._ipfsCache = {
-      parameters: {}
-    };
+    this._ipfsCache = {};
   }
 
   /**
@@ -106,26 +107,65 @@ export class VoteRetrievalService implements IVoteRetrievalService {
       .map(summaries => summaries[idx])
       .switchMap(summary => {
         const contractManager = this.replacementAnonymousVotingSvc.at(summary.address.value);
+
         const params$ = contractManager.constants$
-          .switchMap(constants => this._retrieveVoteParameters(constants.paramsHash))
+          .switchMap(constants => this._retrieveVoteParameters(constants.paramsHash));
+
         const numPendingRegistrations$ = this._wrapRetrieval(
           contractManager.registrationHashes$
             .map(regHashes => Object.keys(regHashes).map(voter => regHashes[voter]))
-            .map(regPairs => regPairs.filter(pair => pair.signature === null))
+            .map(hashPairs => hashPairs.filter(hashPair => hashPair.signature === null))
             .map(pending => pending.length)
         );
+
         const key$ = this._wrapRetrieval(params$.map(params => params.registration_key));
+
         const candidates$ = this._wrapRetrieval(params$.map(params => params.candidates));
 
-        return numPendingRegistrations$.combineLatest(key$, candidates$,
-          (numPending, key, candidates) => ({
+        const registration$ = this._wrapRetrieval(
+          contractManager.registrationHashes$
+            .switchMap(regHashes =>
+              Observable.from(Object.keys(regHashes))
+                .mergeMap(voter =>
+                  this._retrieveBlindedAddress(regHashes[voter].blindedAddress)
+                    .combineLatest(this._retrieveBlindSignature(regHashes[voter].signature), (addr, sig) => ({
+                      voter: voter, blindedAddress: addr, blindSignature: sig
+                    }))
+                    .defaultIfEmpty(null)
+                    .switchMap(reg => reg === null ? Observable.throw(null) : Observable.of(reg))
+                )
+                .scan((L, el) => L.concat(el), [])
+                .defaultIfEmpty([])
+                .combineLatest(params$.map(p => p.registration_key), (L, key) => {
+                  if (L.every(reg => this.cryptoSvc.verify(reg.blindedAddress, reg.blindSignature, key))) {
+                    return L;
+                  } else {
+                    this.errSvc.add(VoteRetrievalServiceErrors.registration, null);
+                    return null;
+                  }
+                })
+                .switchMap(L => L === null ? Observable.throw(null) : Observable.of(L))
+                .map(L => {
+                  const registration: IRegistration = {};
+                  L.map(reg => {
+                    registration[reg.voter] = {blindSignature: reg.blindSignature};
+                  });
+                  return registration;
+                })
+            )
+            .catch(err => <Observable<IRegistration>> Observable.empty())
+        );
+
+        return numPendingRegistrations$.combineLatest(key$, candidates$, registration$,
+          (numPending, key, candidates, registration) => ({
             index: idx,
             address: summary.address,
             topic: summary.topic,
             phase: summary.phase,
             numPendingRegistrations: numPending,
             key: key,
-            candidates: candidates
+            candidates: candidates,
+            registration: registration
           }));
       })
       .share();
@@ -146,30 +186,80 @@ export class VoteRetrievalService implements IVoteRetrievalService {
   }
 
   /**
-   * Resolves the IPFS hash (from cache if possible), confirms the retrieved object is valid
-   * and caches the result
+   * Resolves the IPFS hash (from cache if possible) and caches the result
+   * @param {string} hash the IPFS hash to resolve
+   * @returns {Observable<any>} An observable of the retrieved object <br/>
+   * or an empty observable if there is an error
+   * @private
+   */
+  private _retrieveIPFSHash(hash: string): Observable<any> {
+    if (!hash) {
+      this.errSvc.add(VoteRetrievalServiceErrors.ipfs.nullHash, null);
+      return Observable.empty();
+    }
+
+    return Observable.of(this._ipfsCache[hash] ? this._ipfsCache[hash] : this.ipfsSvc.catJSON(hash))
+      .do(promise => {
+        this._ipfsCache[hash] = promise;
+      })
+      .switchMap(promise => Observable.fromPromise(promise))
+      .catch(err => {
+        this.errSvc.add(VoteRetrievalServiceErrors.ipfs.retrieval, err);
+        return Observable.empty();
+      });
+  }
+
+  /**
    * @param {string} hash the IPFS hash to resolve
    * @returns {Observable<IVoteParameters>} An observable of the retrieved vote parameters <br/>
    * or an empty observable if there is an error
    * @private
    */
   private _retrieveVoteParameters(hash: string): Observable<IVoteParameters> {
-    return Observable.of(
-      this._ipfsCache.parameters[hash] ?
-        this._ipfsCache.parameters[hash] :
-        this.ipfsSvc.catJSON(hash)
-    )
-      .do(promise => {
-        this._ipfsCache.parameters[hash] = <Promise<IVoteParameters>> promise;
-      })
-      .switchMap(promise => Observable.fromPromise(promise))
-      .catch(err => {
-        this.errSvc.add(VoteRetrievalServiceErrors.ipfs.parameters(hash), err);
-        this._ipfsCache.parameters[hash] = null;
-        return <Observable<object>> Observable.empty();
-      })
+    return this._retrieveIPFSHash(hash)
       .switchMap(obj => this._filterInvalidParameters(obj));
   }
+
+  /**
+   * @param {string} hash the IPFS hash to resolve
+   * @returns {Observable<string>} An observable of the blinded address <br/>
+   * or an empty observable if there is an error
+   * @private
+   */
+  private _retrieveBlindedAddress(hash: string): Observable<string> {
+    return this._retrieveIPFSHash(hash)
+      .map(obj => <IBlindedAddress> obj)
+      .switchMap(obj => {
+        if (obj && obj.blinded_address && typeof obj.blinded_address === 'string') {
+          return Observable.of(obj);
+        } else {
+          this.errSvc.add(VoteRetrievalServiceErrors.format.blindedAddress(obj), null);
+          return <Observable<IBlindedAddress>> Observable.empty();
+        }
+      })
+      .map(obj => obj.blinded_address);
+  }
+
+  /**
+   * @param {string} hash the IPFS hash to resolve
+   * @returns {Observable<string>} An observable of the blind signature <br/>
+   * or an empty observable if there is an error
+   * @private
+   */
+  private _retrieveBlindSignature(hash: string): Observable<string> {
+    return this._retrieveIPFSHash(hash)
+      .map(obj => <IBlindSignature> obj)
+      .switchMap(obj => {
+        if (obj && obj.blinded_signature && typeof obj.blinded_signature === 'string') {
+          return Observable.of(obj);
+        } else {
+          this.errSvc.add(VoteRetrievalServiceErrors.format.blindSignature(obj), null);
+          return <Observable<IBlindSignature>> Observable.empty();
+        }
+      })
+      .map(obj => obj.blinded_signature);
+  }
+
 
   /**
    * Confirms the specified object matching the IVoteParameters format
@@ -348,11 +438,11 @@ export class VoteRetrievalService implements IVoteRetrievalService {
   /**
    * Notifies the Error Service if the object doesn't match the IBlindedSignature interface
    * @param {Object} obj the object to check
-   * @returns {IBlindedSignature} the blinded signature object if it matches or null otherwise
+   * @returns {IBlindSignature} the blinded signature object if it matches or null otherwise
    * @private
    */
-  private _confirmBlindSignatureFormat(obj: object): IBlindedSignature {
-    const wrappedBlindedSig: IBlindedSignature = <IBlindedSignature> obj;
+  private _confirmBlindSignatureFormat(obj: object): IBlindSignature {
+    const wrappedBlindedSig: IBlindSignature = <IBlindSignature> obj;
     const valid: boolean =
       wrappedBlindedSig &&
       wrappedBlindedSig.blinded_signature &&
@@ -465,8 +555,6 @@ interface IVoteCache {
 }
 
 interface IIPFSCache {
-  parameters: {
-    [addr: string]: Promise<IVoteParameters>;
-  };
+  [addr: string]: Promise<any>;
 }
 
