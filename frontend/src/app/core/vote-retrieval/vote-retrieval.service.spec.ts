@@ -718,9 +718,10 @@ describe('Service: VoteRetrievalService', () => {
             init_replacementDetailsAtIndex$_and_subscribe();
           });
 
-          it('should return an empty list', () => {
+          it('should return a list of candidates with 0 votes ', () => {
             expect(lastEmitted().results.status).toEqual(RETRIEVAL_STATUS.AVAILABLE);
-            expect(lastEmitted().results.value).toEqual([]);
+            expect(lastEmitted().results.value)
+              .toEqual(voteCollection.parameters.candidates.map(candidate => ({candidate: candidate, count: 0})));
           });
         });
 
@@ -792,7 +793,7 @@ describe('Service: VoteRetrievalService', () => {
           });
         });
 
-        xdescribe('case: on of the vote hashes resolves to an invalid candidate index', () => {
+        xdescribe('case: one of the vote hashes resolves to an invalid candidate index', () => {
         });
 
         describe('case: valid vote hashes', () => {
@@ -809,14 +810,12 @@ describe('Service: VoteRetrievalService', () => {
             expect(lastEmitted().results.status).toEqual(RETRIEVAL_STATUS.AVAILABLE);
             const results = lastEmitted().results.value;
             voteCollection.parameters.candidates.map((candidate, idx) => {
-              const candidateVotes = Mock.Voters.filter(voter => voter.vote.candidateIdx === idx).length;
-              expect(results[idx]).toEqual(candidateVotes);
+              const count = Mock.Voters.filter(voter => voter.vote.candidateIdx === idx).length;
+              expect(results[idx]).toEqual({candidate: candidate, count: count});
             });
           });
         });
       });
-
-
     });
 
   });

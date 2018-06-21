@@ -106,6 +106,7 @@ export class VoteRetrievalService implements IVoteRetrievalService {
     return this.summaries$
       .filter(summaries => idx < summaries.length)
       .map(summaries => summaries[idx])
+      .filter(summary => summary.address.status === RETRIEVAL_STATUS.AVAILABLE)
       .switchMap(summary => {
         const contractManager = this.replacementAnonymousVotingSvc.at(summary.address.value);
 
@@ -179,7 +180,13 @@ export class VoteRetrievalService implements IVoteRetrievalService {
                 return arr;
               }, []
             )
-            .defaultIfEmpty([])
+            .startWith([])
+            .combineLatest(params$.map(p => p.candidates), (totalArr, candidates) => candidates.map(
+              (candidate, candidateIdx) => ({
+                candidate: candidate,
+                count: totalArr[candidateIdx] ? totalArr[candidateIdx] : 0
+              }))
+            )
             .catch(err => Observable.of(null))
         );
 
@@ -208,9 +215,9 @@ export class VoteRetrievalService implements IVoteRetrievalService {
    */
   private _wrapRetrieval<T>(obs: Observable<T>): Observable<IDynamicValue<T>> {
     return obs
-      .map(val => val ?
-        {status: RETRIEVAL_STATUS.AVAILABLE, value: val} :
-        {status: RETRIEVAL_STATUS.UNAVAILABLE, value: null}
+      .map(val => val === null ?
+        {status: RETRIEVAL_STATUS.UNAVAILABLE, value: null} :
+        {status: RETRIEVAL_STATUS.AVAILABLE, value: val}
       )
       .defaultIfEmpty({status: RETRIEVAL_STATUS.UNAVAILABLE, value: null})
       .startWith({status: RETRIEVAL_STATUS.RETRIEVING, value: null});
