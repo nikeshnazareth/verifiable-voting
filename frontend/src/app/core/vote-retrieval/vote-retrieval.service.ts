@@ -73,7 +73,7 @@ export class VoteRetrievalService implements IVoteRetrievalService {
 
         const topic$ = this._wrapRetrieval(
           this.replacementAnonymousVotingSvc.at(addr).constants$
-            .switchMap(constants => this._retrieveVoteParameters(constants.paramsHash))
+            .switchMap(constants => this._retrieveIPFSHash(constants.paramsHash, this._parametersFormatError))
             .map(params => params.topic)
         );
 
@@ -109,7 +109,7 @@ export class VoteRetrievalService implements IVoteRetrievalService {
         const contractManager = this.replacementAnonymousVotingSvc.at(summary.address.value);
 
         const params$ = contractManager.constants$
-          .switchMap(constants => this._retrieveVoteParameters(constants.paramsHash));
+          .switchMap(constants => this._retrieveIPFSHash(constants.paramsHash, this._parametersFormatError));
 
         const numPendingRegistrations$ = this._wrapRetrieval(
           contractManager.registrationHashes$
@@ -126,14 +126,21 @@ export class VoteRetrievalService implements IVoteRetrievalService {
           contractManager.registrationHashes$
             .switchMap(regHashes =>
               Observable.from(Object.keys(regHashes))
-                .mergeMap(voter =>
-                  this._retrieveBlindedAddress(regHashes[voter].blindedAddress)
-                    .combineLatest(this._retrieveBlindSignature(regHashes[voter].signature), (addr, sig) => ({
-                      voter: voter, blindedAddress: addr, blindSignature: sig
-                    }))
+                .mergeMap(voter => {
+                  const blindedAddress$ =
+                    this._retrieveIPFSHash(regHashes[voter].blindedAddress, this._blindAddressFormatError)
+                      .map(obj => obj.blinded_address);
+
+                  const blindSignature$ =
+                    this._retrieveIPFSHash(regHashes[voter].signature, this._blindSignatureFormatError)
+                      .map(obj => obj.blinded_signature);
+
+                  return blindedAddress$.combineLatest(blindSignature$, (addr, sig) => ({
+                    voter: voter, blindedAddress: addr, blindSignature: sig
+                  }))
                     .defaultIfEmpty(null)
-                    .switchMap(reg => reg === null ? Observable.throw(null) : Observable.of(reg))
-                )
+                    .switchMap(reg => reg === null ? Observable.throw(null) : Observable.of(reg));
+                })
                 .scan((L, el) => L.concat(el), [])
                 .defaultIfEmpty([])
                 .combineLatest(params$.map(p => p.registration_key), (L, key) => {
@@ -186,13 +193,16 @@ export class VoteRetrievalService implements IVoteRetrievalService {
   }
 
   /**
-   * Resolves the IPFS hash (from cache if possible) and caches the result
+   * Resolves the IPFS hash (from cache if possible) and caches the result.
+   * Notifies the error service if the hash cannot be resolved or the object has an invalid format
    * @param {string} hash the IPFS hash to resolve
+   * @param {(obj: any) => Error} formatError a function that evaluates the returned object against <br/>
+   * an expected format and returns an Error if there is a mismatch
    * @returns {Observable<any>} An observable of the retrieved object <br/>
    * or an empty observable if there is an error
    * @private
    */
-  private _retrieveIPFSHash(hash: string): Observable<any> {
+  private _retrieveIPFSHash(hash: string, formatError: (obj: any) => Error): Observable<any> {
     if (!hash) {
       this.errSvc.add(VoteRetrievalServiceErrors.ipfs.nullHash, null);
       return Observable.empty();
@@ -206,91 +216,62 @@ export class VoteRetrievalService implements IVoteRetrievalService {
       .catch(err => {
         this.errSvc.add(VoteRetrievalServiceErrors.ipfs.retrieval, err);
         return Observable.empty();
+      })
+      .switchMap(obj => {
+        const err = formatError(obj);
+        if (err) {
+          this.errSvc.add(err, null);
+          return Observable.empty();
+        }
+        return Observable.of(obj);
       });
   }
 
   /**
-   * @param {string} hash the IPFS hash to resolve
-   * @returns {Observable<IVoteParameters>} An observable of the retrieved vote parameters <br/>
-   * or an empty observable if there is an error
-   * @private
-   */
-  private _retrieveVoteParameters(hash: string): Observable<IVoteParameters> {
-    return this._retrieveIPFSHash(hash)
-      .switchMap(obj => this._filterInvalidParameters(obj));
-  }
-
-  /**
-   * @param {string} hash the IPFS hash to resolve
-   * @returns {Observable<string>} An observable of the blinded address <br/>
-   * or an empty observable if there is an error
-   * @private
-   */
-  private _retrieveBlindedAddress(hash: string): Observable<string> {
-    return this._retrieveIPFSHash(hash)
-      .map(obj => <IBlindedAddress> obj)
-      .switchMap(obj => {
-        if (obj && obj.blinded_address && typeof obj.blinded_address === 'string') {
-          return Observable.of(obj);
-        } else {
-          this.errSvc.add(VoteRetrievalServiceErrors.format.blindedAddress(obj), null);
-          return <Observable<IBlindedAddress>> Observable.empty();
-        }
-      })
-      .map(obj => obj.blinded_address);
-  }
-
-  /**
-   * @param {string} hash the IPFS hash to resolve
-   * @returns {Observable<string>} An observable of the blind signature <br/>
-   * or an empty observable if there is an error
-   * @private
-   */
-  private _retrieveBlindSignature(hash: string): Observable<string> {
-    return this._retrieveIPFSHash(hash)
-      .map(obj => <IBlindSignature> obj)
-      .switchMap(obj => {
-        if (obj && obj.blinded_signature && typeof obj.blinded_signature === 'string') {
-          return Observable.of(obj);
-        } else {
-          this.errSvc.add(VoteRetrievalServiceErrors.format.blindSignature(obj), null);
-          return <Observable<IBlindSignature>> Observable.empty();
-        }
-      })
-      .map(obj => obj.blinded_signature);
-  }
-
-
-  /**
-   * Confirms the specified object matching the IVoteParameters format
+   * Confirms the specified object matches the IVoteParameters format
    * @param {Object} obj the object to check
-   * @returns {Observable<IVoteParameters>} An observable of the parameters object <br/>
-   * or an empty observable if there is an error
+   * @returns {Error} null if the object matches or an appropriate error otherwise
    * @private
    */
-  private _filterInvalidParameters(obj: object): Observable<IVoteParameters> {
+  private _parametersFormatError(obj: object): Error {
     const params: IVoteParameters = <IVoteParameters> obj;
     const valid: boolean =
       params &&
-      params.topic &&
-      typeof params.topic === 'string' &&
-      params.candidates &&
-      Array.isArray(params.candidates) &&
+      params.topic && typeof params.topic === 'string' &&
+      params.candidates && Array.isArray(params.candidates) &&
       params.candidates.every(el => typeof el === 'string') &&
       params.registration_key &&
-      params.registration_key.modulus &&
-      typeof params.registration_key.modulus === 'string' &&
-      params.registration_key.public_exp &&
-      typeof params.registration_key.public_exp === 'string';
+      params.registration_key.modulus && typeof params.registration_key.modulus === 'string' &&
+      params.registration_key.public_exp && typeof params.registration_key.public_exp === 'string';
 
-    if (valid) {
-      return Observable.of(params);
-    } else {
-      this.errSvc.add(VoteRetrievalServiceErrors.format.parameters(params), null);
-      return Observable.empty();
-    }
+    return valid ? null : VoteRetrievalServiceErrors.format.parameters(params);
   }
 
+  /**
+   * Confirms the specified object matches the IBlindAddress format
+   * @param {Object} obj the object to check
+   * @returns {Error} null if the object matches or an appropriate error otherwise
+   * @private
+   */
+  private _blindAddressFormatError(obj: object): Error {
+    const blindAddress: IBlindedAddress = <IBlindedAddress> obj;
+    const valid = blindAddress &&
+      blindAddress.blinded_address && typeof blindAddress.blinded_address === 'string';
+    return valid ? null : VoteRetrievalServiceErrors.format.blindedAddress(obj);
+  }
+
+  /**
+   * Confirms the specified object matches the IBlindSignature format
+   * @param {Object} obj the object to check
+   * @returns {Error} null if the object matches or an appropriate error otherwise
+   * @private
+   */
+  private _blindSignatureFormatError(obj: object): Error {
+    const blindSignature: IBlindSignature = <IBlindSignature> obj;
+    const valid = blindSignature &&
+      blindSignature.blinded_signature && typeof blindSignature.blinded_signature === 'string';
+    return valid ? null : VoteRetrievalServiceErrors.format.blindSignature(obj);
+  }
 
   /**
    * Retrieves the vote information (from cache if possible) for the specified contract
