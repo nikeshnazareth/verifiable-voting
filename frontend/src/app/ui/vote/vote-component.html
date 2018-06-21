@@ -27,6 +27,6 @@
       <mat-panel-title>RESULTS</mat-panel-title>
       <mat-panel-description>{{status$.pluck('complete').pluck('message') | async}}</mat-panel-description>
     </mat-expansion-panel-header>
-    <vv-results></vv-results>
+    <vv-results [tally]="voteDetails$.pluck('results').pluck('value') | async"></vv-results>
   </mat-expansion-panel>
 </div>

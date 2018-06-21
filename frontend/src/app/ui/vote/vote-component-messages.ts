@@ -62,7 +62,8 @@ export class VoteComponentMessages {
       details.address.status,
       details.key.status,
       details.candidates.status,
-      details.registration.status
+      details.registration.status,
+      details.results.status
     ];
 
     if (required.includes(RETRIEVAL_STATUS.RETRIEVING)) {

@@ -9,7 +9,7 @@ export interface ICandidateTotal {
 @Component({
   selector: 'vv-results',
   template: `
-    <div *ngFor="let candidateTotal of tally$ | async">
+    <div *ngFor="let candidateTotal of tally">
       {{candidateTotal.candidate}} : {{candidateTotal.count}}
     </div>
   `,

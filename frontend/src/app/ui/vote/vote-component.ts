@@ -1,6 +1,5 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { Observable } from 'rxjs/Observable';
-import { BehaviorSubject } from 'rxjs/BehaviorSubject';
 import { ReplaySubject } from 'rxjs/ReplaySubject';
 import 'rxjs/add/operator/pluck';
 
@@ -15,13 +14,13 @@ import { IPhaseStatus, VoteComponentMessages } from './vote-component-messages';
 })
 export class VoteComponent implements OnInit {
   public voteIsSelected: boolean;
-  public index$: BehaviorSubject<number>;
+  public index$: ReplaySubject<number>;
   public heading$: Observable<string>;
   public status$: Observable<IPhaseStatus>;
   public voteDetails$: ReplaySubject<IReplacementVotingContractDetails>;
 
   constructor(private voteRetrievalSvc: VoteRetrievalService) {
-    this.index$ = new BehaviorSubject<number>(null);
+    this.index$ = new ReplaySubject<number>();
     this.voteIsSelected = false;
   }
 

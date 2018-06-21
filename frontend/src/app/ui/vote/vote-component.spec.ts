@@ -17,6 +17,7 @@ import { MaterialModule } from '../../material/material.module';
 import { Mock } from '../../mock/module';
 import { address } from '../../core/ethereum/type.mappings';
 import { IRSAKey } from '../../core/cryptography/cryptography.service';
+import { ICandidateTotal } from './results-component';
 
 describe('Component: VoteComponent', () => {
   let fixture: ComponentFixture<VoteComponent>;
@@ -70,6 +71,22 @@ describe('Component: VoteComponent', () => {
         page = new Page();
       });
   }));
+
+  const completeDetails = (idx) => {
+    const collection = Mock.AnonymousVotingContractCollections[idx];
+    return {
+      index: idx,
+      address: {status: RETRIEVAL_STATUS.AVAILABLE, value: collection.address},
+      topic: {status: RETRIEVAL_STATUS.AVAILABLE, value: collection.parameters.topic},
+      phase: {status: RETRIEVAL_STATUS.AVAILABLE, value: VotePhases[collection.currentPhase]},
+      numPendingRegistrations: {status: RETRIEVAL_STATUS.AVAILABLE, value: 0},
+      key: {status: RETRIEVAL_STATUS.AVAILABLE, value: collection.parameters.registration_key},
+      candidates: {status: RETRIEVAL_STATUS.AVAILABLE, value: collection.parameters.candidates},
+      registration: {status: RETRIEVAL_STATUS.AVAILABLE, value: {}},
+      results: {status: RETRIEVAL_STATUS.AVAILABLE, value: []}
+    };
+  };
+
 
   describe('Structure', () => {
     describe('case: after vote is selected', () => {
@@ -220,19 +237,6 @@ describe('Component: VoteComponent', () => {
 
     describe('Expansion Panels', () => {
       const idx: number = 0;
-      const collection = Mock.AnonymousVotingContractCollections[idx];
-      const completeDetails = () => ({
-        index: idx,
-        address: {status: RETRIEVAL_STATUS.AVAILABLE, value: collection.address},
-        topic: {status: RETRIEVAL_STATUS.AVAILABLE, value: collection.parameters.topic},
-        phase: {status: RETRIEVAL_STATUS.AVAILABLE, value: VotePhases[collection.currentPhase]},
-        numPendingRegistrations: {status: RETRIEVAL_STATUS.AVAILABLE, value: 0},
-        key: {status: RETRIEVAL_STATUS.AVAILABLE, value: collection.parameters.registration_key},
-        candidates: {status: RETRIEVAL_STATUS.AVAILABLE, value: collection.parameters.candidates},
-        registration: {status: RETRIEVAL_STATUS.AVAILABLE, value: {}},
-        results: {status: RETRIEVAL_STATUS.AVAILABLE, value: []}
-      });
-
       beforeEach(() => {
         fixture.componentInstance.index = idx;
       });
@@ -240,7 +244,7 @@ describe('Component: VoteComponent', () => {
       const availabilityTests = (name, property) => {
         describe(`case: the ${name} is being retrieved`, () => {
           beforeEach(() => {
-            const details = completeDetails();
+            const details = completeDetails(idx);
             details[property] = {status: RETRIEVAL_STATUS.RETRIEVING, value: null};
             spyOn(page.voteRetrievalSvc, 'replacementDetailsAtIndex$').and.returnValue(Observable.of(details));
             fixture.detectChanges();
@@ -259,7 +263,7 @@ describe('Component: VoteComponent', () => {
 
         describe(`case: the ${name} is unavailable`, () => {
           beforeEach(() => {
-            const details = completeDetails();
+            const details = completeDetails(idx);
             details[property] = {status: RETRIEVAL_STATUS.UNAVAILABLE, value: null};
             spyOn(page.voteRetrievalSvc, 'replacementDetailsAtIndex$').and.returnValue(Observable.of(details));
             fixture.detectChanges();
@@ -283,6 +287,7 @@ describe('Component: VoteComponent', () => {
       availabilityTests('registration key', 'key');
       availabilityTests('candidates list', 'candidates');
       availabilityTests('registration', 'registration');
+      availabilityTests('results', 'results');
 
       describe('case: all parameters are available', () => {
 
@@ -291,7 +296,7 @@ describe('Component: VoteComponent', () => {
             let details: IReplacementVotingContractDetails;
 
             beforeEach(() => {
-              details = completeDetails();
+              details = completeDetails(idx);
               details.phase = {status: RETRIEVAL_STATUS.AVAILABLE, value: VotePhases[0]};
             });
 
@@ -365,7 +370,7 @@ describe('Component: VoteComponent', () => {
             let details: IReplacementVotingContractDetails;
 
             beforeEach(() => {
-              details = completeDetails();
+              details = completeDetails(idx);
               details.phase = {status: RETRIEVAL_STATUS.AVAILABLE, value: VotePhases[1]};
             });
 
@@ -439,7 +444,7 @@ describe('Component: VoteComponent', () => {
             let details: IReplacementVotingContractDetails;
 
             beforeEach(() => {
-              details = completeDetails();
+              details = completeDetails(idx);
               details.phase = {status: RETRIEVAL_STATUS.AVAILABLE, value: VotePhases[2]};
             });
 
@@ -512,130 +517,160 @@ describe('Component: VoteComponent', () => {
       });
     });
 
-    describe('Registration Phase Component', () => {
-      const regPhaseComponent = () => fixture.debugElement.query(By.css('vv-registration-phase'));
+    describe('Sub components', () => {
 
-      describe('input: contract', () => {
-        it('should be set to the VoteComponent contract address', () => {
-          fixture.componentInstance.index = 0;
-          fixture.detectChanges();
-          expect(regPhaseComponent().componentInstance.contract).toEqual(Mock.addresses[0]);
-        });
 
-        it('should track the index of the Vote Component', () => {
-          Page.ARBITRARY_CONTRACT_INDICES.map(idx => {
-            fixture.componentInstance.index = idx;
+      describe('Registration Phase Component', () => {
+        const regPhaseComponent = () => fixture.debugElement.query(By.css('vv-registration-phase'));
+
+        describe('input: contract', () => {
+          it('should be set to the VoteComponent contract address', () => {
+            fixture.componentInstance.index = 0;
             fixture.detectChanges();
-            expect(regPhaseComponent().componentInstance.contract).toEqual(Mock.addresses[idx]);
+            expect(regPhaseComponent().componentInstance.contract).toEqual(Mock.addresses[0]);
           });
-        });
-      });
 
-      describe('input: key', () => {
-        it('should be set to the registration key', () => {
-          fixture.componentInstance.index = 0;
-          fixture.detectChanges();
-          expect(regPhaseComponent().componentInstance.key)
-            .toEqual(Mock.AnonymousVotingContractCollections[0].parameters.registration_key);
-        });
-
-        it('should track the index of the Vote Component', () => {
-          Page.ARBITRARY_CONTRACT_INDICES.map(idx => {
-            fixture.componentInstance.index = idx;
-            fixture.detectChanges();
-            expect(regPhaseComponent().componentInstance.key)
-              .toEqual(Mock.AnonymousVotingContractCollections[idx].parameters.registration_key);
-          });
-        });
-      });
-    });
-
-    describe('Voting Phase Component', () => {
-      const votingPhaseComponent = () => fixture.debugElement.query(By.css('vv-voting-phase'));
-
-      describe('input: contract', () => {
-        it('should be set to the VoteComponent contract address', () => {
-          fixture.componentInstance.index = 0;
-          fixture.detectChanges();
-          expect(votingPhaseComponent().componentInstance.contract).toEqual(Mock.addresses[0]);
-        });
-
-        it('should track the index of the Vote Component', () => {
-          Page.ARBITRARY_CONTRACT_INDICES.map(idx => {
-            fixture.componentInstance.index = idx;
-            fixture.detectChanges();
-            expect(votingPhaseComponent().componentInstance.contract).toEqual(Mock.addresses[idx]);
-          });
-        });
-      });
-
-      describe('input: key', () => {
-        it('should be set to the registration key', () => {
-          fixture.componentInstance.index = 0;
-          fixture.detectChanges();
-          expect(votingPhaseComponent().componentInstance.key)
-            .toEqual(Mock.AnonymousVotingContractCollections[0].parameters.registration_key);
-        });
-
-        it('should track the index of the Vote Component', () => {
-          Page.ARBITRARY_CONTRACT_INDICES.map(idx => {
-            fixture.componentInstance.index = idx;
-            fixture.detectChanges();
-            expect(votingPhaseComponent().componentInstance.key)
-              .toEqual(Mock.AnonymousVotingContractCollections[idx].parameters.registration_key);
-          });
-        });
-      });
-
-      describe('input: candidates', () => {
-        it('should be set to the candidates list', () => {
-          fixture.componentInstance.index = 0;
-          fixture.detectChanges();
-          expect(votingPhaseComponent().componentInstance.candidates)
-            .toEqual(Mock.AnonymousVotingContractCollections[0].parameters.candidates);
-        });
-
-        it('should track the index of the Vote Component', () => {
-          Page.ARBITRARY_CONTRACT_INDICES.map(idx => {
-            fixture.componentInstance.index = idx;
-            fixture.detectChanges();
-            expect(votingPhaseComponent().componentInstance.candidates)
-              .toEqual(Mock.AnonymousVotingContractCollections[idx].parameters.candidates);
-          });
-        });
-      });
-
-      describe('input: registration', () => {
-        let mockRegistration;
-
-        beforeEach(() => {
-          mockRegistration = Mock.addresses.map(() => ({arbitrary: 'MOCK REGISTRATION '}));
-          spyOn(page.voteRetrievalSvc, 'replacementDetailsAtIndex$').and.callFake((idx) => {
-            const collection = Mock.AnonymousVotingContractCollections[idx];
-            return Observable.of({
-              index: idx,
-              address: {status: RETRIEVAL_STATUS.AVAILABLE, value: collection.address},
-              topic: {status: RETRIEVAL_STATUS.AVAILABLE, value: collection.parameters.topic},
-              phase: {status: RETRIEVAL_STATUS.AVAILABLE, value: VotePhases[collection.currentPhase]},
-              numPendingRegistrations: {status: RETRIEVAL_STATUS.AVAILABLE, value: 0},
-              key: {status: RETRIEVAL_STATUS.AVAILABLE, value: collection.parameters.registration_key},
-              candidates: {status: RETRIEVAL_STATUS.AVAILABLE, value: collection.parameters.candidates},
-              registration: {status: RETRIEVAL_STATUS.AVAILABLE, value: mockRegistration[idx]}
+          it('should track the index of the Vote Component', () => {
+            Page.ARBITRARY_CONTRACT_INDICES.map(idx => {
+              fixture.componentInstance.index = idx;
+              fixture.detectChanges();
+              expect(regPhaseComponent().componentInstance.contract).toEqual(Mock.addresses[idx]);
             });
           });
         });
 
-        it('should be a mapping from public voter addresses to blind signatures', () => {
-          fixture.componentInstance.index = 0;
-          fixture.detectChanges();
-          expect(votingPhaseComponent().componentInstance.registration).toEqual(mockRegistration[0]);
+        describe('input: key', () => {
+          it('should be set to the registration key', () => {
+            fixture.componentInstance.index = 0;
+            fixture.detectChanges();
+            expect(regPhaseComponent().componentInstance.key)
+              .toEqual(Mock.AnonymousVotingContractCollections[0].parameters.registration_key);
+          });
+
+          it('should track the index of the Vote Component', () => {
+            Page.ARBITRARY_CONTRACT_INDICES.map(idx => {
+              fixture.componentInstance.index = idx;
+              fixture.detectChanges();
+              expect(regPhaseComponent().componentInstance.key)
+                .toEqual(Mock.AnonymousVotingContractCollections[idx].parameters.registration_key);
+            });
+          });
+        });
+      });
+
+      describe('Voting Phase Component', () => {
+        const votingPhaseComponent = () => fixture.debugElement.query(By.css('vv-voting-phase'));
+
+        describe('input: contract', () => {
+          it('should be set to the VoteComponent contract address', () => {
+            fixture.componentInstance.index = 0;
+            fixture.detectChanges();
+            expect(votingPhaseComponent().componentInstance.contract).toEqual(Mock.addresses[0]);
+          });
+
+          it('should track the index of the Vote Component', () => {
+            Page.ARBITRARY_CONTRACT_INDICES.map(idx => {
+              fixture.componentInstance.index = idx;
+              fixture.detectChanges();
+              expect(votingPhaseComponent().componentInstance.contract).toEqual(Mock.addresses[idx]);
+            });
+          });
         });
 
-        it('should track the index of the Vote Component', () => {
-          Page.ARBITRARY_CONTRACT_INDICES.map(idx => {
-            fixture.componentInstance.index = idx;
+        describe('input: key', () => {
+          it('should be set to the registration key', () => {
+            fixture.componentInstance.index = 0;
             fixture.detectChanges();
-            expect(votingPhaseComponent().componentInstance.registration).toEqual(mockRegistration[idx]);
+            expect(votingPhaseComponent().componentInstance.key)
+              .toEqual(Mock.AnonymousVotingContractCollections[0].parameters.registration_key);
+          });
+
+          it('should track the index of the Vote Component', () => {
+            Page.ARBITRARY_CONTRACT_INDICES.map(idx => {
+              fixture.componentInstance.index = idx;
+              fixture.detectChanges();
+              expect(votingPhaseComponent().componentInstance.key)
+                .toEqual(Mock.AnonymousVotingContractCollections[idx].parameters.registration_key);
+            });
+          });
+        });
+
+        describe('input: candidates', () => {
+          it('should be set to the candidates list', () => {
+            fixture.componentInstance.index = 0;
+            fixture.detectChanges();
+            expect(votingPhaseComponent().componentInstance.candidates)
+              .toEqual(Mock.AnonymousVotingContractCollections[0].parameters.candidates);
+          });
+
+          it('should track the index of the Vote Component', () => {
+            Page.ARBITRARY_CONTRACT_INDICES.map(idx => {
+              fixture.componentInstance.index = idx;
+              fixture.detectChanges();
+              expect(votingPhaseComponent().componentInstance.candidates)
+                .toEqual(Mock.AnonymousVotingContractCollections[idx].parameters.candidates);
+            });
+          });
+        });
+
+        describe('input: registration', () => {
+          let mockRegistration;
+
+          beforeEach(() => {
+            mockRegistration = Mock.addresses.map(addr => ({arbitrary: 'MOCK REGISTRATION ' + addr}));
+            spyOn(page.voteRetrievalSvc, 'replacementDetailsAtIndex$').and.callFake((idx) => {
+              const details = completeDetails(idx);
+              details.registration.value = mockRegistration[idx];
+              return Observable.of(details);
+            });
+          });
+
+          it('should be a mapping from public voter addresses to blind signatures', () => {
+            fixture.componentInstance.index = 0;
+            fixture.detectChanges();
+            expect(votingPhaseComponent().componentInstance.registration).toEqual(mockRegistration[0]);
+          });
+
+          it('should track the index of the Vote Component', () => {
+            Page.ARBITRARY_CONTRACT_INDICES.map(idx => {
+              fixture.componentInstance.index = idx;
+              fixture.detectChanges();
+              expect(votingPhaseComponent().componentInstance.registration).toEqual(mockRegistration[idx]);
+            });
+          });
+        });
+      });
+
+      describe('Results Component', () => {
+        const resultsComponent = () => fixture.debugElement.query(By.css('vv-results'));
+
+        describe('input: results', () => {
+          let mockResults;
+
+          beforeEach(() => {
+            mockResults = Mock.AnonymousVotingContractCollections.map((collection, colIdx) => {
+              const N = collection.parameters.candidates.length;
+              return collection.parameters.candidates.map((candidate, candIdx) => (colIdx + candIdx) * 5 % N);
+            });
+            spyOn(page.voteRetrievalSvc, 'replacementDetailsAtIndex$').and.callFake((idx) => {
+              const details = completeDetails(idx);
+              details.results.value = mockResults[idx];
+              return Observable.of(details);
+            });
+          });
+
+          it('should be a histogram of the votes', () => {
+            fixture.componentInstance.index = 0;
+            fixture.detectChanges();
+            expect(resultsComponent().componentInstance.tally).toEqual(mockResults[0]);
+          });
+
+          it('should track the index of the Vote Component', () => {
+            Page.ARBITRARY_CONTRACT_INDICES.map(idx => {
+              fixture.componentInstance.index = idx;
+              fixture.detectChanges();
+              expect(resultsComponent().componentInstance.tally).toEqual(mockResults[idx]);
+            });
           });
         });
       });
@@ -668,6 +703,7 @@ class StubVotingPhaseComponent {
   template: ''
 })
 class StubResultsComponent {
+  @Input() tally: ICandidateTotal[];
 }
 
 
