@@ -1,16 +1,16 @@
-import { Observable } from 'rxjs/Observable';
-import { ReplaySubject } from 'rxjs/ReplaySubject';
-import { BehaviorSubject } from 'rxjs/BehaviorSubject';
+import 'rxjs/add/observable/from';
 import 'rxjs/add/observable/timer';
 import 'rxjs/add/operator/reduce';
-import 'rxjs/add/observable/from';
+import { BehaviorSubject } from 'rxjs/BehaviorSubject';
+import { Observable } from 'rxjs/Observable';
+import { ReplaySubject } from 'rxjs/ReplaySubject';
 
-import { AnonymousVotingAPI, RegistrationComplete, VoterInitiatedRegistration, VoteSubmitted } from './contract.api';
-import { IContractLog } from '../contract.interface';
 import { ErrorService } from '../../error-service/error.service';
-import { IVoteConstants } from '../vote-listing-contract/contract.service';
-import { address } from '../type.mappings';
+import { IContractLog } from '../contract.interface';
 import { ITransactionReceipt } from '../transaction.interface';
+import { address } from '../type.mappings';
+import { IVoteConstants } from '../vote-listing-contract/contract.service';
+import { AnonymousVotingAPI, RegistrationComplete, VoterInitiatedRegistration, VoteSubmitted } from './contract.api';
 
 export interface IRegistrationHashes {
   [voter: string]: {

@@ -1,6 +1,6 @@
-import * as VoteListing from '../../../backend/build/contracts/VoteListing.json';
 import * as AnonymousVoting from '../../../backend/build/contracts/AnonymousVoting.json';
 import * as NoRestriction from '../../../backend/build/contracts/NoRestriction.json';
+import * as VoteListing from '../../../backend/build/contracts/VoteListing.json';
 
 export let APP_CONFIG = {
   // infura.io provides a REST interfact at this address into an IPFS node

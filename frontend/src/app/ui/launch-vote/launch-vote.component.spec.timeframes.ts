@@ -1,12 +1,12 @@
 
-import { AbstractControl, FormGroup } from '@angular/forms';
-import { ComponentFixture } from '@angular/core/testing';
 import { DebugElement } from '@angular/core';
+import { ComponentFixture } from '@angular/core/testing';
+import { AbstractControl, FormGroup } from '@angular/forms';
 import { By } from '@angular/platform-browser';
 
-import { LaunchVoteComponent } from './launch-vote.component';
 import { DOMInteractionUtility } from '../../mock/dom-interaction-utility';
 import { Mock } from '../../mock/module';
+import { LaunchVoteComponent } from './launch-vote.component';
 
 const msPerDay: number = 1000 * 60 * 60 * 24;
 const dayAfter = (d: Date) => new Date(d.getTime() + msPerDay);

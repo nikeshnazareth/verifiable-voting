@@ -1,11 +1,11 @@
+import { DebugElement } from '@angular/core';
 import { ComponentFixture } from '@angular/core/testing';
 import { FormArray } from '@angular/forms';
-import { DebugElement } from '@angular/core';
 import { By } from '@angular/platform-browser';
 
-import { LaunchVoteComponent } from './launch-vote.component';
 import { DOMInteractionUtility } from '../../mock/dom-interaction-utility';
 import { Mock } from '../../mock/module';
+import { LaunchVoteComponent } from './launch-vote.component';
 
 export function new_candidate_tests(getFixture) {
 

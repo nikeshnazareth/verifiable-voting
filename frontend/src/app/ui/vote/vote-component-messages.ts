@@ -1,8 +1,8 @@
+import { VotePhases } from '../../core/ethereum/anonymous-voting-contract/contract.api';
 import {
   IVotingContractDetails,
   RETRIEVAL_STATUS
 } from '../../core/vote-retrieval/vote-retreival.service.constants';
-import { VotePhases } from '../../core/ethereum/anonymous-voting-contract/contract.api';
 
 export interface IPhaseStatus {
   registration: {

@@ -1,10 +1,10 @@
 import { Component, Input, OnInit } from '@angular/core';
+import 'rxjs/add/operator/pluck';
 import { Observable } from 'rxjs/Observable';
 import { ReplaySubject } from 'rxjs/ReplaySubject';
-import 'rxjs/add/operator/pluck';
 
-import { VoteRetrievalService } from '../../core/vote-retrieval/vote-retrieval.service';
 import { IVotingContractDetails, } from '../../core/vote-retrieval/vote-retreival.service.constants';
+import { VoteRetrievalService } from '../../core/vote-retrieval/vote-retrieval.service';
 import { IPhaseStatus, VoteComponentMessages } from './vote-component-messages';
 
 @Component({

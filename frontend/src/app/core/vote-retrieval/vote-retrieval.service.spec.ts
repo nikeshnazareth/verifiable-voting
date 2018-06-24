@@ -1,24 +1,24 @@
 import { fakeAsync, TestBed, tick } from '@angular/core/testing';
+import 'rxjs/add/operator/distinctUntilChanged';
 import { Observable } from 'rxjs/Observable';
 import { Subscription } from 'rxjs/Subscription';
-import 'rxjs/add/operator/distinctUntilChanged';
 
-import { VoteRetrievalService } from './vote-retrieval.service';
+import { IAnonymousVotingContractCollection, Mock } from '../../mock/module';
+import { CryptographyService } from '../cryptography/cryptography.service';
+import { ErrorService } from '../error-service/error.service';
+import { IRegistrationHashes } from '../ethereum/anonymous-voting-contract/contract-manager';
+import { VotePhases } from '../ethereum/anonymous-voting-contract/contract.api';
+import { AnonymousVotingContractService } from '../ethereum/anonymous-voting-contract/contract.service';
+import { VoteListingContractService } from '../ethereum/vote-listing-contract/contract.service';
+import { IPFSService } from '../ipfs/ipfs.service';
+import { IVoteParameters } from '../vote-manager/vote-manager.service';
 import {
   IDynamicValue,
-  RETRIEVAL_STATUS,
-  VoteRetrievalServiceErrors,
-  IVotingContractDetails, IRegistration,
+  IRegistration,
+  IVotingContractDetails,
+  RETRIEVAL_STATUS, VoteRetrievalServiceErrors,
 } from './vote-retreival.service.constants';
-import { VoteListingContractService } from '../ethereum/vote-listing-contract/contract.service';
-import { AnonymousVotingContractService } from '../ethereum/anonymous-voting-contract/contract.service';
-import { IPFSService } from '../ipfs/ipfs.service';
-import { ErrorService } from '../error-service/error.service';
-import { VotePhases } from '../ethereum/anonymous-voting-contract/contract.api';
-import { IVoteParameters } from '../vote-manager/vote-manager.service';
-import { CryptographyService } from '../cryptography/cryptography.service';
-import { IRegistrationHashes } from '../ethereum/anonymous-voting-contract/contract-manager';
-import { IAnonymousVotingContractCollection, Mock } from '../../mock/module';
+import { VoteRetrievalService } from './vote-retrieval.service';
 import Spy = jasmine.Spy;
 
 describe('Service: VoteRetrievalService', () => {

@@ -3,9 +3,9 @@
  */
 import { Injectable } from '@angular/core';
 
-import { Web3Service } from '../ethereum/web3.service';
-import { ErrorService } from '../error-service/error.service';
 import * as BN from 'bn.js';
+import { ErrorService } from '../error-service/error.service';
+import { Web3Service } from '../ethereum/web3.service';
 
 export interface IRSAKey {
   modulus: string;

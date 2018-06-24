@@ -1,5 +1,5 @@
-import * as IPFS from 'ipfs-mini';
 import { Injectable } from '@angular/core';
+import * as IPFS from 'ipfs-mini';
 import { APP_CONFIG } from '../../config';
 import { IIPFSService } from './ipfs.service';
 

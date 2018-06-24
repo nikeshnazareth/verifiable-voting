@@ -1,19 +1,19 @@
-import { async, ComponentFixture, TestBed } from '@angular/core/testing';
 import { DebugElement } from '@angular/core';
-import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import { async, ComponentFixture, TestBed } from '@angular/core/testing';
 import { AbstractControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { By } from '@angular/platform-browser';
-import { Observable } from 'rxjs/Observable';
 import { MatRadioGroup } from '@angular/material';
+import { By } from '@angular/platform-browser';
+import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import { Observable } from 'rxjs/Observable';
 
-import { MaterialModule } from '../../material/material.module';
-import { IAnonymousVotingContractCollection, IVoter, Mock } from '../../mock/module';
 import { ErrorService } from '../../core/error-service/error.service';
-import { VotingPhaseComponent } from './voting-phase.component';
-import { Web3Service, Web3ServiceErrors } from '../../core/ethereum/web3.service';
 import { address } from '../../core/ethereum/type.mappings';
-import { DOMInteractionUtility } from '../../mock/dom-interaction-utility';
+import { Web3Service, Web3ServiceErrors } from '../../core/ethereum/web3.service';
 import { VoteManagerService } from '../../core/vote-manager/vote-manager.service';
+import { MaterialModule } from '../../material/material.module';
+import { DOMInteractionUtility } from '../../mock/dom-interaction-utility';
+import { IAnonymousVotingContractCollection, IVoter, Mock } from '../../mock/module';
+import { VotingPhaseComponent } from './voting-phase.component';
 
 describe('Component: VotingPhaseComponent', () => {
   let fixture: ComponentFixture<VotingPhaseComponent>;

@@ -1,10 +1,10 @@
 import { Observable } from 'rxjs/Observable';
 
-import { IVoteManagerService, IVoteParameters } from '../core/vote-manager/vote-manager.service';
-import { ITransactionReceipt } from '../core/ethereum/transaction.interface';
-import { Mock } from './module';
-import { address } from '../core/ethereum/type.mappings';
 import { IRSAKey } from '../core/cryptography/cryptography.service';
+import { ITransactionReceipt } from '../core/ethereum/transaction.interface';
+import { address } from '../core/ethereum/type.mappings';
+import { IVoteManagerService, IVoteParameters } from '../core/vote-manager/vote-manager.service';
+import { Mock } from './module';
 
 export class VoteManagerService implements IVoteManagerService {
   deployVote$(registrationDeadline: number,

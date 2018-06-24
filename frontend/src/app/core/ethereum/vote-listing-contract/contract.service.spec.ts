@@ -1,15 +1,15 @@
 import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 
-import { VoteListingContractErrors, VoteListingContractService } from './contract.service';
-import { ITruffleContractWrapperService, TruffleContractWrapperService } from '../truffle-contract-wrapper.service';
-import { IWeb3Service, Web3Service } from '../web3.service';
-import { VoteCreatedEvent } from './contract.api';
-import { ErrorService } from '../../error-service/error.service';
-import { IAnonymousVotingContractCollection, Mock } from '../../../mock/module';
-import { IContractLog } from '../contract.interface';
-import { address } from '../type.mappings';
 import { APP_CONFIG } from '../../../config';
 import { BigNumber } from '../../../mock/bignumber';
+import { IAnonymousVotingContractCollection, Mock } from '../../../mock/module';
+import { ErrorService } from '../../error-service/error.service';
+import { IContractLog } from '../contract.interface';
+import { ITruffleContractWrapperService, TruffleContractWrapperService } from '../truffle-contract-wrapper.service';
+import { address } from '../type.mappings';
+import { IWeb3Service, Web3Service } from '../web3.service';
+import { VoteCreatedEvent } from './contract.api';
+import { VoteListingContractErrors, VoteListingContractService } from './contract.service';
 import Spy = jasmine.Spy;
 
 describe('Service: VoteListingContractService', () => {

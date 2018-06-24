@@ -1,8 +1,8 @@
 import * as contract from 'truffle-contract';
 
-import { IWeb3Provider } from './web3.service';
 import { IContract } from './contract.interface';
 import { address } from './type.mappings';
+import { IWeb3Provider } from './web3.service';
 
 export interface ITruffleContractWrapperService {
   wrap(definition: object): ITruffleContractAbstraction;

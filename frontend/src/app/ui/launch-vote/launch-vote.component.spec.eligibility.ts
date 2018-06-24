@@ -1,15 +1,15 @@
-import { ComponentFixture, fakeAsync, tick } from '@angular/core/testing';
 import { DebugElement } from '@angular/core';
-import { By } from '@angular/platform-browser';
+import { ComponentFixture, fakeAsync, tick } from '@angular/core/testing';
 import { AbstractControl } from '@angular/forms';
+import { By } from '@angular/platform-browser';
 
-import { LaunchVoteComponent } from './launch-vote.component';
-import { DOMInteractionUtility } from '../../mock/dom-interaction-utility';
-import { Mock } from '../../mock/module';
 import {
   INoRestrictionContractService,
   NoRestrictionContractService
 } from '../../core/ethereum/no-restriction-contract/contract.service';
+import { DOMInteractionUtility } from '../../mock/dom-interaction-utility';
+import { Mock } from '../../mock/module';
+import { LaunchVoteComponent } from './launch-vote.component';
 
 export function eligibility_tests(getFixture) {
 

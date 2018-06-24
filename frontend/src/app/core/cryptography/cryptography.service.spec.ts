@@ -1,9 +1,9 @@
 import { TestBed } from '@angular/core/testing';
 
-import { CryptographyService, ICryptographyService } from './cryptography.service';
 import { Mock } from '../../mock/module';
 import { ErrorService } from '../error-service/error.service';
 import { Web3Service } from '../ethereum/web3.service';
+import { CryptographyService, ICryptographyService } from './cryptography.service';
 
 describe('Service: CryptographyService', () => {
   let cryptoSvc: ICryptographyService;

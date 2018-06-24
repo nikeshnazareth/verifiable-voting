@@ -1,6 +1,6 @@
 import { IContract, IContractLog } from '../contract.interface';
-import { address, uint } from '../type.mappings';
 import { ITransactionProperties, ITransactionReceipt } from '../transaction.interface';
+import { address, uint } from '../type.mappings';
 
 export interface AnonymousVotingAPI extends VotePhasesAPI {
   // string public parametersHash;

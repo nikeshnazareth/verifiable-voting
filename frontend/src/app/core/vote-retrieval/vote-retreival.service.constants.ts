@@ -1,6 +1,6 @@
-import { address } from '../ethereum/type.mappings';
-import { IRSAKey } from '../cryptography/cryptography.service';
 import { ICandidateTotal } from '../../ui/vote/results-component';
+import { IRSAKey } from '../cryptography/cryptography.service';
+import { address } from '../ethereum/type.mappings';
 
 export interface IVotingContractDetails {
   index: number;

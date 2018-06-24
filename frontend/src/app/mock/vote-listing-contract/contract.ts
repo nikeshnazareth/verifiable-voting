@@ -1,9 +1,9 @@
-import { VoteListingAPI } from '../../core/ethereum/vote-listing-contract/contract.api';
-import { ITransactionProperties, ITransactionReceipt } from '../../core/ethereum/transaction.interface';
 import { IContractEventStream } from '../../core/ethereum/contract.interface';
-import { Mock } from '../module';
+import { ITransactionProperties, ITransactionReceipt } from '../../core/ethereum/transaction.interface';
 import { address } from '../../core/ethereum/type.mappings';
+import { VoteListingAPI } from '../../core/ethereum/vote-listing-contract/contract.api';
 import { BigNumber } from '../bignumber';
+import { Mock } from '../module';
 
 export class VoteListingContract implements VoteListingAPI {
   public votingContracts = {

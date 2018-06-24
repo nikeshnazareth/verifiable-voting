@@ -5,31 +5,31 @@
  */
 
 import { Injectable } from '@angular/core';
-import { Observable } from 'rxjs/Observable';
-import 'rxjs/add/operator/share';
-import 'rxjs/add/operator/scan';
-import 'rxjs/add/operator/defaultIfEmpty';
-import 'rxjs/add/operator/map';
-import 'rxjs/add/operator/switchMap';
-import 'rxjs/add/operator/combineLatest';
-import 'rxjs/add/operator/switch';
-import 'rxjs/add/operator/filter';
-import 'rxjs/add/operator/mergeMap';
-import 'rxjs/add/operator/catch';
-import 'rxjs/add/operator/startWith';
-import 'rxjs/add/operator/do';
+import 'rxjs/add/observable/empty';
+import 'rxjs/add/observable/from';
 import 'rxjs/add/observable/of';
 import 'rxjs/add/observable/throw';
-import 'rxjs/add/observable/from';
-import 'rxjs/add/observable/empty';
+import 'rxjs/add/operator/catch';
+import 'rxjs/add/operator/combineLatest';
+import 'rxjs/add/operator/defaultIfEmpty';
+import 'rxjs/add/operator/do';
+import 'rxjs/add/operator/filter';
+import 'rxjs/add/operator/map';
+import 'rxjs/add/operator/mergeMap';
+import 'rxjs/add/operator/scan';
+import 'rxjs/add/operator/share';
+import 'rxjs/add/operator/startWith';
+import 'rxjs/add/operator/switch';
+import 'rxjs/add/operator/switchMap';
+import { Observable } from 'rxjs/Observable';
 
-import { VoteListingContractService } from '../ethereum/vote-listing-contract/contract.service';
-import { AnonymousVotingContractService } from '../ethereum/anonymous-voting-contract/contract.service';
-import { VotePhases } from '../ethereum/anonymous-voting-contract/contract.api';
-import { IPFSService } from '../ipfs/ipfs.service';
-import { IBlindedAddress, IBlindSignature, IVote, IVoteParameters } from '../vote-manager/vote-manager.service';
 import { CryptographyService } from '../cryptography/cryptography.service';
 import { ErrorService } from '../error-service/error.service';
+import { VotePhases } from '../ethereum/anonymous-voting-contract/contract.api';
+import { AnonymousVotingContractService } from '../ethereum/anonymous-voting-contract/contract.service';
+import { VoteListingContractService } from '../ethereum/vote-listing-contract/contract.service';
+import { IPFSService } from '../ipfs/ipfs.service';
+import { IBlindedAddress, IBlindSignature, IVote, IVoteParameters } from '../vote-manager/vote-manager.service';
 import {
 IDynamicValue, IRegistration, IVotingContractDetails,
 IVotingContractSummary,

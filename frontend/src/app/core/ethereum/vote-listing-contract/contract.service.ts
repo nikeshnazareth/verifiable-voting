@@ -1,25 +1,25 @@
 import { Injectable } from '@angular/core';
-import { Observable } from 'rxjs/Observable';
-import { ReplaySubject } from 'rxjs/ReplaySubject';
-import 'rxjs/add/observable/fromPromise';
 import 'rxjs/add/observable/empty';
+import 'rxjs/add/observable/fromPromise';
 import 'rxjs/add/observable/range';
+import 'rxjs/add/operator/bufferCount';
 import 'rxjs/add/operator/catch';
+import 'rxjs/add/operator/concat';
+import 'rxjs/add/operator/concatMap';
 import 'rxjs/add/operator/filter';
 import 'rxjs/add/operator/map';
-import 'rxjs/add/operator/concatMap';
-import 'rxjs/add/operator/concat';
 import 'rxjs/add/operator/switch';
-import 'rxjs/add/operator/bufferCount';
+import { Observable } from 'rxjs/Observable';
+import { ReplaySubject } from 'rxjs/ReplaySubject';
 
 import { APP_CONFIG } from '../../../config';
-import { VoteCreatedEvent, VoteListingAPI } from './contract.api';
-import { Web3Service } from '../web3.service';
-import { ITruffleContractAbstraction, TruffleContractWrapperService } from '../truffle-contract-wrapper.service';
-import { IContractLog } from '../contract.interface';
 import { ErrorService } from '../../error-service/error.service';
-import { address } from '../type.mappings';
+import { IContractLog } from '../contract.interface';
 import { ITransactionReceipt } from '../transaction.interface';
+import { ITruffleContractAbstraction, TruffleContractWrapperService } from '../truffle-contract-wrapper.service';
+import { address } from '../type.mappings';
+import { Web3Service } from '../web3.service';
+import { VoteCreatedEvent, VoteListingAPI } from './contract.api';
 
 
 export interface IVoteConstants {

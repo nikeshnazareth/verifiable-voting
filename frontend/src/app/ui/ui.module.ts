@@ -1,15 +1,15 @@
+import { CommonModule } from '@angular/common';
 import { NgModule } from '@angular/core';
 import { ReactiveFormsModule } from '@angular/forms';
-import { CommonModule } from '@angular/common';
 
 import { MaterialModule } from '../material/material.module';
+import { ExplanationComponent } from './explanation/explanation.component';
 import { LaunchVoteComponent } from './launch-vote/launch-vote.component';
 import { ListVotesComponent } from './list-votes/list-votes.component';
-import { VoteComponent } from './vote/vote-component';
 import { RegistrationPhaseComponent } from './vote/registration-phase.component';
-import { VotingPhaseComponent } from './vote/voting-phase.component';
 import { ResultsComponent } from './vote/results-component';
-import { ExplanationComponent } from './explanation/explanation.component';
+import { VoteComponent } from './vote/vote-component';
+import { VotingPhaseComponent } from './vote/voting-phase.component';
 
 @NgModule({
   declarations: [

@@ -1,11 +1,11 @@
 import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 
 
-import { IWeb3Service, Web3Service } from '../web3.service';
-import { ITruffleContractWrapperService, TruffleContractWrapperService } from '../truffle-contract-wrapper.service';
-import { ErrorService } from '../../error-service/error.service';
 import { APP_CONFIG } from '../../../config';
 import { Mock } from '../../../mock/module';
+import { ErrorService } from '../../error-service/error.service';
+import { ITruffleContractWrapperService, TruffleContractWrapperService } from '../truffle-contract-wrapper.service';
+import { IWeb3Service, Web3Service } from '../web3.service';
 import { AnonymousVotingContractService } from './contract.service';
 
 describe('Service: AnonymousVotingContractService', () => {

@@ -1,10 +1,10 @@
 import { Injectable } from '@angular/core';
 
-import { ITruffleContractAbstraction, TruffleContractWrapperService } from '../truffle-contract-wrapper.service';
-import { Web3Service } from '../web3.service';
-import { ErrorService } from '../../error-service/error.service';
 import { APP_CONFIG } from '../../../config';
+import { ErrorService } from '../../error-service/error.service';
+import { ITruffleContractAbstraction, TruffleContractWrapperService } from '../truffle-contract-wrapper.service';
 import { address } from '../type.mappings';
+import { Web3Service } from '../web3.service';
 
 export interface INoRestrictionContractService {
   address: Promise<address>;

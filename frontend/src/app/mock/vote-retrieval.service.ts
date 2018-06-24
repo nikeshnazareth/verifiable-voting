@@ -1,12 +1,12 @@
 import { Observable } from 'rxjs/Observable';
 
-import { IVoteRetrievalService } from '../core/vote-retrieval/vote-retrieval.service';
 import { VotePhases } from '../core/ethereum/anonymous-voting-contract/contract.api';
+import { address } from '../core/ethereum/type.mappings';
 import {
   IVotingContractDetails,
   IVotingContractSummary, RETRIEVAL_STATUS
 } from '../core/vote-retrieval/vote-retreival.service.constants';
-import { address } from '../core/ethereum/type.mappings';
+import { IVoteRetrievalService } from '../core/vote-retrieval/vote-retrieval.service';
 import { Mock } from './module';
 
 export class VoteRetrievalService implements IVoteRetrievalService {

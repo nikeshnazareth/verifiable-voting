@@ -1,15 +1,15 @@
-import { async, ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { DebugElement } from '@angular/core';
+import { async, ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 
-import { ListVotesComponent } from './list-votes.component';
+import { Observable } from 'rxjs/Observable';
+import { VotePhases } from '../../core/ethereum/anonymous-voting-contract/contract.api';
+import { IVotingContractSummary, RETRIEVAL_STATUS } from '../../core/vote-retrieval/vote-retreival.service.constants';
 import { IVoteRetrievalService, VoteRetrievalService } from '../../core/vote-retrieval/vote-retrieval.service';
 import { MaterialModule } from '../../material/material.module';
 import { DOMInteractionUtility } from '../../mock/dom-interaction-utility';
 import { Mock } from '../../mock/module';
-import { Observable } from 'rxjs/Observable';
-import { IVotingContractSummary, RETRIEVAL_STATUS } from '../../core/vote-retrieval/vote-retreival.service.constants';
-import { VotePhases } from '../../core/ethereum/anonymous-voting-contract/contract.api';
+import { ListVotesComponent } from './list-votes.component';
 import Spy = jasmine.Spy;
 
 describe('Component: ListVotesComponent', () => {

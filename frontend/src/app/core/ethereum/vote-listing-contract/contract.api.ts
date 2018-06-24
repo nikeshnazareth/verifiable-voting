@@ -1,5 +1,5 @@
-import { ITransactionProperties, ITransactionReceipt } from '../transaction.interface';
 import { IContract, IContractLog } from '../contract.interface';
+import { ITransactionProperties, ITransactionReceipt } from '../transaction.interface';
 import { address, uint } from '../type.mappings';
 
 export interface VoteListingAPI extends IContract {

@@ -1,22 +1,22 @@
-import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { TestBed, async, ComponentFixture } from '@angular/core/testing';
 import { DebugElement } from '@angular/core';
+import { async, ComponentFixture, TestBed } from '@angular/core/testing';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { By } from '@angular/platform-browser';
+import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 
-import { LaunchVoteComponent } from './launch-vote.component';
-import { MaterialModule } from '../../material/material.module';
 import { NoRestrictionContractService } from '../../core/ethereum/no-restriction-contract/contract.service';
 import { VoteManagerService } from '../../core/vote-manager/vote-manager.service';
+import { MaterialModule } from '../../material/material.module';
 import { Mock } from '../../mock/module';
+import { LaunchVoteComponent } from './launch-vote.component';
 
-import { topic_input_tests } from './launch-vote.component.spec.topic_input';
-import { timeframe_tests } from './launch-vote.component.spec.timeframes';
-import { new_candidate_tests } from './launch-vote.component.spec.new_candidate';
+import { submit_button_tests } from './launch-vote-component.spec.submit';
 import { candidate_list_tests } from './launch-vote.component.spec.candidate_list';
 import { eligibility_tests } from './launch-vote.component.spec.eligibility';
+import { new_candidate_tests } from './launch-vote.component.spec.new_candidate';
 import { registration_key_tests } from './launch-vote.component.spec.registration_key';
-import { submit_button_tests } from './launch-vote-component.spec.submit';
+import { timeframe_tests } from './launch-vote.component.spec.timeframes';
+import { topic_input_tests } from './launch-vote.component.spec.topic_input';
 
 describe('Component: LaunchVoteComponent', () => {
   let fixture: ComponentFixture<LaunchVoteComponent>;

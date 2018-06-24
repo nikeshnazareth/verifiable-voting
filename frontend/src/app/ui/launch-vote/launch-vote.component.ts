@@ -1,10 +1,10 @@
 import { Component, OnInit } from '@angular/core';
-import { AbstractControl, FormBuilder, FormGroup, Validators, FormArray } from '@angular/forms';
+import { AbstractControl, FormArray, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Observable } from 'rxjs/Observable';
 
 import { NoRestrictionContractService } from '../../core/ethereum/no-restriction-contract/contract.service';
-import { IVoteParameters, VoteManagerService } from '../../core/vote-manager/vote-manager.service';
 import { address } from '../../core/ethereum/type.mappings';
+import { IVoteParameters, VoteManagerService } from '../../core/vote-manager/vote-manager.service';
 
 @Component({
   selector: 'vv-launch-vote',

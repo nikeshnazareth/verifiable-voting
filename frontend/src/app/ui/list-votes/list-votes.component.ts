@@ -1,12 +1,12 @@
 import { Component, EventEmitter, OnInit, Output } from '@angular/core';
 import { Observable } from 'rxjs/Observable';
 
-import { VoteRetrievalService } from '../../core/vote-retrieval/vote-retrieval.service';
+import 'rxjs/add/operator/withLatestFrom';
 import {
   IDynamicValue, IVotingContractSummary,
   RETRIEVAL_STATUS
 } from '../../core/vote-retrieval/vote-retreival.service.constants';
-import 'rxjs/add/operator/withLatestFrom';
+import { VoteRetrievalService } from '../../core/vote-retrieval/vote-retrieval.service';
 
 @Component({
   selector: 'vv-list-votes',

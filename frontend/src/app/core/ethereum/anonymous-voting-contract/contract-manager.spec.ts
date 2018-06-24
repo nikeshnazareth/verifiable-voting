@@ -1,8 +1,8 @@
 import { discardPeriodicTasks, fakeAsync, tick } from '@angular/core/testing';
 import { Observable } from 'rxjs/Observable';
 
-import { ErrorService } from '../../error-service/error.service';
 import { IAnonymousVotingContractCollection, IVoter, Mock } from '../../../mock/module';
+import { ErrorService } from '../../error-service/error.service';
 import { AnonymousVotingContractManager, AnonymousVotingContractManagerErrors } from './contract-manager';
 import { AnonymousVotingAPI, RegistrationComplete, VoterInitiatedRegistration, VoteSubmitted } from './contract.api';
 import Spy = jasmine.Spy;

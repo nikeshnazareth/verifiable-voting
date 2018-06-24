@@ -1,12 +1,12 @@
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs/Observable';
 
-import { ITruffleContractAbstraction, TruffleContractWrapperService } from '../truffle-contract-wrapper.service';
-import { Web3Service } from '../web3.service';
-import { ErrorService } from '../../error-service/error.service';
 import { APP_CONFIG } from '../../../config';
-import { AnonymousVotingContractManager, IAnonymousVotingContractManager } from './contract-manager';
+import { ErrorService } from '../../error-service/error.service';
+import { ITruffleContractAbstraction, TruffleContractWrapperService } from '../truffle-contract-wrapper.service';
 import { address } from '../type.mappings';
+import { Web3Service } from '../web3.service';
+import { AnonymousVotingContractManager, IAnonymousVotingContractManager } from './contract-manager';
 import { AnonymousVotingAPI } from './contract.api';
 
 

@@ -1,14 +1,14 @@
 import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { Observable } from 'rxjs/Observable';
 
-import { VoteManagerService, VoteManagerServiceErrors } from './vote-manager.service';
-import { IPFSService } from '../ipfs/ipfs.service';
-import { ErrorService } from '../error-service/error.service';
-import { VoteListingContractService } from '../ethereum/vote-listing-contract/contract.service';
+import { AnonymousVotingContractManager } from '../../mock/anonymous-voting-contract/contract-manager';
 import { IAnonymousVotingContractCollection, IVoter, Mock } from '../../mock/module';
 import { CryptographyService } from '../cryptography/cryptography.service';
+import { ErrorService } from '../error-service/error.service';
 import { AnonymousVotingContractService } from '../ethereum/anonymous-voting-contract/contract.service';
-import { AnonymousVotingContractManager } from '../../mock/anonymous-voting-contract/contract-manager';
+import { VoteListingContractService } from '../ethereum/vote-listing-contract/contract.service';
+import { IPFSService } from '../ipfs/ipfs.service';
+import { VoteManagerService, VoteManagerServiceErrors } from './vote-manager.service';
 import Spy = jasmine.Spy;
 
 describe('Service: VoteManagerService', () => {

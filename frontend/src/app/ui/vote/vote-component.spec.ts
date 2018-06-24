@@ -1,23 +1,23 @@
-import { async, ComponentFixture, TestBed } from '@angular/core/testing';
 import { Component, DebugElement, Input } from '@angular/core';
+import { async, ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { Observable } from 'rxjs/Observable';
 
-import { VoteComponent } from './vote-component';
-import { VoteRetrievalService } from '../../core/vote-retrieval/vote-retrieval.service';
+import { IRSAKey } from '../../core/cryptography/cryptography.service';
+import { VotePhases } from '../../core/ethereum/anonymous-voting-contract/contract.api';
+import { address } from '../../core/ethereum/type.mappings';
 import {
   IRegistration,
   IVotingContractDetails,
   RETRIEVAL_STATUS
 } from '../../core/vote-retrieval/vote-retreival.service.constants';
-import { VotePhases } from '../../core/ethereum/anonymous-voting-contract/contract.api';
-import { VoteComponentMessages } from './vote-component-messages';
+import { VoteRetrievalService } from '../../core/vote-retrieval/vote-retrieval.service';
 import { MaterialModule } from '../../material/material.module';
 import { Mock } from '../../mock/module';
-import { address } from '../../core/ethereum/type.mappings';
-import { IRSAKey } from '../../core/cryptography/cryptography.service';
 import { ICandidateTotal } from './results-component';
+import { VoteComponent } from './vote-component';
+import { VoteComponentMessages } from './vote-component-messages';
 
 describe('Component: VoteComponent', () => {
   let fixture: ComponentFixture<VoteComponent>;

@@ -1,34 +1,34 @@
-import { address } from '../core/ethereum/type.mappings';
 import { AnonymousVotingAPI, VotePhases } from '../core/ethereum/anonymous-voting-contract/contract.api';
+import { ITransactionReceipt } from '../core/ethereum/transaction.interface';
+import { address } from '../core/ethereum/type.mappings';
+import { IVoteConstants } from '../core/ethereum/vote-listing-contract/contract.service';
+import { IVote, IVoteParameters } from '../core/vote-manager/vote-manager.service';
 import { AnonymousVotingContract } from './anonymous-voting-contract/contract';
 import { AnonymousVotingContractManager } from './anonymous-voting-contract/contract-manager';
 import { AnonymousVotingContractService } from './anonymous-voting-contract/contract.service';
-import { IPFSService } from './ipfs.service';
-import { ITransactionReceipt } from '../core/ethereum/transaction.interface';
-import { IVote, IVoteParameters } from '../core/vote-manager/vote-manager.service';
-import { IVoteConstants } from '../core/ethereum/vote-listing-contract/contract.service';
-import { NoRestrictionContract } from './no-restriction-contract/contract';
-import { ITriggerableEventStream, TriggerableEventStream } from './triggerable-event-stream';
 import {
   TruffleAnonymousVotingAbstraction,
   TruffleAnonymousVotingWrapperService
 } from './anonymous-voting-contract/truffle-contract-wrapper.service';
+import { CryptographyService } from './cryptography.service';
+import { IPFSService } from './ipfs.service';
+import { NoRestrictionContract } from './no-restriction-contract/contract';
+import { NoRestrictionContractService } from './no-restriction-contract/contract.service';
 import {
   TruffleNoRestrictionAbstraction,
   TruffleNoRestrictionWrapperService
 } from './no-restriction-contract/truffle-contract-wrapper.service';
+import { MOCK_BLINDING } from './sample-blinding';
+import { ITriggerableEventStream, TriggerableEventStream } from './triggerable-event-stream';
+import { VoteListingContract } from './vote-listing-contract/contract';
+import { VoteListingContractService } from './vote-listing-contract/contract.service';
 import {
   TruffleVoteListingAbstraction,
   TruffleVoteListingWrapperService
 } from './vote-listing-contract/truffle-contract-wrapper.service';
-import { VoteListingContract } from './vote-listing-contract/contract';
-import { VoteListingContractService } from './vote-listing-contract/contract.service';
 import { VoteManagerService } from './vote-manager.service';
-import { NoRestrictionContractService } from './no-restriction-contract/contract.service';
-import { Web3Service } from './web3.service';
 import { VoteRetrievalService } from './vote-retrieval.service';
-import { MOCK_BLINDING } from './sample-blinding';
-import { CryptographyService } from './cryptography.service';
+import { Web3Service } from './web3.service';
 
 
 const msPerDay: number = 1000 * 60 * 60 * 24;

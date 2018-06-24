@@ -1,13 +1,13 @@
-import { ComponentFixture } from '@angular/core/testing';
 import { DebugElement } from '@angular/core';
-import { By } from '@angular/platform-browser';
+import { ComponentFixture } from '@angular/core/testing';
 import { FormArray, FormBuilder, FormGroup } from '@angular/forms';
+import { By } from '@angular/platform-browser';
 import { Observable } from 'rxjs/Observable';
 
-import { LaunchVoteComponent } from './launch-vote.component';
 import { IVoteParameters, VoteManagerService } from '../../core/vote-manager/vote-manager.service';
 import { DOMInteractionUtility } from '../../mock/dom-interaction-utility';
 import { Mock } from '../../mock/module';
+import { LaunchVoteComponent } from './launch-vote.component';
 
 export function submit_button_tests(getFixture) {
 

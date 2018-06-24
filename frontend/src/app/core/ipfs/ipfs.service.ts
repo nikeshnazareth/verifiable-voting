@@ -1,8 +1,8 @@
 
 import { Injectable } from '@angular/core';
 import { environment } from '../../../environments/environment';
-import { IPFSService as ProductionSvc} from './production-ipfs.service';
 import { IPFSService as DevelopmentSvc } from './local-ipfs.service';
+import { IPFSService as ProductionSvc} from './production-ipfs.service';
 
 
 export interface IIPFSService {
