@@ -19,14 +19,12 @@ import { VoteListingContractService } from '../ethereum/vote-listing-contract/co
 import { AnonymousVotingContractService } from '../ethereum/anonymous-voting-contract/contract.service';
 import { ReplacementAnonymousVotingContractService } from '../ethereum/anonymous-voting-contract/replacement-contract.service';
 import { VotePhases } from '../ethereum/anonymous-voting-contract/contract.api';
-import { address } from '../ethereum/type.mappings';
 import { IPFSService } from '../ipfs/ipfs.service';
 import { IBlindedAddress, IBlindSignature, IVote, IVoteParameters } from '../vote-manager/vote-manager.service';
 import { CryptographyService } from '../cryptography/cryptography.service';
 import { ErrorService } from '../error-service/error.service';
 import {
   IDynamicValue, IRegistration, IReplacementVotingContractDetails,
-  IVotingContractDetails,
   IVotingContractSummary,
   RETRIEVAL_STATUS,
   VoteRetrievalServiceErrors
@@ -36,8 +34,6 @@ export interface IVoteRetrievalService {
   summaries$: Observable<IVotingContractSummary[]>;
 
   replacementDetailsAtIndex$(idx: number): Observable<IReplacementVotingContractDetails>;
-
-  blindSignatureAt$(contractAddr: address, publicVoterAddr: address): Observable<string>;
 }
 
 @Injectable()
@@ -313,52 +309,6 @@ export class VoteRetrievalService implements IVoteRetrievalService {
       typeof vote.candidateIdx === 'number';
     return valid ? null : VoteRetrievalServiceErrors.format.vote(obj);
   }
-
-  /**
-   * Retrieves the blinded signature for the specified voter at the specified contract
-   * Notifies the error service if the hash cannot be obtained from the contract,
-   * the blinded signature cannot be obtained from the hash, or the retrieved value is incorrectly formatted
-   * @param {address} contractAddr the address of the AnonymousVoting contract
-   * @param {address} publicVoterAddr the voter address
-   * @returns {Observable<string>} an observable of the blinded signature or an empty observable if there is an error
-   */
-  blindSignatureAt$(contractAddr: address, publicVoterAddr: address): Observable<string> {
-    return this.anonymousVotingSvc.blindSignatureHashAt$(contractAddr, publicVoterAddr)
-      .map(hash => this.ipfsSvc.catJSON(hash))
-      .switchMap(wrappedBlindSigPromise => Observable.fromPromise(wrappedBlindSigPromise))
-      .catch(err => {
-        this.errSvc.add(VoteRetrievalServiceErrors.ipfs.getBlindSignature(contractAddr, publicVoterAddr), err);
-        return <Observable<object>> Observable.empty();
-      })
-      .map(wrappedBlindedSig => this._confirmBlindSignatureFormat(wrappedBlindedSig))
-      .filter(wrappedBlindedSig => wrappedBlindedSig != null)
-      .map(wrappedBlindedSig => wrappedBlindedSig.blinded_signature);
-  }
-
-  /**
-   * Notifies the Error Service if the object doesn't match the IBlindedSignature interface
-   * @param {Object} obj the object to check
-   * @returns {IBlindSignature} the blinded signature object if it matches or null otherwise
-   * @private
-   */
-  private _confirmBlindSignatureFormat(obj: object): IBlindSignature {
-    const wrappedBlindedSig: IBlindSignature = <IBlindSignature> obj;
-    const valid: boolean =
-      wrappedBlindedSig &&
-      wrappedBlindedSig.blinded_signature &&
-      typeof wrappedBlindedSig.blinded_signature === 'string';
-
-    if (valid) {
-      return wrappedBlindedSig;
-    } else {
-      this.errSvc.add(VoteRetrievalServiceErrors.format.blindSignature(wrappedBlindedSig), null);
-      return null;
-    }
-  }
-}
-
-interface IVoteCache {
-  [addr: string]: Observable<IVotingContractDetails>;
 }
 
 interface IIPFSCache {
