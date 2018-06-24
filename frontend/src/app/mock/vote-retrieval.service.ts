@@ -4,7 +4,6 @@ import { IVoteRetrievalService } from '../core/vote-retrieval/vote-retrieval.ser
 import { VotePhases } from '../core/ethereum/anonymous-voting-contract/contract.api';
 import {
   IReplacementVotingContractDetails,
-  IVotingContractDetails,
   IVotingContractSummary, RETRIEVAL_STATUS
 } from '../core/vote-retrieval/vote-retreival.service.constants';
 import { address } from '../core/ethereum/type.mappings';
@@ -23,33 +22,6 @@ export class VoteRetrievalService implements IVoteRetrievalService {
         topic: {status: RETRIEVAL_STATUS.AVAILABLE, value: collection.parameters.topic}
       }))
     );
-  }
-
-  detailsAtIndex$(index: number): Observable<IVotingContractDetails> {
-    return index == null || typeof index === 'undefined' ?
-      Observable.of(UnavailableDetails) :
-      Observable.of({
-        index: index,
-        address: Mock.AnonymousVotingContractCollections[index].address,
-        phase: VotePhases[Mock.AnonymousVotingContractCollections[index].currentPhase],
-        parameters: Mock.AnonymousVotingContractCollections[index].parameters,
-        registrationDeadline: {
-          status: RETRIEVAL_STATUS.AVAILABLE,
-          value: new Date(Mock.AnonymousVotingContractCollections[index].voteConstants.registrationDeadline)
-        },
-        votingDeadline: {
-          status: RETRIEVAL_STATUS.AVAILABLE,
-          value: new Date(Mock.AnonymousVotingContractCollections[index].voteConstants.votingDeadline)
-        },
-        pendingRegistrations: {
-          status: RETRIEVAL_STATUS.AVAILABLE,
-          value: Mock.AnonymousVotingContractCollections[index].pendingRegistrations
-        },
-        votes: {
-          status: RETRIEVAL_STATUS.AVAILABLE,
-          value: []
-        }
-      });
   }
 
   replacementDetailsAtIndex$(index: number): Observable<IReplacementVotingContractDetails> {
@@ -97,33 +69,3 @@ export class VoteRetrievalService implements IVoteRetrievalService {
     );
   }
 }
-
-const UnavailableDetails: IVotingContractDetails = {
-  index: null,
-  address: RETRIEVAL_STATUS.UNAVAILABLE,
-  phase: RETRIEVAL_STATUS.UNAVAILABLE,
-  parameters: {
-    topic: RETRIEVAL_STATUS.UNAVAILABLE,
-    candidates: [],
-    registration_key: {
-      modulus: RETRIEVAL_STATUS.UNAVAILABLE,
-      public_exp: RETRIEVAL_STATUS.UNAVAILABLE
-    }
-  },
-  registrationDeadline: {
-    status: RETRIEVAL_STATUS.UNAVAILABLE,
-    value: null
-  },
-  votingDeadline: {
-    status: RETRIEVAL_STATUS.UNAVAILABLE,
-    value: null
-  },
-  pendingRegistrations: {
-    status: RETRIEVAL_STATUS.UNAVAILABLE,
-    value: null
-  },
-  votes: {
-    status: RETRIEVAL_STATUS.UNAVAILABLE,
-    value: null
-  }
-};
