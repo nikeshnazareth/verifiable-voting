@@ -24,7 +24,7 @@ import 'rxjs/add/observable/from';
 import 'rxjs/add/observable/empty';
 
 import { VoteListingContractService } from '../ethereum/vote-listing-contract/contract.service';
-import { ReplacementAnonymousVotingContractService } from '../ethereum/anonymous-voting-contract/replacement-contract.service';
+import { AnonymousVotingContractService } from '../ethereum/anonymous-voting-contract/contract.service';
 import { VotePhases } from '../ethereum/anonymous-voting-contract/contract.api';
 import { IPFSService } from '../ipfs/ipfs.service';
 import { IBlindedAddress, IBlindSignature, IVote, IVoteParameters } from '../vote-manager/vote-manager.service';
@@ -48,7 +48,7 @@ export class VoteRetrievalService implements IVoteRetrievalService {
   private _ipfsCache: IIPFSCache;
 
   constructor(private voteListingSvc: VoteListingContractService,
-              private replacementAnonymousVotingSvc: ReplacementAnonymousVotingContractService,
+              private anonymousVotingContractSvc: AnonymousVotingContractService,
               private cryptoSvc: CryptographyService,
               private ipfsSvc: IPFSService,
               private errSvc: ErrorService) {
@@ -66,12 +66,12 @@ export class VoteRetrievalService implements IVoteRetrievalService {
     return this.voteListingSvc.deployedVotes$
       .map((addr, idx) => {
         const phase$ = this._wrapRetrieval(
-          this.replacementAnonymousVotingSvc.at(addr).phase$
+          this.anonymousVotingContractSvc.at(addr).phase$
             .map(phaseIdx => VotePhases[phaseIdx])
         );
 
         const topic$ = this._wrapRetrieval(
-          this.replacementAnonymousVotingSvc.at(addr).constants$
+          this.anonymousVotingContractSvc.at(addr).constants$
             .switchMap(constants => this._retrieveIPFSHash(constants.paramsHash, this._parametersFormatError))
             .map(params => params.topic)
         );
@@ -106,7 +106,7 @@ export class VoteRetrievalService implements IVoteRetrievalService {
       .map(summaries => summaries[idx])
       .filter(summary => summary.address.status === RETRIEVAL_STATUS.AVAILABLE)
       .switchMap(summary => {
-        const contractManager = this.replacementAnonymousVotingSvc.at(summary.address.value);
+        const contractManager = this.anonymousVotingContractSvc.at(summary.address.value);
 
         const params$ = contractManager.constants$
           .switchMap(constants => this._retrieveIPFSHash(constants.paramsHash, this._parametersFormatError));

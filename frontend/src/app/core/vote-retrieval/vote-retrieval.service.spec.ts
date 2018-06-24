@@ -11,7 +11,7 @@ import {
   IVotingContractDetails, IRegistration,
 } from './vote-retreival.service.constants';
 import { VoteListingContractService } from '../ethereum/vote-listing-contract/contract.service';
-import { ReplacementAnonymousVotingContractService } from '../ethereum/anonymous-voting-contract/replacement-contract.service';
+import { AnonymousVotingContractService } from '../ethereum/anonymous-voting-contract/contract.service';
 import { IPFSService } from '../ipfs/ipfs.service';
 import { ErrorService } from '../error-service/error.service';
 import { VotePhases } from '../ethereum/anonymous-voting-contract/contract.api';
@@ -24,12 +24,12 @@ import Spy = jasmine.Spy;
 describe('Service: VoteRetrievalService', () => {
 
   let voteListingSvc: VoteListingContractService;
-  let replacementAnonymousVotingSvc: ReplacementAnonymousVotingContractService;
+  let anonymousVotingContractSvc: AnonymousVotingContractService;
   let cryptoSvc: CryptographyService;
   let ipfsSvc: IPFSService;
   let errSvc: ErrorService;
   const voteRetrievalSvc = () => new VoteRetrievalService(
-    voteListingSvc, replacementAnonymousVotingSvc, cryptoSvc, ipfsSvc, errSvc
+    voteListingSvc, anonymousVotingContractSvc, cryptoSvc, ipfsSvc, errSvc
   );
 
   let onNext: Spy;
@@ -41,13 +41,13 @@ describe('Service: VoteRetrievalService', () => {
       providers: [
         ErrorService,
         {provide: VoteListingContractService, useClass: Mock.VoteListingContractService},
-        {provide: ReplacementAnonymousVotingContractService, useClass: Mock.ReplacementAnonymousVotingContractService},
+        {provide: AnonymousVotingContractService, useClass: Mock.AnonymousVotingContractService},
         {provide: CryptographyService, useClass: Mock.CryptographyService},
         {provide: IPFSService, useClass: Mock.IPFSService},
       ]
     });
     voteListingSvc = TestBed.get(VoteListingContractService);
-    replacementAnonymousVotingSvc = TestBed.get(ReplacementAnonymousVotingContractService);
+    anonymousVotingContractSvc = TestBed.get(AnonymousVotingContractService);
     cryptoSvc = TestBed.get(CryptographyService);
     ipfsSvc = TestBed.get(IPFSService);
     errSvc = TestBed.get(ErrorService);
@@ -150,7 +150,7 @@ describe('Service: VoteRetrievalService', () => {
       describe('parameter: phase', () => {
         describe('case: before phases are retrieved', () => {
           beforeEach(() => {
-            spyOn(replacementAnonymousVotingSvc, 'at').and.callFake(addr => {
+            spyOn(anonymousVotingContractSvc, 'at').and.callFake(addr => {
               const contractManager = new Mock.AnonymousVotingContractManager(addr);
               spyOnProperty(contractManager, 'phase$').and.returnValue(Observable.never());
               return contractManager;
@@ -209,7 +209,7 @@ describe('Service: VoteRetrievalService', () => {
           const emptyIndex: number = 1;
 
           beforeEach(() => {
-            spyOn(replacementAnonymousVotingSvc, 'at').and.callFake(addr => {
+            spyOn(anonymousVotingContractSvc, 'at').and.callFake(addr => {
               const contractManager = new Mock.AnonymousVotingContractManager(addr);
               if (addr === Mock.addresses[emptyIndex]) {
                 spyOnProperty(contractManager, 'phase$').and.returnValue(Observable.empty());
@@ -288,7 +288,7 @@ describe('Service: VoteRetrievalService', () => {
         describe('case: before topic IPFS hashes are retrieved from the AnonymousVoting contracts', () => {
 
           beforeEach(() => {
-            spyOn(replacementAnonymousVotingSvc, 'at').and.callFake(addr => {
+            spyOn(anonymousVotingContractSvc, 'at').and.callFake(addr => {
               const contractManager = new Mock.AnonymousVotingContractManager(addr);
               spyOnProperty(contractManager, 'constants$').and.returnValue(Observable.never());
               return contractManager;
@@ -360,7 +360,7 @@ describe('Service: VoteRetrievalService', () => {
           const emptyIndex: number = 1;
 
           beforeEach(() => {
-            spyOn(replacementAnonymousVotingSvc, 'at').and.callFake(addr => {
+            spyOn(anonymousVotingContractSvc, 'at').and.callFake(addr => {
               const contractManager = new Mock.AnonymousVotingContractManager(addr);
               if (addr === Mock.addresses[emptyIndex]) {
                 spyOnProperty(contractManager, 'constants$').and.returnValue(Observable.empty());
@@ -560,7 +560,7 @@ describe('Service: VoteRetrievalService', () => {
             });
             mockRegHashes[Mock.Voters[1].public_address].signature = Mock.Voters[1].signed_blinded_address_hash;
 
-            spyOn(replacementAnonymousVotingSvc, 'at').and.callFake(addr => {
+            spyOn(anonymousVotingContractSvc, 'at').and.callFake(addr => {
               const contractManager = new Mock.AnonymousVotingContractManager(addr);
               spyOnProperty(contractManager, 'registrationHashes$').and.returnValue(Observable.of(mockRegHashes));
               return contractManager;
@@ -593,7 +593,7 @@ describe('Service: VoteRetrievalService', () => {
             };
           });
 
-          spyOn(replacementAnonymousVotingSvc, 'at').and.callFake(addr => {
+          spyOn(anonymousVotingContractSvc, 'at').and.callFake(addr => {
             const contractManager = new Mock.AnonymousVotingContractManager(addr);
             spyOnProperty(contractManager, 'registrationHashes$').and.returnValue(Observable.of(completeRegHashes));
             return contractManager;
@@ -692,7 +692,7 @@ describe('Service: VoteRetrievalService', () => {
       describe('parameter: results', () => {
 
         const create_voteHash_spy = (voteHashes) => {
-          spyOn(replacementAnonymousVotingSvc, 'at').and.callFake(addr => {
+          spyOn(anonymousVotingContractSvc, 'at').and.callFake(addr => {
             const contractManager = new Mock.AnonymousVotingContractManager(addr);
             spyOnProperty(contractManager, 'voteHashes$').and.returnValue(Observable.from(voteHashes));
             return contractManager;

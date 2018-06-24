@@ -16,7 +16,7 @@ import { address } from '../ethereum/type.mappings';
 import { ITransactionReceipt } from '../ethereum/transaction.interface';
 import { VoteListingContractService } from '../ethereum/vote-listing-contract/contract.service';
 import { CryptographyService, IRSAKey } from '../cryptography/cryptography.service';
-import { ReplacementAnonymousVotingContractService } from '../ethereum/anonymous-voting-contract/replacement-contract.service';
+import { AnonymousVotingContractService } from '../ethereum/anonymous-voting-contract/contract.service';
 
 export interface IVoteParameters {
   topic: string;
@@ -71,7 +71,7 @@ export const VoteManagerServiceErrors = {
 export class VoteManagerService implements IVoteManagerService {
 
   constructor(private voteListingSvc: VoteListingContractService,
-              private replacementAnonymousVotingContractSvc: ReplacementAnonymousVotingContractService,
+              private anonymousVotingContractSvc: AnonymousVotingContractService,
               private cryptoSvc: CryptographyService,
               private ipfsSvc: IPFSService,
               private errSvc: ErrorService) {
@@ -132,7 +132,7 @@ export class VoteManagerService implements IVoteManagerService {
         return <Observable<string>> Observable.empty();
       })
       .switchMap(blindedAddrHash =>
-        this.replacementAnonymousVotingContractSvc.at(contractAddr).register$(voterAddr, blindedAddrHash)
+        this.anonymousVotingContractSvc.at(contractAddr).register$(voterAddr, blindedAddrHash)
       );
   }
 
@@ -167,7 +167,7 @@ export class VoteManagerService implements IVoteManagerService {
         return <Observable<string>> Observable.empty();
       })
       .switchMap(voteHash =>
-        this.replacementAnonymousVotingContractSvc.at(contractAddr).vote$(anonymousAddr, voteHash)
+        this.anonymousVotingContractSvc.at(contractAddr).vote$(anonymousAddr, voteHash)
       );
   }
 

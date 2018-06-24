@@ -7,18 +7,18 @@ import { ErrorService } from '../error-service/error.service';
 import { VoteListingContractService } from '../ethereum/vote-listing-contract/contract.service';
 import { IAnonymousVotingContractCollection, IVoter, Mock } from '../../mock/module';
 import { CryptographyService } from '../cryptography/cryptography.service';
-import { ReplacementAnonymousVotingContractService } from '../ethereum/anonymous-voting-contract/replacement-contract.service';
+import { AnonymousVotingContractService } from '../ethereum/anonymous-voting-contract/contract.service';
 import { AnonymousVotingContractManager } from '../../mock/anonymous-voting-contract/contract-manager';
 import Spy = jasmine.Spy;
 
 describe('Service: VoteManagerService', () => {
   let voteListingSvc: VoteListingContractService;
-  let replacementAnonymousVotingContractSvc: ReplacementAnonymousVotingContractService;
+  let anonymousVotingContractSvc: AnonymousVotingContractService;
   let cryptoSvc: CryptographyService;
   let ipfsSvc: IPFSService;
   let errSvc: ErrorService;
 
-  const voteManagerSvc = () => new VoteManagerService(voteListingSvc, replacementAnonymousVotingContractSvc, cryptoSvc, ipfsSvc, errSvc);
+  const voteManagerSvc = () => new VoteManagerService(voteListingSvc, anonymousVotingContractSvc, cryptoSvc, ipfsSvc, errSvc);
 
   beforeEach(() => {
     TestBed.configureTestingModule({
@@ -26,14 +26,14 @@ describe('Service: VoteManagerService', () => {
         VoteManagerService,
         ErrorService,
         {provide: VoteListingContractService, useClass: Mock.VoteListingContractService},
-        {provide: ReplacementAnonymousVotingContractService, useClass: Mock.ReplacementAnonymousVotingContractService},
+        {provide: AnonymousVotingContractService, useClass: Mock.AnonymousVotingContractService},
         {provide: CryptographyService, useClass: Mock.CryptographyService},
         {provide: IPFSService, useClass: Mock.IPFSService},
       ]
     });
 
     voteListingSvc = TestBed.get(VoteListingContractService);
-    replacementAnonymousVotingContractSvc = TestBed.get(ReplacementAnonymousVotingContractService);
+    anonymousVotingContractSvc = TestBed.get(AnonymousVotingContractService);
     cryptoSvc = TestBed.get(CryptographyService);
     ipfsSvc = TestBed.get(IPFSService);
     errSvc = TestBed.get(ErrorService);
@@ -144,14 +144,14 @@ describe('Service: VoteManagerService', () => {
     });
 
     it('should get the AnonymousVotingContractManager at the contract address', () => {
-      spyOn(replacementAnonymousVotingContractSvc, 'at').and.callThrough();
+      spyOn(anonymousVotingContractSvc, 'at').and.callThrough();
       init_and_call_registerAt$();
-      expect(replacementAnonymousVotingContractSvc.at).toHaveBeenCalledWith(voteDetails.address);
+      expect(anonymousVotingContractSvc.at).toHaveBeenCalledWith(voteDetails.address);
     });
 
     it('should pass the IPFS hash and public addresses to AnonymousVotingContractManager.register$', () => {
       const contractManager = new AnonymousVotingContractManager(voteDetails.address);
-      spyOn(replacementAnonymousVotingContractSvc, 'at').and.returnValue(contractManager);
+      spyOn(anonymousVotingContractSvc, 'at').and.returnValue(contractManager);
       spyOn(contractManager, 'register$').and.callThrough();
       init_and_call_registerAt$();
       expect(contractManager.register$).toHaveBeenCalledWith(voter.public_address, voter.blinded_address_hash);
@@ -195,7 +195,7 @@ describe('Service: VoteManagerService', () => {
     describe('case: AnonymousVotingContractManager.register$ returns an empty observable', () => {
       beforeEach(() => {
         const contractManager = new AnonymousVotingContractManager(voteDetails.address);
-        spyOn(replacementAnonymousVotingContractSvc, 'at').and.returnValue(contractManager);
+        spyOn(anonymousVotingContractSvc, 'at').and.returnValue(contractManager);
         spyOn(contractManager, 'register$').and.returnValue(Observable.empty());
         init_and_call_registerAt$();
       });
@@ -244,14 +244,14 @@ describe('Service: VoteManagerService', () => {
     });
 
     it('should get the AnonymousVotingContractManager at the contract address', () => {
-      spyOn(replacementAnonymousVotingContractSvc, 'at').and.callThrough();
+      spyOn(anonymousVotingContractSvc, 'at').and.callThrough();
       init_and_call_voteAt$();
-      expect(replacementAnonymousVotingContractSvc.at).toHaveBeenCalledWith(voteDetails.address);
+      expect(anonymousVotingContractSvc.at).toHaveBeenCalledWith(voteDetails.address);
     });
 
     it('should pass the anonymous address and vote hash to AnonymousVotingContractManager.vote$', () => {
       const contractManager = new AnonymousVotingContractManager(voteDetails.address);
-      spyOn(replacementAnonymousVotingContractSvc, 'at').and.returnValue(contractManager);
+      spyOn(anonymousVotingContractSvc, 'at').and.returnValue(contractManager);
       spyOn(contractManager, 'vote$').and.callThrough();
       init_and_call_voteAt$();
       expect(contractManager.vote$).toHaveBeenCalledWith(voter.anonymous_address, voter.vote_hash);
@@ -312,7 +312,7 @@ describe('Service: VoteManagerService', () => {
     describe('case: AnonymousVotingContractManager.vote$ returns an empty observable', () => {
       beforeEach(() => {
         const contractManager = new AnonymousVotingContractManager(voteDetails.address);
-        spyOn(replacementAnonymousVotingContractSvc, 'at').and.returnValue(contractManager);
+        spyOn(anonymousVotingContractSvc, 'at').and.returnValue(contractManager);
         spyOn(contractManager, 'vote$').and.returnValue(Observable.empty());
         init_and_call_voteAt$();
       });

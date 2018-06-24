@@ -10,12 +10,12 @@ import { address } from '../type.mappings';
 import { AnonymousVotingAPI } from './contract.api';
 
 
-export interface IReplacementAnonymousVotingContractService {
+export interface IAnonymousVotingContractService {
   at(addr: address): IAnonymousVotingContractManager;
 }
 
 @Injectable()
-export class ReplacementAnonymousVotingContractService implements IReplacementAnonymousVotingContractService {
+export class AnonymousVotingContractService implements IAnonymousVotingContractService {
   private _abstraction$: Observable<ITruffleContractAbstraction>;
   private _contractCache: IContractCache;
 
