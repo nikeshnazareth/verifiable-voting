@@ -8,7 +8,7 @@ import {
   IDynamicValue,
   RETRIEVAL_STATUS,
   VoteRetrievalServiceErrors,
-  IReplacementVotingContractDetails, IRegistration,
+  IVotingContractDetails, IRegistration,
 } from './vote-retreival.service.constants';
 import { VoteListingContractService } from '../ethereum/vote-listing-contract/contract.service';
 import { ReplacementAnonymousVotingContractService } from '../ethereum/anonymous-voting-contract/replacement-contract.service';
@@ -507,22 +507,22 @@ describe('Service: VoteRetrievalService', () => {
     });
   });
 
-  describe('method: replacementDetailsAtIndex$', () => {
+  describe('method: detailsAtIndex$', () => {
     let index: number;
 
-    const init_replacementDetailsAtIndex$_and_subscribe = fakeAsync(() => {
-      voteRetrievalSvc().replacementDetailsAtIndex$(index)
+    const init_detailsAtIndex$_and_subscribe = fakeAsync(() => {
+      voteRetrievalSvc().detailsAtIndex$(index)
         .subscribe(onNext, onError, onCompleted);
       tick();
     });
 
-    const lastEmitted: (() => IReplacementVotingContractDetails) = () => onNext.calls.mostRecent().args[0];
+    const lastEmitted: (() => IVotingContractDetails) = () => onNext.calls.mostRecent().args[0];
 
 
     describe('case: idx is out of range', () => {
       beforeEach(() => {
         index = Mock.addresses.length;
-        init_replacementDetailsAtIndex$_and_subscribe();
+        init_detailsAtIndex$_and_subscribe();
       });
 
       it('should return a waiting observable', () => {
@@ -565,7 +565,7 @@ describe('Service: VoteRetrievalService', () => {
               spyOnProperty(contractManager, 'registrationHashes$').and.returnValue(Observable.of(mockRegHashes));
               return contractManager;
             });
-            init_replacementDetailsAtIndex$_and_subscribe();
+            init_detailsAtIndex$_and_subscribe();
           });
 
           it('should return "2"', () => {
@@ -611,7 +611,7 @@ describe('Service: VoteRetrievalService', () => {
             Object.keys(completeRegHashes).map(voter => {
               delete completeRegHashes[voter];
             });
-            init_replacementDetailsAtIndex$_and_subscribe();
+            init_detailsAtIndex$_and_subscribe();
           });
 
           it('should return an empty object', () => {
@@ -623,7 +623,7 @@ describe('Service: VoteRetrievalService', () => {
         describe('case: one of the blind address hashes is null', () => {
           beforeEach(() => {
             completeRegHashes[Mock.Voters[1].public_address].blindedAddress = null;
-            init_replacementDetailsAtIndex$_and_subscribe();
+            init_detailsAtIndex$_and_subscribe();
           });
 
           it('should notify the error service', () => {
@@ -639,7 +639,7 @@ describe('Service: VoteRetrievalService', () => {
         describe('case: one of the blind signature hashes is null', () => {
           beforeEach(() => {
             completeRegHashes[Mock.Voters[1].public_address].signature = null;
-            init_replacementDetailsAtIndex$_and_subscribe();
+            init_detailsAtIndex$_and_subscribe();
           });
 
           it('should notify the error service', () => {
@@ -661,7 +661,7 @@ describe('Service: VoteRetrievalService', () => {
         describe('case: one of the blind signatures does not match the blind address', () => {
           beforeEach(() => {
             completeRegHashes[Mock.Voters[1].public_address].signature = Mock.Voters[2].signed_blinded_address_hash;
-            init_replacementDetailsAtIndex$_and_subscribe();
+            init_detailsAtIndex$_and_subscribe();
           });
 
           it('should notify the error service', () => {
@@ -675,7 +675,7 @@ describe('Service: VoteRetrievalService', () => {
         });
 
         describe('case: valid registration', () => {
-          beforeEach(() => init_replacementDetailsAtIndex$_and_subscribe());
+          beforeEach(() => init_detailsAtIndex$_and_subscribe());
 
           it('should return all blind signatures', () => {
             const reg: IDynamicValue<IRegistration> = lastEmitted().registration;
@@ -708,7 +708,7 @@ describe('Service: VoteRetrievalService', () => {
         describe('case: there are no vote hashes', () => {
           beforeEach(() => {
             create_voteHash_spy([]);
-            init_replacementDetailsAtIndex$_and_subscribe();
+            init_detailsAtIndex$_and_subscribe();
           });
 
           it('should return a list of candidates with 0 votes ', () => {
@@ -726,7 +726,7 @@ describe('Service: VoteRetrievalService', () => {
             }));
             voteHashes[1].voteHash = null;
             create_voteHash_spy(voteHashes);
-            init_replacementDetailsAtIndex$_and_subscribe();
+            init_detailsAtIndex$_and_subscribe();
           });
 
           it('should notify the error service', () => {
@@ -747,7 +747,7 @@ describe('Service: VoteRetrievalService', () => {
             }));
             voteHashes[1].voteHash = 'INVALID_HASH';
             create_voteHash_spy(voteHashes);
-            init_replacementDetailsAtIndex$_and_subscribe();
+            init_detailsAtIndex$_and_subscribe();
           });
 
           it('should notify the error service', () => {
@@ -773,7 +773,7 @@ describe('Service: VoteRetrievalService', () => {
             }));
             voteHashes[1] = invalid;
             create_voteHash_spy(voteHashes);
-            init_replacementDetailsAtIndex$_and_subscribe();
+            init_detailsAtIndex$_and_subscribe();
           });
 
           it('should notify the error service', () => {
@@ -796,7 +796,7 @@ describe('Service: VoteRetrievalService', () => {
               voteHash: voter.vote_hash
             }));
             create_voteHash_spy(voteHashes);
-            init_replacementDetailsAtIndex$_and_subscribe();
+            init_detailsAtIndex$_and_subscribe();
           });
 
           it('should return a histogram of the voter choices', () => {

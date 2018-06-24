@@ -8,7 +8,7 @@ import { VoteComponent } from './vote-component';
 import { VoteRetrievalService } from '../../core/vote-retrieval/vote-retrieval.service';
 import {
   IRegistration,
-  IReplacementVotingContractDetails,
+  IVotingContractDetails,
   RETRIEVAL_STATUS
 } from '../../core/vote-retrieval/vote-retreival.service.constants';
 import { VotePhases } from '../../core/ethereum/anonymous-voting-contract/contract.api';
@@ -246,7 +246,7 @@ describe('Component: VoteComponent', () => {
           beforeEach(() => {
             const details = completeDetails(idx);
             details[property] = {status: RETRIEVAL_STATUS.RETRIEVING, value: null};
-            spyOn(page.voteRetrievalSvc, 'replacementDetailsAtIndex$').and.returnValue(Observable.of(details));
+            spyOn(page.voteRetrievalSvc, 'detailsAtIndex$').and.returnValue(Observable.of(details));
             fixture.detectChanges();
           });
 
@@ -265,7 +265,7 @@ describe('Component: VoteComponent', () => {
           beforeEach(() => {
             const details = completeDetails(idx);
             details[property] = {status: RETRIEVAL_STATUS.UNAVAILABLE, value: null};
-            spyOn(page.voteRetrievalSvc, 'replacementDetailsAtIndex$').and.returnValue(Observable.of(details));
+            spyOn(page.voteRetrievalSvc, 'detailsAtIndex$').and.returnValue(Observable.of(details));
             fixture.detectChanges();
           });
 
@@ -293,7 +293,7 @@ describe('Component: VoteComponent', () => {
 
         describe('parameter: phase', () => {
           describe(`case: it is "${VotePhases[0]}"`, () => {
-            let details: IReplacementVotingContractDetails;
+            let details: IVotingContractDetails;
 
             beforeEach(() => {
               details = completeDetails(idx);
@@ -302,7 +302,7 @@ describe('Component: VoteComponent', () => {
 
             describe('section: first (Registration) expansion panel', () => {
               beforeEach(() => {
-                spyOn(page.voteRetrievalSvc, 'replacementDetailsAtIndex$').and.returnValue(Observable.of(details));
+                spyOn(page.voteRetrievalSvc, 'detailsAtIndex$').and.returnValue(Observable.of(details));
                 fixture.detectChanges();
               });
 
@@ -318,7 +318,7 @@ describe('Component: VoteComponent', () => {
             describe('section: second (Voting) expansion panel', () => {
               describe('case: there are no pending registrations', () => {
                 beforeEach(() => {
-                  spyOn(page.voteRetrievalSvc, 'replacementDetailsAtIndex$').and.returnValue(Observable.of(details));
+                  spyOn(page.voteRetrievalSvc, 'detailsAtIndex$').and.returnValue(Observable.of(details));
                   fixture.detectChanges();
                 });
 
@@ -336,7 +336,7 @@ describe('Component: VoteComponent', () => {
 
                 beforeEach(() => {
                   details.numPendingRegistrations.value = numPending;
-                  spyOn(page.voteRetrievalSvc, 'replacementDetailsAtIndex$').and.returnValue(Observable.of(details));
+                  spyOn(page.voteRetrievalSvc, 'detailsAtIndex$').and.returnValue(Observable.of(details));
                   fixture.detectChanges();
                 });
 
@@ -352,7 +352,7 @@ describe('Component: VoteComponent', () => {
 
             describe('section: third (Results) expansion panel', () => {
               beforeEach(() => {
-                spyOn(page.voteRetrievalSvc, 'replacementDetailsAtIndex$').and.returnValue(Observable.of(details));
+                spyOn(page.voteRetrievalSvc, 'detailsAtIndex$').and.returnValue(Observable.of(details));
                 fixture.detectChanges();
               });
 
@@ -367,7 +367,7 @@ describe('Component: VoteComponent', () => {
           });
 
           describe(`case: it is "${VotePhases[1]}"`, () => {
-            let details: IReplacementVotingContractDetails;
+            let details: IVotingContractDetails;
 
             beforeEach(() => {
               details = completeDetails(idx);
@@ -376,7 +376,7 @@ describe('Component: VoteComponent', () => {
 
             describe('section: first (Registration) expansion panel', () => {
               beforeEach(() => {
-                spyOn(page.voteRetrievalSvc, 'replacementDetailsAtIndex$').and.returnValue(Observable.of(details));
+                spyOn(page.voteRetrievalSvc, 'detailsAtIndex$').and.returnValue(Observable.of(details));
                 fixture.detectChanges();
               });
 
@@ -392,7 +392,7 @@ describe('Component: VoteComponent', () => {
             describe('section: second (Voting) expansion panel', () => {
               describe('case: there are no pending registrations', () => {
                 beforeEach(() => {
-                  spyOn(page.voteRetrievalSvc, 'replacementDetailsAtIndex$').and.returnValue(Observable.of(details));
+                  spyOn(page.voteRetrievalSvc, 'detailsAtIndex$').and.returnValue(Observable.of(details));
                   fixture.detectChanges();
                 });
 
@@ -410,7 +410,7 @@ describe('Component: VoteComponent', () => {
 
                 beforeEach(() => {
                   details.numPendingRegistrations.value = numPending;
-                  spyOn(page.voteRetrievalSvc, 'replacementDetailsAtIndex$').and.returnValue(Observable.of(details));
+                  spyOn(page.voteRetrievalSvc, 'detailsAtIndex$').and.returnValue(Observable.of(details));
                   fixture.detectChanges();
                 });
 
@@ -426,7 +426,7 @@ describe('Component: VoteComponent', () => {
 
             describe('section: third (Results) expansion panel', () => {
               beforeEach(() => {
-                spyOn(page.voteRetrievalSvc, 'replacementDetailsAtIndex$').and.returnValue(Observable.of(details));
+                spyOn(page.voteRetrievalSvc, 'detailsAtIndex$').and.returnValue(Observable.of(details));
                 fixture.detectChanges();
               });
 
@@ -441,7 +441,7 @@ describe('Component: VoteComponent', () => {
           });
 
           describe(`case: it is "${VotePhases[2]}"`, () => {
-            let details: IReplacementVotingContractDetails;
+            let details: IVotingContractDetails;
 
             beforeEach(() => {
               details = completeDetails(idx);
@@ -450,7 +450,7 @@ describe('Component: VoteComponent', () => {
 
             describe('section: first (Registration) expansion panel', () => {
               beforeEach(() => {
-                spyOn(page.voteRetrievalSvc, 'replacementDetailsAtIndex$').and.returnValue(Observable.of(details));
+                spyOn(page.voteRetrievalSvc, 'detailsAtIndex$').and.returnValue(Observable.of(details));
                 fixture.detectChanges();
               });
 
@@ -466,7 +466,7 @@ describe('Component: VoteComponent', () => {
             describe('section: second (Voting) expansion panel', () => {
               describe('case: there are no pending registrations', () => {
                 beforeEach(() => {
-                  spyOn(page.voteRetrievalSvc, 'replacementDetailsAtIndex$').and.returnValue(Observable.of(details));
+                  spyOn(page.voteRetrievalSvc, 'detailsAtIndex$').and.returnValue(Observable.of(details));
                   fixture.detectChanges();
                 });
 
@@ -484,7 +484,7 @@ describe('Component: VoteComponent', () => {
 
                 beforeEach(() => {
                   details.numPendingRegistrations.value = numPending;
-                  spyOn(page.voteRetrievalSvc, 'replacementDetailsAtIndex$').and.returnValue(Observable.of(details));
+                  spyOn(page.voteRetrievalSvc, 'detailsAtIndex$').and.returnValue(Observable.of(details));
                   fixture.detectChanges();
                 });
 
@@ -500,7 +500,7 @@ describe('Component: VoteComponent', () => {
 
             describe('section: third (Results) expansion panel', () => {
               beforeEach(() => {
-                spyOn(page.voteRetrievalSvc, 'replacementDetailsAtIndex$').and.returnValue(Observable.of(details));
+                spyOn(page.voteRetrievalSvc, 'detailsAtIndex$').and.returnValue(Observable.of(details));
                 fixture.detectChanges();
               });
 
@@ -618,7 +618,7 @@ describe('Component: VoteComponent', () => {
 
           beforeEach(() => {
             mockRegistration = Mock.addresses.map(addr => ({arbitrary: 'MOCK REGISTRATION ' + addr}));
-            spyOn(page.voteRetrievalSvc, 'replacementDetailsAtIndex$').and.callFake((idx) => {
+            spyOn(page.voteRetrievalSvc, 'detailsAtIndex$').and.callFake((idx) => {
               const details = completeDetails(idx);
               details.registration.value = mockRegistration[idx];
               return Observable.of(details);
@@ -652,7 +652,7 @@ describe('Component: VoteComponent', () => {
               const N = collection.parameters.candidates.length;
               return collection.parameters.candidates.map((candidate, candIdx) => (colIdx + candIdx) * 5 % N);
             });
-            spyOn(page.voteRetrievalSvc, 'replacementDetailsAtIndex$').and.callFake((idx) => {
+            spyOn(page.voteRetrievalSvc, 'detailsAtIndex$').and.callFake((idx) => {
               const details = completeDetails(idx);
               details.results.value = mockResults[idx];
               return Observable.of(details);

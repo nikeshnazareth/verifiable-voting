@@ -4,7 +4,7 @@ import { ReplaySubject } from 'rxjs/ReplaySubject';
 import 'rxjs/add/operator/pluck';
 
 import { VoteRetrievalService } from '../../core/vote-retrieval/vote-retrieval.service';
-import { IReplacementVotingContractDetails, } from '../../core/vote-retrieval/vote-retreival.service.constants';
+import { IVotingContractDetails, } from '../../core/vote-retrieval/vote-retreival.service.constants';
 import { IPhaseStatus, VoteComponentMessages } from './vote-component-messages';
 
 @Component({
@@ -17,7 +17,7 @@ export class VoteComponent implements OnInit {
   public index$: ReplaySubject<number>;
   public heading$: Observable<string>;
   public status$: Observable<IPhaseStatus>;
-  public voteDetails$: ReplaySubject<IReplacementVotingContractDetails>;
+  public voteDetails$: ReplaySubject<IVotingContractDetails>;
 
   constructor(private voteRetrievalSvc: VoteRetrievalService) {
     this.index$ = new ReplaySubject<number>();
@@ -28,8 +28,8 @@ export class VoteComponent implements OnInit {
    * Initialise the observables used by the view
    */
   ngOnInit() {
-    this.voteDetails$ = new ReplaySubject<IReplacementVotingContractDetails>();
-    this.index$.switchMap(idx => this.voteRetrievalSvc.replacementDetailsAtIndex$(idx))
+    this.voteDetails$ = new ReplaySubject<IVotingContractDetails>();
+    this.index$.switchMap(idx => this.voteRetrievalSvc.detailsAtIndex$(idx))
       .subscribe(this.voteDetails$);
 
     this.heading$ = this.voteDetails$.map(details => `${details.index}. ${details.topic.value}`);

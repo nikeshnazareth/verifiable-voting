@@ -3,7 +3,7 @@ import { Observable } from 'rxjs/Observable';
 import { IVoteRetrievalService } from '../core/vote-retrieval/vote-retrieval.service';
 import { VotePhases } from '../core/ethereum/anonymous-voting-contract/contract.api';
 import {
-  IReplacementVotingContractDetails,
+  IVotingContractDetails,
   IVotingContractSummary, RETRIEVAL_STATUS
 } from '../core/vote-retrieval/vote-retreival.service.constants';
 import { address } from '../core/ethereum/type.mappings';
@@ -24,7 +24,7 @@ export class VoteRetrievalService implements IVoteRetrievalService {
     );
   }
 
-  replacementDetailsAtIndex$(index: number): Observable<IReplacementVotingContractDetails> {
+  detailsAtIndex$(index: number): Observable<IVotingContractDetails> {
     return index === null || typeof index === 'undefined' ?
       Observable.of({
         index: index,

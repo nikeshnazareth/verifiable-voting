@@ -2,7 +2,7 @@ import { address } from '../ethereum/type.mappings';
 import { IRSAKey } from '../cryptography/cryptography.service';
 import { ICandidateTotal } from '../../ui/vote/results-component';
 
-export interface IReplacementVotingContractDetails {
+export interface IVotingContractDetails {
   index: number;
   address: IDynamicValue<address>;
   topic: IDynamicValue<string>;

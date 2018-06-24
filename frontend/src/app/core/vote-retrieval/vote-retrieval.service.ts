@@ -31,7 +31,7 @@ import { IBlindedAddress, IBlindSignature, IVote, IVoteParameters } from '../vot
 import { CryptographyService } from '../cryptography/cryptography.service';
 import { ErrorService } from '../error-service/error.service';
 import {
-IDynamicValue, IRegistration, IReplacementVotingContractDetails,
+IDynamicValue, IRegistration, IVotingContractDetails,
 IVotingContractSummary,
 RETRIEVAL_STATUS,
 VoteRetrievalServiceErrors
@@ -40,7 +40,7 @@ VoteRetrievalServiceErrors
 export interface IVoteRetrievalService {
   summaries$: Observable<IVotingContractSummary[]>;
 
-  replacementDetailsAtIndex$(idx: number): Observable<IReplacementVotingContractDetails>;
+  detailsAtIndex$(idx: number): Observable<IVotingContractDetails>;
 }
 
 @Injectable()
@@ -97,10 +97,10 @@ export class VoteRetrievalService implements IVoteRetrievalService {
    * Retrieves the vote information (from cache if possible) required to view and participate in the vote
    * The result is designed to be used by the VoteComponent
    * @param {number} idx the index of the AnonymousVoting contract in the VoteListingContract
-   * @returns {Observable<IReplacementVotingContractDetails>} an observable of the vote details <br/>
+   * @returns {Observable<IVotingContractDetails>} an observable of the vote details <br/>
    * including intermediate and error states
    */
-  replacementDetailsAtIndex$(idx: number): Observable<IReplacementVotingContractDetails> {
+  detailsAtIndex$(idx: number): Observable<IVotingContractDetails> {
     return this.summaries$
       .filter(summaries => idx < summaries.length)
       .map(summaries => summaries[idx])

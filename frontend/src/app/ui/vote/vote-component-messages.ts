@@ -1,5 +1,5 @@
 import {
-  IReplacementVotingContractDetails,
+  IVotingContractDetails,
   RETRIEVAL_STATUS
 } from '../../core/vote-retrieval/vote-retreival.service.constants';
 import { VotePhases } from '../../core/ethereum/anonymous-voting-contract/contract.api';
@@ -51,11 +51,11 @@ export class VoteComponentMessages {
 
   /**
    * Get the phase status and error messages corresponding to the specified vote details
-   * @param {IReplacementVotingContractDetails} details the details of the vote including retrieval status
+   * @param {IVotingContractDetails} details the details of the vote including retrieval status
    * @returns {IPhaseStatus} which forms are disabled and why
    * @private
    */
-  static status(details: IReplacementVotingContractDetails): IPhaseStatus {
+  static status(details: IVotingContractDetails): IPhaseStatus {
     const required = [
       details.phase.status,
       details.numPendingRegistrations.status,
