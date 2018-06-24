@@ -1,7 +1,6 @@
 import { address } from '../core/ethereum/type.mappings';
 import { AnonymousVotingAPI, VotePhases } from '../core/ethereum/anonymous-voting-contract/contract.api';
 import { AnonymousVotingContract } from './anonymous-voting-contract/contract';
-import { AnonymousVotingContractService } from './anonymous-voting-contract/contract.service';
 import { AnonymousVotingContractManager } from './anonymous-voting-contract/contract-manager';
 import { ReplacementAnonymousVotingContractService } from './anonymous-voting-contract/replacement-contract.service';
 import { IPFSService } from './ipfs.service';
@@ -53,7 +52,6 @@ export class Mock {
   public static CryptographyService = CryptographyService;
 
   // contract service
-  public static AnonymousVotingContractService = AnonymousVotingContractService;
   public static ReplacementAnonymousVotingContractService = ReplacementAnonymousVotingContractService;
   public static AnonymousVotingContractManager = AnonymousVotingContractManager;
   public static VoteListingContractService = VoteListingContractService;

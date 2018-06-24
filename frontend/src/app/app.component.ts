@@ -1,5 +1,8 @@
 import { Component } from '@angular/core';
 import { MatSnackBar} from '@angular/material';
+import 'rxjs/add/operator/filter';
+import 'rxjs/add/operator/do';
+import 'rxjs/add/operator/concatMap';
 
 import { ErrorService } from './core/error-service/error.service';
 

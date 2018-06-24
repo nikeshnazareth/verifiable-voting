@@ -6,7 +6,6 @@ import { VoteListingContractService } from './ethereum/vote-listing-contract/con
 import { Web3Service } from './ethereum/web3.service';
 import { ErrorService } from './error-service/error.service';
 import { VoteManagerService } from './vote-manager/vote-manager.service';
-import { AnonymousVotingContractService } from './ethereum/anonymous-voting-contract/contract.service';
 import { ReplacementAnonymousVotingContractService } from './ethereum/anonymous-voting-contract/replacement-contract.service';
 import { NoRestrictionContractService } from './ethereum/no-restriction-contract/contract.service';
 import { VoteRetrievalService } from './vote-retrieval/vote-retrieval.service';
@@ -20,7 +19,6 @@ import { CryptographyService } from './cryptography/cryptography.service';
     TruffleContractWrapperService,
     Web3Service,
     VoteListingContractService,
-    AnonymousVotingContractService,
     ReplacementAnonymousVotingContractService,
     VoteManagerService,
     NoRestrictionContractService,

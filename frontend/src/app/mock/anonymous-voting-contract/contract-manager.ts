@@ -1,8 +1,9 @@
 import { Observable } from 'rxjs/Observable';
+import 'rxjs/add/observable/never';
 
 import {
-  IAnonymousVotingContractManager,
-  IRegistrationHashes, IVoteHash
+IAnonymousVotingContractManager,
+IRegistrationHashes, IVoteHash
 } from '../../core/ethereum/anonymous-voting-contract/contract-manager';
 import { address } from '../../core/ethereum/type.mappings';
 import { VotePhases } from '../../core/ethereum/anonymous-voting-contract/contract.api';
