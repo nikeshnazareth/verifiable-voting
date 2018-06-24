@@ -1,18 +1,16 @@
 import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { Observable } from 'rxjs/Observable';
 import { Subscription } from 'rxjs/Subscription';
-import { Subject } from 'rxjs/Subject';
 import 'rxjs/add/operator/distinctUntilChanged';
 
 import { VoteRetrievalService } from './vote-retrieval.service';
 import {
   IDynamicValue,
-  IVotingContractDetails, RETRIEVAL_STATUS,
+  RETRIEVAL_STATUS,
   VoteRetrievalServiceErrors,
   IReplacementVotingContractDetails, IRegistration,
 } from './vote-retreival.service.constants';
 import { VoteListingContractService } from '../ethereum/vote-listing-contract/contract.service';
-import { AnonymousVotingContractService } from '../ethereum/anonymous-voting-contract/contract.service';
 import { ReplacementAnonymousVotingContractService } from '../ethereum/anonymous-voting-contract/replacement-contract.service';
 import { IPFSService } from '../ipfs/ipfs.service';
 import { ErrorService } from '../error-service/error.service';
@@ -20,20 +18,18 @@ import { VotePhases } from '../ethereum/anonymous-voting-contract/contract.api';
 import { IVoteParameters } from '../vote-manager/vote-manager.service';
 import { CryptographyService } from '../cryptography/cryptography.service';
 import { IRegistrationHashes } from '../ethereum/anonymous-voting-contract/contract-manager';
-import { address } from '../ethereum/type.mappings';
-import { IAnonymousVotingContractCollection, IVoter, Mock } from '../../mock/module';
+import { IAnonymousVotingContractCollection, Mock } from '../../mock/module';
 import Spy = jasmine.Spy;
 
 describe('Service: VoteRetrievalService', () => {
 
   let voteListingSvc: VoteListingContractService;
-  let anonymousVotingSvc: AnonymousVotingContractService;
   let replacementAnonymousVotingSvc: ReplacementAnonymousVotingContractService;
   let cryptoSvc: CryptographyService;
   let ipfsSvc: IPFSService;
   let errSvc: ErrorService;
   const voteRetrievalSvc = () => new VoteRetrievalService(
-    voteListingSvc, anonymousVotingSvc, replacementAnonymousVotingSvc, cryptoSvc, ipfsSvc, errSvc
+    voteListingSvc, replacementAnonymousVotingSvc, cryptoSvc, ipfsSvc, errSvc
   );
 
   let onNext: Spy;
@@ -45,14 +41,12 @@ describe('Service: VoteRetrievalService', () => {
       providers: [
         ErrorService,
         {provide: VoteListingContractService, useClass: Mock.VoteListingContractService},
-        {provide: AnonymousVotingContractService, useClass: Mock.AnonymousVotingContractService},
         {provide: ReplacementAnonymousVotingContractService, useClass: Mock.ReplacementAnonymousVotingContractService},
         {provide: CryptographyService, useClass: Mock.CryptographyService},
         {provide: IPFSService, useClass: Mock.IPFSService},
       ]
     });
     voteListingSvc = TestBed.get(VoteListingContractService);
-    anonymousVotingSvc = TestBed.get(AnonymousVotingContractService);
     replacementAnonymousVotingSvc = TestBed.get(ReplacementAnonymousVotingContractService);
     cryptoSvc = TestBed.get(CryptographyService);
     ipfsSvc = TestBed.get(IPFSService);

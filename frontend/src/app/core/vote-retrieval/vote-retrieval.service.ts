@@ -16,7 +16,6 @@ import 'rxjs/add/operator/mergeMap';
 import 'rxjs/add/observable/throw';
 
 import { VoteListingContractService } from '../ethereum/vote-listing-contract/contract.service';
-import { AnonymousVotingContractService } from '../ethereum/anonymous-voting-contract/contract.service';
 import { ReplacementAnonymousVotingContractService } from '../ethereum/anonymous-voting-contract/replacement-contract.service';
 import { VotePhases } from '../ethereum/anonymous-voting-contract/contract.api';
 import { IPFSService } from '../ipfs/ipfs.service';
@@ -41,7 +40,6 @@ export class VoteRetrievalService implements IVoteRetrievalService {
   private _ipfsCache: IIPFSCache;
 
   constructor(private voteListingSvc: VoteListingContractService,
-              private anonymousVotingSvc: AnonymousVotingContractService,
               private replacementAnonymousVotingSvc: ReplacementAnonymousVotingContractService,
               private cryptoSvc: CryptographyService,
               private ipfsSvc: IPFSService,

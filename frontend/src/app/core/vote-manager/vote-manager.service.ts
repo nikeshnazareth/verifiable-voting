@@ -15,7 +15,7 @@ import { address } from '../ethereum/type.mappings';
 import { ITransactionReceipt } from '../ethereum/transaction.interface';
 import { VoteListingContractService } from '../ethereum/vote-listing-contract/contract.service';
 import { CryptographyService, IRSAKey } from '../cryptography/cryptography.service';
-import { AnonymousVotingContractService } from '../ethereum/anonymous-voting-contract/contract.service';
+import { ReplacementAnonymousVotingContractService } from '../ethereum/anonymous-voting-contract/replacement-contract.service';
 
 export interface IVoteParameters {
   topic: string;
@@ -70,7 +70,7 @@ export const VoteManagerServiceErrors = {
 export class VoteManagerService implements IVoteManagerService {
 
   constructor(private voteListingSvc: VoteListingContractService,
-              private anonymousVotingSvc: AnonymousVotingContractService,
+              private replacementAnonymousVotingContractSvc: ReplacementAnonymousVotingContractService,
               private cryptoSvc: CryptographyService,
               private ipfsSvc: IPFSService,
               private errSvc: ErrorService) {
@@ -130,9 +130,9 @@ export class VoteManagerService implements IVoteManagerService {
         this.errSvc.add(VoteManagerServiceErrors.ipfs.addBlindedAddress(), err);
         return <Observable<string>> Observable.empty();
       })
-      .switchMap(blindedAddrHash => this.anonymousVotingSvc.registerAt$(
-        contractAddr, voterAddr, blindedAddrHash
-      ));
+      .switchMap(blindedAddrHash =>
+        this.replacementAnonymousVotingContractSvc.at(contractAddr).register$(voterAddr, blindedAddrHash)
+      );
   }
 
   /**
@@ -165,7 +165,9 @@ export class VoteManagerService implements IVoteManagerService {
         this.errSvc.add(VoteManagerServiceErrors.ipfs.addVote(), err);
         return <Observable<string>> Observable.empty();
       })
-      .switchMap(voteHash => this.anonymousVotingSvc.voteAt$(contractAddr, anonymousAddr, voteHash));
+      .switchMap(voteHash =>
+        this.replacementAnonymousVotingContractSvc.at(contractAddr).vote$(anonymousAddr, voteHash)
+      );
   }
 
   /**
