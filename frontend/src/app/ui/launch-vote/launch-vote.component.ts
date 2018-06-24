@@ -4,7 +4,6 @@ import { Observable } from 'rxjs/Observable';
 
 import { NoRestrictionContractService } from '../../core/ethereum/no-restriction-contract/contract.service';
 import { IVoteParameters, VoteManagerService } from '../../core/vote-manager/vote-manager.service';
-import { IVoteConstants } from '../../core/ethereum/vote-listing-contract/contract.service';
 import { address } from '../../core/ethereum/type.mappings';
 
 @Component({
@@ -25,7 +24,7 @@ export class LaunchVoteComponent implements OnInit {
     this.createForm();
   }
 
-  private createForm() {
+  public createForm() {
     this.form = this.fb.group({
       topic: ['', Validators.required],
       timeframes: this.fb.group({
@@ -138,6 +137,4 @@ export class LaunchVoteComponent implements OnInit {
     const msPerDay: number = 1000 * 60 * 60 * 24;
     return new Date(d.getTime() + msPerDay);
   }
-
-
 }

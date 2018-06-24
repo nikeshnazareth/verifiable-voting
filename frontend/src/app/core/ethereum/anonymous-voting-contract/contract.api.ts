@@ -1,8 +1,6 @@
 import { IContract, IContractLog } from '../contract.interface';
 import { address, uint } from '../type.mappings';
 import { ITransactionProperties, ITransactionReceipt } from '../transaction.interface';
-import { IBigNumber } from '../web3.service';
-
 
 export interface AnonymousVotingAPI extends VotePhasesAPI {
   // string public parametersHash;
@@ -40,16 +38,6 @@ export interface AnonymousVotingAPI extends VotePhasesAPI {
 
   // function vote(string _voteHash) public
   vote(_voteHash: string, props?: ITransactionProperties): Promise<ITransactionReceipt>;
-}
-
-export namespace NewPhaseEvent {
-  export const name: string = 'NewPhase';
-
-  export interface Log extends IContractLog {
-    args: {
-      phase: IBigNumber;
-    };
-  }
 }
 
 export namespace VoterInitiatedRegistration {

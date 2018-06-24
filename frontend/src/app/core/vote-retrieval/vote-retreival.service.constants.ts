@@ -1,18 +1,6 @@
-import { IVoteParameters } from '../vote-manager/vote-manager.service';
 import { address } from '../ethereum/type.mappings';
 import { IRSAKey } from '../cryptography/cryptography.service';
-import { ICandidateTotal } from "../../ui/vote/results-component";
-
-export interface IVotingContractDetails {
-  index: number;
-  address: address;
-  phase: string;
-  parameters: IVoteParameters;
-  registrationDeadline: IDynamicValue<Date>;
-  votingDeadline: IDynamicValue<Date>;
-  pendingRegistrations: IDynamicValue<number>;
-  votes: IDynamicValue<number[]>;
-}
+import { ICandidateTotal } from '../../ui/vote/results-component';
 
 export interface IReplacementVotingContractDetails {
   index: number;
@@ -52,12 +40,6 @@ export const RETRIEVAL_STATUS = {
 
 export const VoteRetrievalServiceErrors = {
   ipfs: {
-    getParameters: (addr) => new Error('Unable to retrieve the parameters for the AnonymousVoting contract' +
-      ` at ${addr} from the IPFS hash`),
-    getBlindSignature: (contract, voter) => new Error(`Unable to retrieve the blind signature for the voter ${voter}` +
-      ` at the AnonymousVoting contract at ${contract} from the IPFS hash`),
-    getVote: (addr) => new Error(`Unable to retrieve the votes for the AnonymousVoting contract at ${addr}` +
-      ' from the IPFS hashes'),
     nullHash: new Error('Attempting to retrieve null IPFS hash'),
     retrieval: new Error('Unable to retrieve the object from IPFS')
   },

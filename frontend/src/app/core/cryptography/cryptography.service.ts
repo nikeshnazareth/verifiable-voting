@@ -22,12 +22,6 @@ export interface ICryptographyService {
   verify(message: string, signature: string, key: IRSAKey): boolean;
 }
 
-export const CryptographyServiceErrors = {
-  key: (key) => new Error(`Invalid RSA key (${key.modulus}, ${key.public_exp})`),
-  signature: (sig) => new Error(`Invalid signature ${sig}`),
-  rawMessage: (m) => new Error(`Invalid raw message ${m}`)
-};
-
 @Injectable()
 export class CryptographyService implements ICryptographyService {
 
@@ -173,3 +167,9 @@ export class CryptographyService implements ICryptographyService {
     return key && this._isHexString(key.modulus) && this._isHexString(key.public_exp);
   }
 }
+
+const CryptographyServiceErrors = {
+  key: (key) => new Error(`Invalid RSA key (${key.modulus}, ${key.public_exp})`),
+  signature: (sig) => new Error(`Invalid signature ${sig}`),
+  rawMessage: (m) => new Error(`Invalid raw message ${m}`)
+};

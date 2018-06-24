@@ -398,7 +398,6 @@ describe('Service: VoteRetrievalService', () => {
           });
 
           it('should notify the Error Service', () => {
-            const hash: string = mockHashes[failedIndex];
             expect(errSvc.add).toHaveBeenCalledWith(VoteRetrievalServiceErrors.ipfs.retrieval, error);
           });
 

@@ -18,7 +18,7 @@ declare const web3: IWeb3;
 export const Web3ServiceErrors = {
   account: new Error('There is no ethereum account selected.' + '' +
     ' Please ensure you have signed into the Metamask extension (or another web3 provider)')
-}
+};
 
 export class Web3Service {
 

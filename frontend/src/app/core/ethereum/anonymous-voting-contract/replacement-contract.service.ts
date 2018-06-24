@@ -14,12 +14,6 @@ export interface IReplacementAnonymousVotingContractService {
   at(addr: address): IAnonymousVotingContractManager;
 }
 
-export const AnonymousVotingContractErrors = {
-  network: (addr) => new Error(`Unable to find the AnonymousVoting contract on the blockchain at address ${addr}. ` +
-    'Ensure the address is correct ' +
-    `and MetaMask (or the web3 provider) is connected to the ${APP_CONFIG.network.name}`)
-};
-
 @Injectable()
 export class ReplacementAnonymousVotingContractService implements IReplacementAnonymousVotingContractService {
   private _abstraction$: Observable<ITruffleContractAbstraction>;
@@ -85,3 +79,9 @@ export class ReplacementAnonymousVotingContractService implements IReplacementAn
 interface IContractCache {
   [addr: string]: IAnonymousVotingContractManager;
 }
+
+const AnonymousVotingContractErrors = {
+  network: (addr) => new Error(`Unable to find the AnonymousVoting contract on the blockchain at address ${addr}. ` +
+    'Ensure the address is correct ' +
+    `and MetaMask (or the web3 provider) is connected to the ${APP_CONFIG.network.name}`)
+};

@@ -1,16 +1,6 @@
 import { EventEmitter, Injectable } from '@angular/core';
 import { Observable } from 'rxjs/Observable';
 
-export interface IErrorPair {
-  friendly: Error;
-  detailed: Error;
-}
-
-export interface IErrorService {
-  error$: Observable<IErrorPair>;
-
-  add(friendlyErr: Error, detailedErr: Error): void;
-}
 
 /**
  * A service to aggregate errors that occur throughout the app
@@ -34,4 +24,15 @@ export class ErrorService implements IErrorService {
       detailed: detailedErr
     });
   }
+}
+
+interface IErrorPair {
+  friendly: Error;
+  detailed: Error;
+}
+
+interface IErrorService {
+  error$: Observable<IErrorPair>;
+
+  add(friendlyErr: Error, detailedErr: Error): void;
 }

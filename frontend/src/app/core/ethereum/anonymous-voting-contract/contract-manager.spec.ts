@@ -42,6 +42,9 @@ describe('class: AnonymousVotingContractManager', () => {
 
   describe('property: constants$', () => {
     const retrievalError = new Error('Value cannot be retrieved');
+    const failedRetrievalObj = {
+      call: () => Promise.reject(retrievalError)
+    };
 
     const init_constant$_and_subscribe = () => {
       contractManager().constants$.subscribe(onNext, onError, onCompleted);
@@ -75,32 +78,27 @@ describe('class: AnonymousVotingContractManager', () => {
     });
 
     describe('case: parameters hash cannot be retrieved', () => {
-      beforeEach(() => spyOn(voteCollection.instance.parametersHash, 'call').and
-        .returnValue(Promise.reject(retrievalError)));
+      beforeEach(() => spyOnProperty(voteCollection.instance, 'parametersHash').and.returnValue(failedRetrievalObj));
       error_tests();
     });
 
     describe('case: eligibility contract cannot be retrieved', () => {
-      beforeEach(() => spyOn(voteCollection.instance.eligibilityContract, 'call').and
-        .returnValue(Promise.reject(retrievalError)));
+      beforeEach(() => spyOnProperty(voteCollection.instance, 'eligibilityContract').and.returnValue(failedRetrievalObj));
       error_tests();
     });
 
     describe('case: registration authority cannot be retrieved', () => {
-      beforeEach(() => spyOn(voteCollection.instance.registrationAuthority, 'call').and
-        .returnValue(Promise.reject(retrievalError)));
+      beforeEach(() => spyOnProperty(voteCollection.instance, 'registrationAuthority').and.returnValue(failedRetrievalObj));
       error_tests();
     });
 
     describe('case: registration deadline cannot be retrieved', () => {
-      beforeEach(() => spyOn(voteCollection.instance.registrationDeadline, 'call').and
-        .returnValue(Promise.reject(retrievalError)));
+      beforeEach(() => spyOnProperty(voteCollection.instance, 'registrationDeadline').and.returnValue(failedRetrievalObj));
       error_tests();
     });
 
     describe('case: voting deadline cannot be retrieved', () => {
-      beforeEach(() => spyOn(voteCollection.instance.votingDeadline, 'call').and
-        .returnValue(Promise.reject(retrievalError)));
+      beforeEach(() => spyOnProperty(voteCollection.instance, 'votingDeadline').and.returnValue(failedRetrievalObj));
       error_tests();
     });
   });
