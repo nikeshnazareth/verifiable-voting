@@ -47,14 +47,14 @@ export interface IVoteRetrievalService {
 
 @Injectable()
 export class VoteRetrievalService implements IVoteRetrievalService {
-  private _ipfsCache: IIPFSCache;
+  private ipfsCache: IIPFSCache;
 
   constructor(private voteListingSvc: VoteListingContractService,
               private anonymousVotingContractSvc: AnonymousVotingContractService,
               private cryptoSvc: CryptographyService,
               private ipfsSvc: IPFSService,
               private errSvc: ErrorService) {
-    this._ipfsCache = {};
+    this.ipfsCache = {};
   }
 
   /**
@@ -67,18 +67,18 @@ export class VoteRetrievalService implements IVoteRetrievalService {
   get summaries$(): Observable<IVotingContractSummary[]> {
     return this.voteListingSvc.deployedVotes$
       .map((addr, idx) => {
-        const phase$ = this._wrapRetrieval(
+        const phase$ = this.wrapRetrieval(
           this.anonymousVotingContractSvc.at(addr).phase$
             .map(phaseIdx => VotePhases[phaseIdx])
         );
 
-        const topic$ = this._wrapRetrieval(
+        const topic$ = this.wrapRetrieval(
           this.anonymousVotingContractSvc.at(addr).constants$
-            .switchMap(constants => this._retrieveIPFSHash(constants.paramsHash, FormatValidator.parametersFormatError))
+            .switchMap(constants => this.retrieveIPFSHash(constants.paramsHash, FormatValidator.parametersFormatError))
             .map(params => params.topic)
         );
 
-        const address$ = this._wrapRetrieval(addr ? Observable.of(addr) : Observable.empty());
+        const address$ = this.wrapRetrieval(addr ? Observable.of(addr) : Observable.empty());
 
         return phase$.combineLatest(topic$, address$, (phase, topic, contractAddr) => ({
           index: idx,
@@ -111,30 +111,30 @@ export class VoteRetrievalService implements IVoteRetrievalService {
         const contractManager = this.anonymousVotingContractSvc.at(summary.address.value);
 
         const params$ = contractManager.constants$
-          .switchMap(constants => this._retrieveIPFSHash(constants.paramsHash, FormatValidator.parametersFormatError));
+          .switchMap(constants => this.retrieveIPFSHash(constants.paramsHash, FormatValidator.parametersFormatError));
 
-        const numPendingRegistrations$ = this._wrapRetrieval(
+        const numPendingRegistrations$ = this.wrapRetrieval(
           contractManager.registrationHashes$
             .map(regHashes => Object.keys(regHashes).map(voter => regHashes[voter]))
             .map(hashPairs => hashPairs.filter(hashPair => hashPair.signature === null))
             .map(pending => pending.length)
         );
 
-        const key$ = this._wrapRetrieval(params$.map(params => params.registration_key));
+        const key$ = this.wrapRetrieval(params$.map(params => params.registration_key));
 
-        const candidates$ = this._wrapRetrieval(params$.map(params => params.candidates));
+        const candidates$ = this.wrapRetrieval(params$.map(params => params.candidates));
 
-        const registration$ = this._wrapRetrieval(
+        const registration$ = this.wrapRetrieval(
           contractManager.registrationHashes$
             .switchMap(regHashes =>
               Observable.from(Object.keys(regHashes))
                 .mergeMap(voter => {
                   const blindedAddress$ =
-                    this._retrieveIPFSHash(regHashes[voter].blindedAddress, FormatValidator.blindAddressFormatError)
+                    this.retrieveIPFSHash(regHashes[voter].blindedAddress, FormatValidator.blindAddressFormatError)
                       .map(obj => obj.blinded_address);
 
                   const blindSignature$ =
-                    this._retrieveIPFSHash(regHashes[voter].signature, FormatValidator.blindSignatureFormatError)
+                    this.retrieveIPFSHash(regHashes[voter].signature, FormatValidator.blindSignatureFormatError)
                       .map(obj => obj.blinded_signature);
 
                   return blindedAddress$.combineLatest(blindSignature$, (addr, sig) => ({
@@ -166,10 +166,10 @@ export class VoteRetrievalService implements IVoteRetrievalService {
         );
 
 
-        const tally$ = this._wrapRetrieval(
+        const tally$ = this.wrapRetrieval(
           contractManager.voteHashes$
             .mergeMap(voteHashEvent =>
-              this._retrieveIPFSHash(voteHashEvent.voteHash, FormatValidator.voteFormatError)
+              this.retrieveIPFSHash(voteHashEvent.voteHash, FormatValidator.voteFormatError)
                 .defaultIfEmpty(null)
                 .switchMap(vote => vote === null ? Observable.throw(null) : Observable.of(vote))
             )
@@ -213,7 +213,7 @@ export class VoteRetrievalService implements IVoteRetrievalService {
    * @returns {Observable<IDynamicValue<T>>} an observable the wraps retrieval status information around the source observable
    * @private
    */
-  private _wrapRetrieval<T>(obs: Observable<T>): Observable<IDynamicValue<T>> {
+  private wrapRetrieval<T>(obs: Observable<T>): Observable<IDynamicValue<T>> {
     return obs
       .map(val => val === null ?
         {status: RETRIEVAL_STATUS.UNAVAILABLE, value: null} :
@@ -233,15 +233,15 @@ export class VoteRetrievalService implements IVoteRetrievalService {
    * or an empty observable if there is an error
    * @private
    */
-  private _retrieveIPFSHash(hash: string, formatError: (obj: any) => Error): Observable<any> {
+  private retrieveIPFSHash(hash: string, formatError: (obj: any) => Error): Observable<any> {
     if (!hash) {
       this.errSvc.add(VoteRetrievalErrors.ipfs.nullHash, null);
       return Observable.empty();
     }
 
-    return Observable.of(this._ipfsCache[hash] ? this._ipfsCache[hash] : this.ipfsSvc.catJSON(hash))
+    return Observable.of(this.ipfsCache[hash] ? this.ipfsCache[hash] : this.ipfsSvc.catJSON(hash))
       .do(promise => {
-        this._ipfsCache[hash] = promise;
+        this.ipfsCache[hash] = promise;
       })
       .switchMap(promise => Observable.fromPromise(promise))
       .catch(err => {
