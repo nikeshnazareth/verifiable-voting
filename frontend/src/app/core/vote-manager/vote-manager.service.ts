@@ -130,7 +130,7 @@ export class VoteManagerService implements IVoteManagerService {
           candidateIdx: number): Observable<ITransactionReceipt> {
     return Observable.of(this.cryptoSvc.unblind(blindedSignature, blindingFactor, registrationKey))
       .filter(signedAddress => signedAddress != null)
-      .filter(signedAddress => this._confirmAuthorised(anonymousAddr, signedAddress, registrationKey))
+      .filter(signedAddress => this.confirmAuthorised(anonymousAddr, signedAddress, registrationKey))
       .map(signedAddress => ({
         signed_address: signedAddress,
         candidateIdx: candidateIdx
@@ -154,7 +154,7 @@ export class VoteManagerService implements IVoteManagerService {
    * @returns {boolean} whether the signed address matches the anonymous address
    * @private
    */
-  private _confirmAuthorised(anonymousAddr: address, signedAddr: string, registrationKey: IRSAKey): boolean {
+  private confirmAuthorised(anonymousAddr: address, signedAddr: string, registrationKey: IRSAKey): boolean {
     if (!this.cryptoSvc.verify(anonymousAddr, signedAddr, registrationKey)) {
       this.errSvc.add(VoteManagerErrors.unauthorised(), null);
       return false;
