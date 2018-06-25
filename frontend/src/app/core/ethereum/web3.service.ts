@@ -5,10 +5,6 @@ export interface IWeb3Service {
   sha3(preimage: string): string;
 }
 
-export interface IBigNumber {
-  toNumber(): number;
-}
-
 export interface IWeb3Provider { //tslint:disable-line
 }
 
