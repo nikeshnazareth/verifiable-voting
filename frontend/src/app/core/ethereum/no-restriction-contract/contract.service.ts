@@ -13,16 +13,16 @@ export interface INoRestrictionContractService {
 
 @Injectable()
 export class NoRestrictionContractService implements INoRestrictionContractService {
-  private _addressPromise: Promise<address>;
+  private addressPromise: Promise<address>;
 
   constructor(private web3Svc: Web3Service,
               private contractSvc: TruffleContractWrapperService,
               private errSvc: ErrorService) {
-    this._addressPromise = this._initAddressPromise();
+    this.addressPromise = this.initAddressPromise();
   }
 
   get address(): Promise<address> {
-    return this._addressPromise;
+    return this.addressPromise;
   }
 
   /**
@@ -34,7 +34,7 @@ export class NoRestrictionContractService implements INoRestrictionContractServi
    * or null if there is an error
    * @private
    */
-  private _initAddressPromise(): Promise<address> {
+  private initAddressPromise(): Promise<address> {
     if (this.web3Svc.currentProvider) {
       const abstraction: ITruffleContractAbstraction = this.contractSvc.wrap(APP_CONFIG.contracts.no_restriction);
       abstraction.setProvider(this.web3Svc.currentProvider);
