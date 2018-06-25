@@ -38,23 +38,22 @@ export interface IVoteListingContractService {
   deployVote$(voteConstants: IVoteConstants): Observable<ITransactionReceipt>;
 }
 
-
-
 @Injectable()
 export class VoteListingContractService implements IVoteListingContractService {
   public deployedVotes$: ReplaySubject<address>;
-  private _contractPromise: Promise<VoteListingAPI>;
-  private _voteCreated$: Observable<address>;
+
+  private contractPromise: Promise<VoteListingAPI>;
+  private voteCreated$: Observable<address>;
 
   constructor(private web3Svc: Web3Service,
               private contractSvc: TruffleContractWrapperService,
               private errSvc: ErrorService) {
 
-    this._contractPromise = this._initContractPromise();
+    this.contractPromise = this.initContractPromise();
 
-    this._voteCreated$ = this._initVoteCreated$();
+    this.voteCreated$ = this.initVoteCreated$();
     this.deployedVotes$ = new ReplaySubject<address>();
-    this._initDeployedVotes$().subscribe(this.deployedVotes$);
+    this.initDeployedVotes$().subscribe(this.deployedVotes$);
   }
 
   /**
@@ -65,7 +64,7 @@ export class VoteListingContractService implements IVoteListingContractService {
    */
   deployVote$(voteConstants: IVoteConstants): Observable<ITransactionReceipt> {
     return Observable.fromPromise(
-      this._contractPromise.then(contract => contract.deploy(
+      this.contractPromise.then(contract => contract.deploy(
         voteConstants.registrationDeadline,
         voteConstants.votingDeadline,
         voteConstants.paramsHash,
@@ -86,11 +85,11 @@ export class VoteListingContractService implements IVoteListingContractService {
    * with null values wherever a contract could not be retrieved (to maintain the correct index)<br/>
    * or an empty observable if the contract cannot be contacted
    */
-  private _initDeployedVotes$(): Observable<address> {
-    return this._voteCreated$
+  private initDeployedVotes$(): Observable<address> {
+    return this.voteCreated$
       .startWith(null)
       // get the number of votes every time a VoteCreated event is emitted
-      .map(() => this._contractPromise.then(contract => contract.numberOfVotingContracts.call()))
+      .map(() => this.contractPromise.then(contract => contract.numberOfVotingContracts.call()))
       .switchMap(promise => Observable.fromPromise(promise))
       // produce an observable with all the indices not yet processed
       .map(countBN => countBN.toNumber())
@@ -98,12 +97,12 @@ export class VoteListingContractService implements IVoteListingContractService {
       .bufferCount(2, 1)
       .concatMap(bounds => Observable.range(bounds[0], bounds[1] - bounds[0]))
       // get the contract address at the index or null if there is an error
-      .map(contractIdx => this._contractPromise
-          .then(contract => contract.votingContracts.call(contractIdx))
-          .catch(err => {
-            this.errSvc.add(VoteListingContractErrors.contractAddress(contractIdx), err);
-            return Promise.resolve(null);
-          })
+      .map(contractIdx => this.contractPromise
+        .then(contract => contract.votingContracts.call(contractIdx))
+        .catch(err => {
+          this.errSvc.add(VoteListingContractErrors.contractAddress(contractIdx), err);
+          return Promise.resolve(null);
+        })
       )
       .concatMap(promise => Observable.fromPromise(promise))
       .catch(err => {
@@ -122,7 +121,7 @@ export class VoteListingContractService implements IVoteListingContractService {
    * or null if there is an error
    * @private
    */
-  private _initContractPromise(): Promise<VoteListingAPI> {
+  private initContractPromise(): Promise<VoteListingAPI> {
     if (this.web3Svc.currentProvider) {
       const abstraction: ITruffleContractAbstraction = this.contractSvc.wrap(APP_CONFIG.contracts.vote_listing);
       abstraction.setProvider(this.web3Svc.currentProvider);
@@ -143,8 +142,8 @@ export class VoteListingContractService implements IVoteListingContractService {
    * Listens for VoteCreated events on the VoteListing contract and returns an observable that emits the addresses
    * @returns {Observable<address>} an observable of the new VoteContract addresses
    */
-  private _initVoteCreated$(): Observable<address> {
-    const p: Promise<Observable<IContractLog>> = this._contractPromise
+  private initVoteCreated$(): Observable<address> {
+    const p: Promise<Observable<IContractLog>> = this.contractPromise
       .then(contract => contract.allEvents())
       .then(events => Observable.create(observer => {
         events.watch((err, log) => err ?
