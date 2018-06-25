@@ -7,6 +7,7 @@ import * as BN from 'bn.js';
 import { ErrorService } from '../error-service/error.service';
 import { Web3Service } from '../ethereum/web3.service';
 import { IRSAKey } from './rsa-key.interface';
+import { CryptographyErrors } from './cryptography-errors';
 
 export interface ICryptographyService {
   random: (size: number) => string;
@@ -45,7 +46,7 @@ export class CryptographyService implements ICryptographyService {
    */
   blind(message: string, factor: string, key: IRSAKey): string {
     if (!this._validKey(key)) {
-      this.errSvc.add(CryptographyServiceErrors.key(key), null);
+      this.errSvc.add(CryptographyErrors.key(key), null);
       return null;
     }
 
@@ -83,12 +84,12 @@ export class CryptographyService implements ICryptographyService {
    */
   unblind(blinded_signature: string, factor: string, key: IRSAKey): string {
     if (!this._validKey(key)) {
-      this.errSvc.add(CryptographyServiceErrors.key(key), null);
+      this.errSvc.add(CryptographyErrors.key(key), null);
       return null;
     }
 
     if (!this._isHexString(blinded_signature)) {
-      this.errSvc.add(CryptographyServiceErrors.signature(blinded_signature), null);
+      this.errSvc.add(CryptographyErrors.signature(blinded_signature), null);
       return null;
     }
 
@@ -124,17 +125,17 @@ export class CryptographyService implements ICryptographyService {
    */
   verify(rawMessage: string, signature: string, key: IRSAKey): boolean {
     if (!this._validKey(key)) {
-      this.errSvc.add(CryptographyServiceErrors.key(key), null);
+      this.errSvc.add(CryptographyErrors.key(key), null);
       return false;
     }
 
     if (!this._isHexString(signature)) {
-      this.errSvc.add(CryptographyServiceErrors.signature(signature), null);
+      this.errSvc.add(CryptographyErrors.signature(signature), null);
       return false;
     }
 
     if (!this._isHexString(rawMessage)) {
-      this.errSvc.add(CryptographyServiceErrors.rawMessage(rawMessage), null);
+      this.errSvc.add(CryptographyErrors.rawMessage(rawMessage), null);
       return false;
     }
 
@@ -164,8 +165,4 @@ export class CryptographyService implements ICryptographyService {
   }
 }
 
-const CryptographyServiceErrors = {
-  key: (key) => new Error(`Invalid RSA key (${key.modulus}, ${key.public_exp})`),
-  signature: (sig) => new Error(`Invalid signature ${sig}`),
-  rawMessage: (m) => new Error(`Invalid raw message ${m}`)
-};
+
