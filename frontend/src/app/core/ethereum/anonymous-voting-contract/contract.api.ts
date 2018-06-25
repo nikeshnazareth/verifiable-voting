@@ -1,4 +1,3 @@
-import { IContractLog } from '../contract.interface';
 import { ITransactionProperties, ITransactionReceipt } from '../transaction.interface';
 import { address, uint } from '../type.mappings';
 import { VotePhasesAPI } from './vote-phases-contract.api';
@@ -39,39 +38,6 @@ export interface AnonymousVotingAPI extends VotePhasesAPI {
 
   // function vote(string _voteHash) public
   vote(_voteHash: string, props?: ITransactionProperties): Promise<ITransactionReceipt>;
-}
-
-export namespace VoterInitiatedRegistration {
-  export const name: string = 'VoterInitiatedRegistration';
-
-  export interface Log extends IContractLog {
-    args: {
-      voter: address;
-      blindedAddressHash: string;
-    };
-  }
-}
-
-export namespace RegistrationComplete {
-  export const name: string = 'RegistrationComplete';
-
-  export interface Log extends IContractLog {
-    args: {
-      voter: address;
-      signatureHash: string;
-    };
-  }
-}
-
-export namespace VoteSubmitted {
-  export const name: string = 'VoteSubmitted';
-
-  export interface Log extends IContractLog {
-    args: {
-      voter: address;
-      voteHash: string;
-    };
-  }
 }
 
 

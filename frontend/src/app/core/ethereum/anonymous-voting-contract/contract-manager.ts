@@ -10,7 +10,8 @@ import { IContractLog } from '../contract.interface';
 import { ITransactionReceipt } from '../transaction.interface';
 import { address } from '../type.mappings';
 import { IVoteConstants } from '../vote-listing-contract/contract.service';
-import { AnonymousVotingAPI, RegistrationComplete, VoterInitiatedRegistration, VoteSubmitted } from './contract.api';
+import { AnonymousVotingAPI} from './contract.api';
+import { RegistrationComplete, VoterInitiatedRegistration, VoteSubmitted } from './contract-events.interface';
 
 export interface IRegistrationHashes {
   [voter: string]: {

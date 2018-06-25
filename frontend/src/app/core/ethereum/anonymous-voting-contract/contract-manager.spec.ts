@@ -4,8 +4,9 @@ import { Observable } from 'rxjs/Observable';
 import { IAnonymousVotingContractCollection, IVoter, Mock } from '../../../mock/module';
 import { ErrorService } from '../../error-service/error.service';
 import { AnonymousVotingContractManager, AnonymousVotingContractManagerErrors } from './contract-manager';
-import { AnonymousVotingAPI, RegistrationComplete, VoterInitiatedRegistration, VoteSubmitted } from './contract.api';
+import { AnonymousVotingAPI} from './contract.api';
 import Spy = jasmine.Spy;
+import { RegistrationComplete, VoterInitiatedRegistration, VoteSubmitted } from './contract-events.interface';
 
 describe('class: AnonymousVotingContractManager', () => {
   const contractManager = () => new AnonymousVotingContractManager(contract$, errSvc);
