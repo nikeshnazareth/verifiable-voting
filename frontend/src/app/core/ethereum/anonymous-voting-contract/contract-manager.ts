@@ -15,13 +15,6 @@ import { AnonymousVotingContractErrors } from './contract-errors';
 import { RegistrationComplete, VoterInitiatedRegistration, VoteSubmitted } from './contract-events.interface';
 import { AnonymousVotingAPI } from './contract.api';
 
-export interface IRegistrationHashes {
-  [voter: string]: {
-    blindedAddress: string;
-    signature: string;
-  };
-}
-
 export interface IAnonymousVotingContractManager {
   phase$: Observable<number>;
   constants$: Observable<IVoteConstants>;
@@ -32,22 +25,20 @@ export interface IAnonymousVotingContractManager {
   vote$(anonymousAddr: address, voteHash: string): Observable<ITransactionReceipt>;
 }
 
-
-
 export class AnonymousVotingContractManager implements IAnonymousVotingContractManager {
-  private _events$: ReplaySubject<IContractLog>;
-  private _voteConstants$: ReplaySubject<IVoteConstants>;
-  private _registrationHashes: IRegistrationHashes;
-  private _updatedRegistrationHashes$: BehaviorSubject<boolean>;
+  private events$: ReplaySubject<IContractLog>;
+  private voteConstants$: ReplaySubject<IVoteConstants>;
+  private registrationHashes: IRegistrationHashes;
+  private updatedRegistrationHashes$: BehaviorSubject<boolean>;
 
   constructor(private _contract$: Observable<AnonymousVotingAPI>, private errSvc: ErrorService) {
-    this._events$ = new ReplaySubject<IContractLog>();
-    this._voteConstants$ = new ReplaySubject<IVoteConstants>();
-    this._updatedRegistrationHashes$ = new BehaviorSubject<boolean>(true);
+    this.events$ = new ReplaySubject<IContractLog>();
+    this.voteConstants$ = new ReplaySubject<IVoteConstants>();
+    this.updatedRegistrationHashes$ = new BehaviorSubject<boolean>(true);
 
-    this._initEvents$().subscribe(this._events$);
-    this._initVoteConstants$().subscribe(this._voteConstants$);
-    this._initRegistrationHashes();
+    this.initEvents$().subscribe(this.events$);
+    this.initVoteConstants$().subscribe(this.voteConstants$);
+    this.initRegistrationHashes();
   }
 
   /**
@@ -74,22 +65,22 @@ export class AnonymousVotingContractManager implements IAnonymousVotingContractM
    * or an empty observable if there is an error
    */
   get constants$(): Observable<IVoteConstants> {
-    return this._voteConstants$;
+    return this.voteConstants$;
   }
 
   /**
    * @returns {Observable<IRegistrationHashes>} An observable of the registration IPFS hashes as they are published
    */
   get registrationHashes$(): Observable<IRegistrationHashes> {
-    return this._updatedRegistrationHashes$
-      .map(() => this._registrationHashes);
+    return this.updatedRegistrationHashes$
+      .map(() => this.registrationHashes);
   }
 
   /**
    * @returns {Observable<IVoteHash>} An observable of voters and their vote IPFS hashes as they are published
    */
   get voteHashes$(): Observable<IVoteHash> {
-    return this._events$
+    return this.events$
       .filter(log => log.event === VoteSubmitted.name)
       .map(log => (<VoteSubmitted.Log> log).args);
   }
@@ -133,7 +124,7 @@ export class AnonymousVotingContractManager implements IAnonymousVotingContractM
    * Notifies the Error Service if the contract event stream contains errors
    * @returns {Observable<IContractLog>} the stream of contract events. Closes when there is an error
    */
-  private _initEvents$(): Observable<IContractLog> {
+  private initEvents$(): Observable<IContractLog> {
     return this._contract$
       .map(contract => contract.allEvents({fromBlock: 0, toBlock: 'latest'}))
       .switchMap(events => <Observable<IContractLog>> Observable.create(observer => {
@@ -151,7 +142,7 @@ export class AnonymousVotingContractManager implements IAnonymousVotingContractM
    * or an empty observable if there was an error
    * @private
    */
-  private _initVoteConstants$(): Observable<IVoteConstants> {
+  private initVoteConstants$(): Observable<IVoteConstants> {
     return this._contract$
       .map(contract => Promise.all([
         contract.parametersHash.call(),
@@ -179,22 +170,29 @@ export class AnonymousVotingContractManager implements IAnonymousVotingContractM
    * so observers know about the update
    * @private
    */
-  private _initRegistrationHashes(): void {
-    this._registrationHashes = {};
-    this._events$
+  private initRegistrationHashes(): void {
+    this.registrationHashes = {};
+    this.events$
       .filter(log => [VoterInitiatedRegistration.name, RegistrationComplete.name].includes(log.event))
       .subscribe(log => {
         if (log.event === VoterInitiatedRegistration.name) {
           const args = (<VoterInitiatedRegistration.Log> log).args;
-          this._registrationHashes[args.voter] = {
+          this.registrationHashes[args.voter] = {
             blindedAddress: args.blindedAddressHash,
             signature: null
           };
         } else {
           const args = (<RegistrationComplete.Log> log).args;
-          this._registrationHashes[args.voter].signature = args.signatureHash;
+          this.registrationHashes[args.voter].signature = args.signatureHash;
         }
-        this._updatedRegistrationHashes$.next(true);
+        this.updatedRegistrationHashes$.next(true);
       });
   }
+}
+
+export interface IRegistrationHashes {
+  [voter: string]: {
+    blindedAddress: string;
+    signature: string;
+  };
 }
