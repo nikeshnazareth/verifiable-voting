@@ -6,8 +6,8 @@ import { Injectable } from '@angular/core';
 import * as BN from 'bn.js';
 import { ErrorService } from '../error-service/error.service';
 import { Web3Service } from '../ethereum/web3.service';
-import { IRSAKey } from './rsa-key.interface';
 import { CryptographyErrors } from './cryptography-errors';
+import { IRSAKey } from './rsa-key.interface';
 
 export interface ICryptographyService {
   random: (size: number) => string;
@@ -45,7 +45,7 @@ export class CryptographyService implements ICryptographyService {
    * @returns {string} a hex string of the blinded message (or null if there is a problem)
    */
   blind(message: string, factor: string, key: IRSAKey): string {
-    if (!this._validKey(key)) {
+    if (!CryptographyService.validKey(key)) {
       this.errSvc.add(CryptographyErrors.key(key), null);
       return null;
     }
@@ -83,12 +83,12 @@ export class CryptographyService implements ICryptographyService {
    * @returns {string} a hex string of the unblinded signed message (or null if there is a problem)
    */
   unblind(blinded_signature: string, factor: string, key: IRSAKey): string {
-    if (!this._validKey(key)) {
+    if (!CryptographyService.validKey(key)) {
       this.errSvc.add(CryptographyErrors.key(key), null);
       return null;
     }
 
-    if (!this._isHexString(blinded_signature)) {
+    if (!CryptographyService.isHexString(blinded_signature)) {
       this.errSvc.add(CryptographyErrors.signature(blinded_signature), null);
       return null;
     }
@@ -124,17 +124,17 @@ export class CryptographyService implements ICryptographyService {
    * @returns {boolean} whether the signature matches the raw message and key
    */
   verify(rawMessage: string, signature: string, key: IRSAKey): boolean {
-    if (!this._validKey(key)) {
+    if (!CryptographyService.validKey(key)) {
       this.errSvc.add(CryptographyErrors.key(key), null);
       return false;
     }
 
-    if (!this._isHexString(signature)) {
+    if (!CryptographyService.isHexString(signature)) {
       this.errSvc.add(CryptographyErrors.signature(signature), null);
       return false;
     }
 
-    if (!this._isHexString(rawMessage)) {
+    if (!CryptographyService.isHexString(rawMessage)) {
       this.errSvc.add(CryptographyErrors.rawMessage(rawMessage), null);
       return false;
     }
@@ -155,13 +155,13 @@ export class CryptographyService implements ICryptographyService {
     return ('0x' + calculated_message) === rawMessage;
   }
 
-  private _isHexString(val: string) {
+  private static isHexString(val: string) {
     const hexRegex = /^0x[a-f0-9]*$/;
     return hexRegex.test(val);
   }
 
-  private _validKey(key: IRSAKey) {
-    return key && this._isHexString(key.modulus) && this._isHexString(key.public_exp);
+  private static validKey(key: IRSAKey) {
+    return key && CryptographyService.isHexString(key.modulus) && CryptographyService.isHexString(key.public_exp);
   }
 }
 
