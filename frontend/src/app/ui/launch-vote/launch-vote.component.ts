@@ -4,7 +4,8 @@ import { Observable } from 'rxjs/Observable';
 
 import { NoRestrictionContractService } from '../../core/ethereum/no-restriction-contract/contract.service';
 import { address } from '../../core/ethereum/type.mappings';
-import { IVoteParameters, VoteManagerService } from '../../core/vote-manager/vote-manager.service';
+import { IVoteParameters } from '../../core/ipfs/formats.interface';
+import { VoteManagerService } from '../../core/vote-manager/vote-manager.service';
 
 @Component({
   selector: 'vv-launch-vote',

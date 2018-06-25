@@ -10,8 +10,8 @@ import { IRegistrationHashes } from '../ethereum/anonymous-voting-contract/contr
 import { VotePhases } from '../ethereum/anonymous-voting-contract/contract.constants';
 import { AnonymousVotingContractService } from '../ethereum/anonymous-voting-contract/contract.service';
 import { VoteListingContractService } from '../ethereum/vote-listing-contract/contract.service';
+import { IVoteParameters } from '../ipfs/formats.interface';
 import { IPFSService } from '../ipfs/ipfs.service';
-import { IVoteParameters } from '../vote-manager/vote-manager.service';
 import {
   IDynamicValue,
   IRegistration,

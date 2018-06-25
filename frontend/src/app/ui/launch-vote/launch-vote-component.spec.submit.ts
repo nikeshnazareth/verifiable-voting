@@ -4,7 +4,8 @@ import { FormArray, FormBuilder, FormGroup } from '@angular/forms';
 import { By } from '@angular/platform-browser';
 import { Observable } from 'rxjs/Observable';
 
-import { IVoteParameters, VoteManagerService } from '../../core/vote-manager/vote-manager.service';
+import { IVoteParameters } from '../../core/ipfs/formats.interface';
+import { VoteManagerService } from '../../core/vote-manager/vote-manager.service';
 import { DOMInteractionUtility } from '../../mock/dom-interaction-utility';
 import { Mock } from '../../mock/module';
 import { LaunchVoteComponent } from './launch-vote.component';

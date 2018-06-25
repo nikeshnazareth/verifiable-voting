@@ -3,8 +3,9 @@ import { VotePhases } from '../core/ethereum/anonymous-voting-contract/contract.
 import { ITransactionReceipt } from '../core/ethereum/transaction.interface';
 import { address } from '../core/ethereum/type.mappings';
 import { IVoteConstants } from '../core/ethereum/vote-listing-contract/contract.service';
-import { IVote, IVoteParameters } from '../core/vote-manager/vote-manager.service';
+import { IVote} from '../core/ipfs/formats.interface';
 
+import { IVoteParameters } from '../core/ipfs/formats.interface';
 import { AnonymousVotingContract } from './anonymous-voting-contract/contract';
 import { AnonymousVotingContractManager } from './anonymous-voting-contract/contract-manager';
 import { AnonymousVotingContractService } from './anonymous-voting-contract/contract.service';

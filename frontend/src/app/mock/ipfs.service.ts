@@ -1,5 +1,6 @@
+import { IVote} from '../core/ipfs/formats.interface';
+import { IBlindedAddress, IBlindSignature, IVoteParameters } from '../core/ipfs/formats.interface';
 import { IIPFSService } from '../core/ipfs/ipfs.service';
-import { IBlindedAddress, IBlindSignature, IVote, IVoteParameters } from '../core/vote-manager/vote-manager.service';
 import { Mock } from './module';
 
 export class IPFSService implements IIPFSService {
