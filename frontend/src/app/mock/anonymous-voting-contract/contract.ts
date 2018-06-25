@@ -6,29 +6,29 @@ import { BigNumber } from '../bignumber';
 import { Mock } from '../module';
 
 export class AnonymousVotingContract implements AnonymousVotingAPI {
-  private REGISTRATION_DEADLINE: number;
-  private VOTING_DEADLINE: number;
-  private PARAMETERS_IPFS_HASH: string;
-  private ELIGIBILITY_CONTRACT: address;
-  private REGISTRATION_AUTHORITY: address;
+  private regDeadline: number;
+  private voteDeadline: number;
+  private paramsIPFSHash: string;
+  private eligibility: address;
+  private regAuthority: address;
 
   constructor(registrationDeadline: number,
               votingDeadline: number,
               parameters_hash: string,
               eligibility_contract: address,
               registration_authority: address) {
-    this.REGISTRATION_DEADLINE = registrationDeadline;
-    this.VOTING_DEADLINE = votingDeadline;
-    this.PARAMETERS_IPFS_HASH = parameters_hash;
-    this.ELIGIBILITY_CONTRACT = eligibility_contract;
-    this.REGISTRATION_AUTHORITY = registration_authority;
+    this.regDeadline = registrationDeadline;
+    this.voteDeadline = votingDeadline;
+    this.paramsIPFSHash = parameters_hash;
+    this.eligibility = eligibility_contract;
+    this.regAuthority = registration_authority;
   }
 
   get currentPhase() {
     return {
       call: () => Promise.resolve(new BigNumber(
         Mock.AnonymousVotingContractCollections
-          .filter(collection => collection.voteConstants.paramsHash === this.PARAMETERS_IPFS_HASH)[0]
+          .filter(collection => collection.voteConstants.paramsHash === this.paramsIPFSHash)[0]
           .currentPhase
       ))
     };
@@ -36,31 +36,31 @@ export class AnonymousVotingContract implements AnonymousVotingAPI {
 
   get registrationDeadline() {
     return {
-      call: () => Promise.resolve(new BigNumber(this.REGISTRATION_DEADLINE))
+      call: () => Promise.resolve(new BigNumber(this.regDeadline))
     };
   }
 
   get votingDeadline() {
     return {
-      call: () => Promise.resolve(new BigNumber(this.VOTING_DEADLINE))
+      call: () => Promise.resolve(new BigNumber(this.voteDeadline))
     };
   }
 
   get parametersHash() {
     return {
-      call: () => Promise.resolve(this.PARAMETERS_IPFS_HASH)
+      call: () => Promise.resolve(this.paramsIPFSHash)
     };
   }
 
   get eligibilityContract() {
     return {
-      call: () => Promise.resolve(this.ELIGIBILITY_CONTRACT)
+      call: () => Promise.resolve(this.eligibility)
     };
   }
 
   get registrationAuthority() {
     return {
-      call: () => Promise.resolve(this.REGISTRATION_AUTHORITY)
+      call: () => Promise.resolve(this.regAuthority)
     };
   }
 
@@ -68,7 +68,7 @@ export class AnonymousVotingContract implements AnonymousVotingAPI {
     return {
       call: () => Promise.resolve(new BigNumber(
         Mock.AnonymousVotingContractCollections
-          .filter(collection => collection.voteConstants.paramsHash === this.PARAMETERS_IPFS_HASH)[0]
+          .filter(collection => collection.voteConstants.paramsHash === this.paramsIPFSHash)[0]
           .pendingRegistrations
       ))
     };
@@ -114,13 +114,13 @@ export class AnonymousVotingContract implements AnonymousVotingAPI {
 
   get address(): address {
     return Mock.AnonymousVotingContractCollections
-      .filter(collection => collection.voteConstants.paramsHash === this.PARAMETERS_IPFS_HASH)[0]
+      .filter(collection => collection.voteConstants.paramsHash === this.paramsIPFSHash)[0]
       .address;
   }
 
   allEvents(): IContractEventStream {
     return Mock.AnonymousVotingContractCollections
-      .filter(collection => collection.voteConstants.paramsHash === this.PARAMETERS_IPFS_HASH)[0]
+      .filter(collection => collection.voteConstants.paramsHash === this.paramsIPFSHash)[0]
       .eventStream;
   }
 }
