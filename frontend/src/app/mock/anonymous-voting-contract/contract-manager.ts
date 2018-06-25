@@ -12,16 +12,16 @@ import { IVoteHash } from '../../core/ipfs/formats.interface';
 import { IAnonymousVotingContractCollection, Mock } from '../module';
 
 export class AnonymousVotingContractManager implements IAnonymousVotingContractManager {
-  private _collection$: Observable<IAnonymousVotingContractCollection>;
+  private collection$: Observable<IAnonymousVotingContractCollection>;
 
   constructor(addr: address) {
     const collections = Mock.AnonymousVotingContractCollections
       .filter(collection => collection.address === addr);
-    this._collection$ = collections.length > 0 ? Observable.of(collections[0]) : Observable.empty();
+    this.collection$ = collections.length > 0 ? Observable.of(collections[0]) : Observable.empty();
   }
 
   get phase$(): Observable<number> {
-    return this._collection$
+    return this.collection$
       .map(collection => collection.currentPhase)
       // count up to the current phase
       .switchMap(phase =>
@@ -33,7 +33,7 @@ export class AnonymousVotingContractManager implements IAnonymousVotingContractM
   }
 
   get constants$(): Observable<IVoteConstants> {
-    return this._collection$
+    return this.collection$
       .map(collection => collection.voteConstants);
   }
 
@@ -46,13 +46,13 @@ export class AnonymousVotingContractManager implements IAnonymousVotingContractM
   }
 
   register$(voterAddr: address, blindAddressHash: string): Observable<ITransactionReceipt> {
-    return this._collection$
+    return this.collection$
       .map(() => Mock.Voters.filter(voter => voter.public_address === voterAddr)[0])
       .map(voter => voter.register_receipt);
   }
 
   vote$(anonymousAddr: address, voteHash: string): Observable<ITransactionReceipt> {
-    return this._collection$
+    return this.collection$
       .map(() => Mock.Voters.filter(voter => voter.anonymous_address === anonymousAddr)[0])
       .map(voter => voter.vote_receipt);
   }
