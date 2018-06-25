@@ -10,13 +10,14 @@ import 'rxjs/add/observable/of';
 import 'rxjs/add/operator/switchMap';
 import { Observable } from 'rxjs/Observable';
 
-import { CryptographyService, IRSAKey } from '../cryptography/cryptography.service';
+import { CryptographyService} from '../cryptography/cryptography.service';
 import { ErrorService } from '../error-service/error.service';
 import { AnonymousVotingContractService } from '../ethereum/anonymous-voting-contract/contract.service';
 import { ITransactionReceipt } from '../ethereum/transaction.interface';
 import { address } from '../ethereum/type.mappings';
 import { VoteListingContractService } from '../ethereum/vote-listing-contract/contract.service';
 import { IPFSService } from '../ipfs/ipfs.service';
+import { IRSAKey } from '../cryptography/rsa-key.interface';
 
 export interface IVoteParameters {
   topic: string;

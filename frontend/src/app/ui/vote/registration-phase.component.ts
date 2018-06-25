@@ -6,11 +6,12 @@ import { Observable } from 'rxjs/Observable';
 import { Subject } from 'rxjs/Subject';
 import { Subscription } from 'rxjs/Subscription';
 
-import { CryptographyService, IRSAKey } from '../../core/cryptography/cryptography.service';
+import { CryptographyService} from '../../core/cryptography/cryptography.service';
 import { ErrorService } from '../../core/error-service/error.service';
 import { address } from '../../core/ethereum/type.mappings';
 import { Web3Service, Web3ServiceErrors } from '../../core/ethereum/web3.service';
 import { VoteManagerService } from '../../core/vote-manager/vote-manager.service';
+import { IRSAKey } from '../../core/cryptography/rsa-key.interface';
 
 @Component({
   selector: 'vv-registration-phase',

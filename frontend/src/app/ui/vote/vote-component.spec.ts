@@ -4,7 +4,7 @@ import { By } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { Observable } from 'rxjs/Observable';
 
-import { IRSAKey } from '../../core/cryptography/cryptography.service';
+import { IRSAKey } from '../../core/cryptography/rsa-key.interface';
 import { VotePhases } from '../../core/ethereum/anonymous-voting-contract/contract.api';
 import { address } from '../../core/ethereum/type.mappings';
 import {

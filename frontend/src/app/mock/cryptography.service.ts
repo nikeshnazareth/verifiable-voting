@@ -1,5 +1,6 @@
-import { ICryptographyService, IRSAKey } from '../core/cryptography/cryptography.service';
+import { ICryptographyService} from '../core/cryptography/cryptography.service';
 import { Mock } from './module';
+import { IRSAKey } from '../core/cryptography/rsa-key.interface';
 
 export class CryptographyService implements ICryptographyService {
   random(size: number): string {

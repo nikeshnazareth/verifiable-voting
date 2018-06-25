@@ -1,6 +1,6 @@
 import { Observable } from 'rxjs/Observable';
 
-import { IRSAKey } from '../core/cryptography/cryptography.service';
+import { IRSAKey } from '../core/cryptography/rsa-key.interface';
 import { ITransactionReceipt } from '../core/ethereum/transaction.interface';
 import { address } from '../core/ethereum/type.mappings';
 import { IVoteManagerService, IVoteParameters } from '../core/vote-manager/vote-manager.service';
