@@ -10,30 +10,7 @@ import { VoteRetrievalService } from '../../core/vote-retrieval/vote-retrieval.s
 
 @Component({
   selector: 'vv-list-votes',
-  template: `
-    <mat-table [dataSource]="contractsSummary$ | async">
-      <!-- Index column -->
-      <ng-container matColumnDef="index">
-        <mat-header-cell *matHeaderCellDef>#</mat-header-cell>
-        <mat-cell *matCellDef="let contract">{{ contract.index }}</mat-cell>
-      </ng-container>
-
-      <!-- Phase column -->
-      <ng-container matColumnDef="phase">
-        <mat-header-cell *matHeaderCellDef>Phase</mat-header-cell>
-        <mat-cell *matCellDef="let contract">{{ displayString(contract.phase) }}</mat-cell>
-      </ng-container>
-
-      <!-- Topic column -->
-      <ng-container matColumnDef="topic">
-        <mat-header-cell *matHeaderCellDef>Topic</mat-header-cell>
-        <mat-cell *matCellDef="let contract">{{ displayString(contract.topic) }}</mat-cell>
-      </ng-container>
-
-      <mat-header-row *matHeaderRowDef="displayedColumns"></mat-header-row>
-      <mat-row *matRowDef="let row; columns: displayedColumns" (click)="_rowClicked$.emit(row.index)"></mat-row>
-    </mat-table>
-  `,
+  templateUrl: './list-votes.component.html',
   styleUrls: ['./list-votes.component.scss']
 })
 export class ListVotesComponent implements OnInit {
