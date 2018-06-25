@@ -3,12 +3,12 @@ import { Observable } from 'rxjs/Observable';
 
 import {
 IAnonymousVotingContractManager,
-IRegistrationHashes, IVoteHash
-} from '../../core/ethereum/anonymous-voting-contract/contract-manager';
+IRegistrationHashes} from '../../core/ethereum/anonymous-voting-contract/contract-manager';
 import { VotePhases } from '../../core/ethereum/anonymous-voting-contract/contract.constants';
 import { ITransactionReceipt } from '../../core/ethereum/transaction.interface';
 import { address } from '../../core/ethereum/type.mappings';
 import { IVoteConstants } from '../../core/ethereum/vote-listing-contract/contract.service';
+import { IVoteHash } from '../../core/ipfs/formats.interface';
 import { IAnonymousVotingContractCollection, Mock } from '../module';
 
 export class AnonymousVotingContractManager implements IAnonymousVotingContractManager {

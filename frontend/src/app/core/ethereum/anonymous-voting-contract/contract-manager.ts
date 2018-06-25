@@ -6,23 +6,19 @@ import { Observable } from 'rxjs/Observable';
 import { ReplaySubject } from 'rxjs/ReplaySubject';
 
 import { ErrorService } from '../../error-service/error.service';
+import { IVoteHash } from '../../ipfs/formats.interface';
 import { IContractLog } from '../contract.interface';
 import { ITransactionReceipt } from '../transaction.interface';
 import { address } from '../type.mappings';
 import { IVoteConstants } from '../vote-listing-contract/contract.service';
 import { RegistrationComplete, VoterInitiatedRegistration, VoteSubmitted } from './contract-events.interface';
-import { AnonymousVotingAPI} from './contract.api';
+import { AnonymousVotingAPI } from './contract.api';
 
 export interface IRegistrationHashes {
   [voter: string]: {
     blindedAddress: string;
     signature: string;
   };
-}
-
-export interface IVoteHash {
-  voter: address;
-  voteHash: string;
 }
 
 export interface IAnonymousVotingContractManager {
