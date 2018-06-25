@@ -27,6 +27,12 @@ export interface IRegistration {
   };
 }
 
+export interface ISingleVoterRegistration {
+  voter: address;
+  blindedAddress: string;
+  blindSignature: string;
+}
+
 export interface IDynamicValue<T> {
   status: string;
   value: T;

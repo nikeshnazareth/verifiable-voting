@@ -18,7 +18,8 @@ import {
   IDynamicValue,
   IRegistration,
   IVotingContractDetails,
-  RetrievalStatus, } from './vote-retreival.service.constants';
+  RetrievalStatus,
+} from './vote-retreival.service.constants';
 import { VoteRetrievalService } from './vote-retrieval.service';
 
 describe('Service: VoteRetrievalService', () => {
