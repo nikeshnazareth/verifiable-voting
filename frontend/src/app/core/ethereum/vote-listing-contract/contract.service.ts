@@ -19,6 +19,7 @@ import { ITransactionReceipt } from '../transaction.interface';
 import { ITruffleContractAbstraction, TruffleContractWrapperService } from '../truffle-contract-wrapper.service';
 import { address } from '../type.mappings';
 import { Web3Service } from '../web3.service';
+import { VoteListingContractErrors } from './contract-errors';
 import { VoteCreatedEvent } from './contract-events.interface';
 import { VoteListingAPI } from './contract.api';
 
@@ -37,16 +38,7 @@ export interface IVoteListingContractService {
   deployVote$(voteConstants: IVoteConstants): Observable<ITransactionReceipt>;
 }
 
-export const VoteListingContractErrors = {
-  network: new Error('Cannot find the VoteListing contract on the blockchain. ' +
-    `Ensure MetaMask (or the web3 provider) is connected to the ${APP_CONFIG.network.name}`),
-  voteCreated: new Error('Cannot listen for VoteCreated events on the VoteListing contract. ' +
-    'No new contracts will be displayed'),
-  eventError: new Error('Unexpected error in the VoteListing contract event stream'),
-  deployVote: new Error('Unable to deploy a new AnonymousVoting contract'),
-  deployedVotes: new Error('Unable to obtain AnonymousVoting contracts from the VoteListing contract'),
-  contractAddress: (i: number) => new Error(`Unable to retrieve voting contract ${i} (0-up indexing)`)
-};
+
 
 @Injectable()
 export class VoteListingContractService implements IVoteListingContractService {
