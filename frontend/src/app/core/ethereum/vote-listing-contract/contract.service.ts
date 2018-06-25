@@ -19,7 +19,8 @@ import { ITransactionReceipt } from '../transaction.interface';
 import { ITruffleContractAbstraction, TruffleContractWrapperService } from '../truffle-contract-wrapper.service';
 import { address } from '../type.mappings';
 import { Web3Service } from '../web3.service';
-import { VoteCreatedEvent, VoteListingAPI } from './contract.api';
+import { VoteCreatedEvent } from './contract-events.interface';
+import { VoteListingAPI } from './contract.api';
 
 
 export interface IVoteConstants {

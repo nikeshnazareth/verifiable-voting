@@ -8,7 +8,7 @@ import { IContractLog } from '../contract.interface';
 import { ITruffleContractWrapperService, TruffleContractWrapperService } from '../truffle-contract-wrapper.service';
 import { address } from '../type.mappings';
 import { IWeb3Service, Web3Service } from '../web3.service';
-import { VoteCreatedEvent } from './contract.api';
+import { VoteCreatedEvent } from './contract-events.interface';
 import { VoteListingContractErrors, VoteListingContractService } from './contract.service';
 import Spy = jasmine.Spy;
 

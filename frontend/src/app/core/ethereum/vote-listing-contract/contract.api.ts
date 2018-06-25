@@ -1,4 +1,4 @@
-import { IContract, IContractLog } from '../contract.interface';
+import { IContract } from '../contract.interface';
 import { ITransactionProperties, ITransactionReceipt } from '../transaction.interface';
 import { address, uint } from '../type.mappings';
 
@@ -28,15 +28,5 @@ export interface VoteListingAPI extends IContract {
          _elibigilityContract: address,
          _registrationAuthority: address,
          props: ITransactionProperties): Promise<ITransactionReceipt>;
-}
-
-export namespace VoteCreatedEvent {
-  export const name: string = 'VoteCreated';
-
-  export interface Log extends IContractLog {
-    args: {
-      contractAddress: address;
-    };
-  }
 }
 
