@@ -9,7 +9,7 @@ import { ListVotesComponent } from './list-votes/list-votes.component';
 import { RegistrationPhaseComponent } from './vote/registration/registration-phase.component';
 import { ResultsComponent } from './vote/results/results-component';
 import { VoteComponent } from './vote/vote-component';
-import { VotingPhaseComponent } from './vote/voting-phase.component';
+import { VotingPhaseComponent } from './vote/voting/voting-phase.component';
 
 @NgModule({
   declarations: [

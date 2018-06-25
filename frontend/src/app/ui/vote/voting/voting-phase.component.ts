@@ -6,13 +6,13 @@ import { Observable } from 'rxjs/Observable';
 import { Subject } from 'rxjs/Subject';
 import { Subscription } from 'rxjs/Subscription';
 
-import { IRSAKey } from '../../core/cryptography/rsa-key.interface';
-import { ErrorService } from '../../core/error-service/error.service';
-import { address } from '../../core/ethereum/type.mappings';
-import { Web3Errors } from '../../core/ethereum/web3-errors';
-import { Web3Service} from '../../core/ethereum/web3.service';
-import { VoteManagerService } from '../../core/vote-manager/vote-manager.service';
-import { IRegistration } from '../../core/vote-retrieval/vote-retreival.service.constants';
+import { IRSAKey } from '../../../core/cryptography/rsa-key.interface';
+import { ErrorService } from '../../../core/error-service/error.service';
+import { address } from '../../../core/ethereum/type.mappings';
+import { Web3Errors } from '../../../core/ethereum/web3-errors';
+import { Web3Service} from '../../../core/ethereum/web3.service';
+import { VoteManagerService } from '../../../core/vote-manager/vote-manager.service';
+import { IRegistration } from '../../../core/vote-retrieval/vote-retreival.service.constants';
 
 @Component({
   selector: 'vv-voting-phase',
