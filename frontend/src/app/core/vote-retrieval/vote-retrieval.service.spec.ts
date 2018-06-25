@@ -12,14 +12,14 @@ import { AnonymousVotingContractService } from '../ethereum/anonymous-voting-con
 import { VoteListingContractService } from '../ethereum/vote-listing-contract/contract.service';
 import { IVoteParameters } from '../ipfs/formats.interface';
 import { IPFSService } from '../ipfs/ipfs.service';
+import Spy = jasmine.Spy;
+import { VoteRetrievalErrors } from './vote-retreival-errors';
 import {
   IDynamicValue,
   IRegistration,
   IVotingContractDetails,
-  RETRIEVAL_STATUS, VoteRetrievalServiceErrors,
-} from './vote-retreival.service.constants';
+  RETRIEVAL_STATUS, } from './vote-retreival.service.constants';
 import { VoteRetrievalService } from './vote-retrieval.service';
-import Spy = jasmine.Spy;
 
 describe('Service: VoteRetrievalService', () => {
 
@@ -398,7 +398,7 @@ describe('Service: VoteRetrievalService', () => {
           });
 
           it('should notify the Error Service', () => {
-            expect(errSvc.add).toHaveBeenCalledWith(VoteRetrievalServiceErrors.ipfs.retrieval, error);
+            expect(errSvc.add).toHaveBeenCalledWith(VoteRetrievalErrors.ipfs.retrieval, error);
           });
 
           it(`should emit ${RETRIEVAL_STATUS.UNAVAILABLE}`, () => {
@@ -432,7 +432,7 @@ describe('Service: VoteRetrievalService', () => {
 
           it('should notify the Error Service', () => {
             expect(errSvc.add).toHaveBeenCalledWith(
-              VoteRetrievalServiceErrors.format.parameters(invalid_params), null
+              VoteRetrievalErrors.format.parameters(invalid_params), null
             );
           });
 
@@ -627,7 +627,7 @@ describe('Service: VoteRetrievalService', () => {
           });
 
           it('should notify the error service', () => {
-            expect(errSvc.add).toHaveBeenCalledWith(VoteRetrievalServiceErrors.ipfs.nullHash, null);
+            expect(errSvc.add).toHaveBeenCalledWith(VoteRetrievalErrors.ipfs.nullHash, null);
           });
 
           it('should be unavailable', () => {
@@ -643,7 +643,7 @@ describe('Service: VoteRetrievalService', () => {
           });
 
           it('should notify the error service', () => {
-            expect(errSvc.add).toHaveBeenCalledWith(VoteRetrievalServiceErrors.ipfs.nullHash, null);
+            expect(errSvc.add).toHaveBeenCalledWith(VoteRetrievalErrors.ipfs.nullHash, null);
           });
 
           it('should be unavailable', () => {
@@ -665,7 +665,7 @@ describe('Service: VoteRetrievalService', () => {
           });
 
           it('should notify the error service', () => {
-            expect(errSvc.add).toHaveBeenCalledWith(VoteRetrievalServiceErrors.registration, null);
+            expect(errSvc.add).toHaveBeenCalledWith(VoteRetrievalErrors.registration, null);
           });
 
           it('should be unavailable', () => {
@@ -730,7 +730,7 @@ describe('Service: VoteRetrievalService', () => {
           });
 
           it('should notify the error service', () => {
-            expect(errSvc.add).toHaveBeenCalledWith(VoteRetrievalServiceErrors.ipfs.nullHash, null);
+            expect(errSvc.add).toHaveBeenCalledWith(VoteRetrievalErrors.ipfs.nullHash, null);
           });
 
           it('should be unavailable', () => {
@@ -751,7 +751,7 @@ describe('Service: VoteRetrievalService', () => {
           });
 
           it('should notify the error service', () => {
-            expect(errSvc.add).toHaveBeenCalledWith(VoteRetrievalServiceErrors.ipfs.retrieval, jasmine.any(Error));
+            expect(errSvc.add).toHaveBeenCalledWith(VoteRetrievalErrors.ipfs.retrieval, jasmine.any(Error));
           });
 
           it('should be unavailable', () => {
@@ -777,7 +777,7 @@ describe('Service: VoteRetrievalService', () => {
           });
 
           it('should notify the error service', () => {
-            expect(errSvc.add).toHaveBeenCalledWith(VoteRetrievalServiceErrors.format.vote(invalid), null);
+            expect(errSvc.add).toHaveBeenCalledWith(VoteRetrievalErrors.format.vote(invalid), null);
           });
 
           it('should be unavailable', () => {

@@ -31,12 +31,11 @@ import { VoteListingContractService } from '../ethereum/vote-listing-contract/co
 import { IVote} from '../ipfs/formats.interface';
 import { IBlindedAddress, IBlindSignature, IVoteParameters } from '../ipfs/formats.interface';
 import { IPFSService } from '../ipfs/ipfs.service';
+import { VoteRetrievalErrors } from './vote-retreival-errors';
 import {
 IDynamicValue, IRegistration, IVotingContractDetails,
 IVotingContractSummary,
-RETRIEVAL_STATUS,
-VoteRetrievalServiceErrors
-} from './vote-retreival.service.constants';
+RETRIEVAL_STATUS} from './vote-retreival.service.constants';
 
 export interface IVoteRetrievalService {
   summaries$: Observable<IVotingContractSummary[]>;
@@ -148,7 +147,7 @@ export class VoteRetrievalService implements IVoteRetrievalService {
                   if (L.every(reg => this.cryptoSvc.verify(reg.blindedAddress, reg.blindSignature, key))) {
                     return L;
                   } else {
-                    this.errSvc.add(VoteRetrievalServiceErrors.registration, null);
+                    this.errSvc.add(VoteRetrievalErrors.registration, null);
                     return null;
                   }
                 })
@@ -234,7 +233,7 @@ export class VoteRetrievalService implements IVoteRetrievalService {
    */
   private _retrieveIPFSHash(hash: string, formatError: (obj: any) => Error): Observable<any> {
     if (!hash) {
-      this.errSvc.add(VoteRetrievalServiceErrors.ipfs.nullHash, null);
+      this.errSvc.add(VoteRetrievalErrors.ipfs.nullHash, null);
       return Observable.empty();
     }
 
@@ -244,7 +243,7 @@ export class VoteRetrievalService implements IVoteRetrievalService {
       })
       .switchMap(promise => Observable.fromPromise(promise))
       .catch(err => {
-        this.errSvc.add(VoteRetrievalServiceErrors.ipfs.retrieval, err);
+        this.errSvc.add(VoteRetrievalErrors.ipfs.retrieval, err);
         return Observable.empty();
       })
       .switchMap(obj => {
@@ -274,7 +273,7 @@ export class VoteRetrievalService implements IVoteRetrievalService {
       params.registration_key.modulus && typeof params.registration_key.modulus === 'string' &&
       params.registration_key.public_exp && typeof params.registration_key.public_exp === 'string';
 
-    return valid ? null : VoteRetrievalServiceErrors.format.parameters(params);
+    return valid ? null : VoteRetrievalErrors.format.parameters(params);
   }
 
   /**
@@ -287,7 +286,7 @@ export class VoteRetrievalService implements IVoteRetrievalService {
     const blindAddress: IBlindedAddress = <IBlindedAddress> obj;
     const valid = blindAddress &&
       blindAddress.blinded_address && typeof blindAddress.blinded_address === 'string';
-    return valid ? null : VoteRetrievalServiceErrors.format.blindedAddress(obj);
+    return valid ? null : VoteRetrievalErrors.format.blindedAddress(obj);
   }
 
   /**
@@ -300,7 +299,7 @@ export class VoteRetrievalService implements IVoteRetrievalService {
     const blindSignature: IBlindSignature = <IBlindSignature> obj;
     const valid = blindSignature &&
       blindSignature.blinded_signature && typeof blindSignature.blinded_signature === 'string';
-    return valid ? null : VoteRetrievalServiceErrors.format.blindSignature(obj);
+    return valid ? null : VoteRetrievalErrors.format.blindSignature(obj);
   }
 
   /**
@@ -314,7 +313,7 @@ export class VoteRetrievalService implements IVoteRetrievalService {
     const valid = vote &&
       vote.signed_address && typeof vote.signed_address === 'string' &&
       typeof vote.candidateIdx === 'number';
-    return valid ? null : VoteRetrievalServiceErrors.format.vote(obj);
+    return valid ? null : VoteRetrievalErrors.format.vote(obj);
   }
 }
 
