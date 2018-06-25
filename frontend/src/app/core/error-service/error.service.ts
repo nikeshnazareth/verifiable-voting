@@ -1,5 +1,6 @@
 import { EventEmitter, Injectable } from '@angular/core';
 import { Observable } from 'rxjs/Observable';
+import { IErrorPair } from './error-pair.interface';
 
 
 /**
@@ -24,11 +25,6 @@ export class ErrorService implements IErrorService {
       detailed: detailedErr
     });
   }
-}
-
-interface IErrorPair {
-  friendly: Error;
-  detailed: Error;
 }
 
 interface IErrorService {
