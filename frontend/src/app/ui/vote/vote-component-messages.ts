@@ -1,7 +1,7 @@
 import { VotePhases } from '../../core/ethereum/anonymous-voting-contract/contract.constants';
 import {
   IVotingContractDetails,
-  RETRIEVAL_STATUS
+  RetrievalStatus
 } from '../../core/vote-retrieval/vote-retreival.service.constants';
 
 export interface IPhaseStatus {
@@ -66,10 +66,10 @@ export class VoteComponentMessages {
       details.results.status
     ];
 
-    if (required.includes(RETRIEVAL_STATUS.RETRIEVING)) {
+    if (required.includes(RetrievalStatus.retrieving)) {
       return VoteComponentMessages.disableAllPanels(VoteComponentMessages.retrieving);
     }
-    if (required.includes(RETRIEVAL_STATUS.UNAVAILABLE)) {
+    if (required.includes(RetrievalStatus.unavailable)) {
       return VoteComponentMessages.disableAllPanels(VoteComponentMessages.unavailable);
     }
     const status: IPhaseStatus = VoteComponentMessages.enableAllPanels();

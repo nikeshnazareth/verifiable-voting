@@ -3,7 +3,7 @@ import { Observable } from 'rxjs/Observable';
 import { VotePhases } from '../core/ethereum/anonymous-voting-contract/contract.constants';
 import {
   IVotingContractDetails,
-  IVotingContractSummary, RETRIEVAL_STATUS
+  IVotingContractSummary, RetrievalStatus
 } from '../core/vote-retrieval/vote-retreival.service.constants';
 import { IVoteRetrievalService } from '../core/vote-retrieval/vote-retrieval.service';
 import { Mock } from './module';
@@ -13,12 +13,12 @@ export class VoteRetrievalService implements IVoteRetrievalService {
     return Observable.of(
       Mock.AnonymousVotingContractCollections.map((collection, idx) => ({
         index: idx,
-        address: {status: RETRIEVAL_STATUS.AVAILABLE, value: collection.address},
+        address: {status: RetrievalStatus.available, value: collection.address},
         phase: {
-          status: RETRIEVAL_STATUS.AVAILABLE,
+          status: RetrievalStatus.available,
           value: VotePhases[Mock.AnonymousVotingContractCollections[idx].currentPhase]
         },
-        topic: {status: RETRIEVAL_STATUS.AVAILABLE, value: collection.parameters.topic}
+        topic: {status: RetrievalStatus.available, value: collection.parameters.topic}
       }))
     );
   }
@@ -27,37 +27,37 @@ export class VoteRetrievalService implements IVoteRetrievalService {
     return index === null || typeof index === 'undefined' ?
       Observable.of({
         index: index,
-        address: {status: RETRIEVAL_STATUS.UNAVAILABLE, value: null},
-        topic: {status: RETRIEVAL_STATUS.UNAVAILABLE, value: null},
-        phase: {status: RETRIEVAL_STATUS.UNAVAILABLE, value: null},
-        numPendingRegistrations: {status: RETRIEVAL_STATUS.UNAVAILABLE, value: null},
-        key: {status: RETRIEVAL_STATUS.UNAVAILABLE, value: null},
-        candidates: {status: RETRIEVAL_STATUS.UNAVAILABLE, value: null},
-        registration: {status: RETRIEVAL_STATUS.UNAVAILABLE, value: null},
-        results: {status: RETRIEVAL_STATUS.UNAVAILABLE, value: null}
+        address: {status: RetrievalStatus.unavailable, value: null},
+        topic: {status: RetrievalStatus.unavailable, value: null},
+        phase: {status: RetrievalStatus.unavailable, value: null},
+        numPendingRegistrations: {status: RetrievalStatus.unavailable, value: null},
+        key: {status: RetrievalStatus.unavailable, value: null},
+        candidates: {status: RetrievalStatus.unavailable, value: null},
+        registration: {status: RetrievalStatus.unavailable, value: null},
+        results: {status: RetrievalStatus.unavailable, value: null}
       }) :
       Observable.of({
         index: index,
-        address: {status: RETRIEVAL_STATUS.AVAILABLE, value: Mock.addresses[index]},
+        address: {status: RetrievalStatus.available, value: Mock.addresses[index]},
         topic: {
-          status: RETRIEVAL_STATUS.AVAILABLE,
+          status: RetrievalStatus.available,
           value: Mock.AnonymousVotingContractCollections[index].parameters.topic
         },
         phase: {
-          status: RETRIEVAL_STATUS.AVAILABLE,
+          status: RetrievalStatus.available,
           value: VotePhases[Mock.AnonymousVotingContractCollections[index].currentPhase]
         },
-        numPendingRegistrations: {status: RETRIEVAL_STATUS.AVAILABLE, value: 0},
+        numPendingRegistrations: {status: RetrievalStatus.available, value: 0},
         key: {
-          status: RETRIEVAL_STATUS.AVAILABLE,
+          status: RetrievalStatus.available,
           value: Mock.AnonymousVotingContractCollections[index].parameters.registration_key
         },
         candidates: {
-          status: RETRIEVAL_STATUS.AVAILABLE,
+          status: RetrievalStatus.available,
           value: Mock.AnonymousVotingContractCollections[index].parameters.candidates
         },
-        registration: {status: RETRIEVAL_STATUS.AVAILABLE, value: {}},
-        results: {status: RETRIEVAL_STATUS.AVAILABLE, value: []}
+        registration: {status: RetrievalStatus.available, value: {}},
+        results: {status: RetrievalStatus.available, value: []}
       });
   }
 }

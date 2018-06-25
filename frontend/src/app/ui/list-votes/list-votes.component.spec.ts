@@ -4,7 +4,7 @@ import { By } from '@angular/platform-browser';
 
 import { Observable } from 'rxjs/Observable';
 import { VotePhases } from '../../core/ethereum/anonymous-voting-contract/contract.constants';
-import { IVotingContractSummary, RETRIEVAL_STATUS } from '../../core/vote-retrieval/vote-retreival.service.constants';
+import { IVotingContractSummary, RetrievalStatus } from '../../core/vote-retrieval/vote-retreival.service.constants';
 import { IVoteRetrievalService, VoteRetrievalService } from '../../core/vote-retrieval/vote-retrieval.service';
 import { MaterialModule } from '../../material/material.module';
 import { DOMInteractionUtility } from '../../mock/dom-interaction-utility';
@@ -136,20 +136,20 @@ describe('Component: ListVotesComponent', () => {
         beforeEach(() => spyOnProperty(page.voteRetrievalSvc, 'summaries$').and.callFake(() => {
           const summaries = Mock.AnonymousVotingContractCollections.map((collection, idx) => ({
             index: idx,
-            address: {status: RETRIEVAL_STATUS.AVAILABLE, value: collection.address},
+            address: {status: RetrievalStatus.available, value: collection.address},
             phase: {
-              status: RETRIEVAL_STATUS.AVAILABLE,
+              status: RetrievalStatus.available,
               value: VotePhases[Mock.AnonymousVotingContractCollections[idx].currentPhase]
             },
-            topic: {status: RETRIEVAL_STATUS.AVAILABLE, value: collection.parameters.topic}
+            topic: {status: RetrievalStatus.available, value: collection.parameters.topic}
           }));
-          summaries[waitingIndex].phase = {status: RETRIEVAL_STATUS.RETRIEVING, value: null};
+          summaries[waitingIndex].phase = {status: RetrievalStatus.retrieving, value: null};
           return Observable.of(summaries);
         }));
 
-        it(`should display ${RETRIEVAL_STATUS.RETRIEVING}`, () => {
+        it(`should display ${RetrievalStatus.retrieving}`, () => {
           init_phases();
-          expect(displayedPhases[waitingIndex]).toEqual(RETRIEVAL_STATUS.RETRIEVING);
+          expect(displayedPhases[waitingIndex]).toEqual(RetrievalStatus.retrieving);
         });
 
         it('should not affect the other phases', () => {
@@ -168,20 +168,20 @@ describe('Component: ListVotesComponent', () => {
         beforeEach(() => spyOnProperty(page.voteRetrievalSvc, 'summaries$').and.callFake(() => {
           const summaries = Mock.AnonymousVotingContractCollections.map((collection, idx) => ({
             index: idx,
-            address: {status: RETRIEVAL_STATUS.AVAILABLE, value: collection.address},
+            address: {status: RetrievalStatus.available, value: collection.address},
             phase: {
-              status: RETRIEVAL_STATUS.AVAILABLE,
+              status: RetrievalStatus.available,
               value: VotePhases[Mock.AnonymousVotingContractCollections[idx].currentPhase]
             },
-            topic: {status: RETRIEVAL_STATUS.AVAILABLE, value: collection.parameters.topic}
+            topic: {status: RetrievalStatus.available, value: collection.parameters.topic}
           }));
-          summaries[unavailableIndex].phase = {status: RETRIEVAL_STATUS.UNAVAILABLE, value: null};
+          summaries[unavailableIndex].phase = {status: RetrievalStatus.unavailable, value: null};
           return Observable.of(summaries);
         }));
 
-        it(`should display ${RETRIEVAL_STATUS.RETRIEVING}`, () => {
+        it(`should display ${RetrievalStatus.retrieving}`, () => {
           init_phases();
-          expect(displayedPhases[unavailableIndex]).toEqual(RETRIEVAL_STATUS.UNAVAILABLE);
+          expect(displayedPhases[unavailableIndex]).toEqual(RetrievalStatus.unavailable);
         });
 
         it('should not affect the other phases', () => {
@@ -219,20 +219,20 @@ describe('Component: ListVotesComponent', () => {
         beforeEach(() => spyOnProperty(page.voteRetrievalSvc, 'summaries$').and.callFake(() => {
           const summaries = Mock.AnonymousVotingContractCollections.map((collection, idx) => ({
             index: idx,
-            address: {status: RETRIEVAL_STATUS.AVAILABLE, value: collection.address},
+            address: {status: RetrievalStatus.available, value: collection.address},
             phase: {
-              status: RETRIEVAL_STATUS.AVAILABLE,
+              status: RetrievalStatus.available,
               value: VotePhases[Mock.AnonymousVotingContractCollections[idx].currentPhase]
             },
-            topic: {status: RETRIEVAL_STATUS.AVAILABLE, value: collection.parameters.topic}
+            topic: {status: RetrievalStatus.available, value: collection.parameters.topic}
           }));
-          summaries[waitingIndex].topic = {status: RETRIEVAL_STATUS.RETRIEVING, value: null};
+          summaries[waitingIndex].topic = {status: RetrievalStatus.retrieving, value: null};
           return Observable.of(summaries);
         }));
 
-        it(`should display ${RETRIEVAL_STATUS.RETRIEVING}`, () => {
+        it(`should display ${RetrievalStatus.retrieving}`, () => {
           init_topics();
-          expect(displayedTopics[waitingIndex]).toEqual(RETRIEVAL_STATUS.RETRIEVING);
+          expect(displayedTopics[waitingIndex]).toEqual(RetrievalStatus.retrieving);
         });
 
         it('should not affect the other topic', () => {
@@ -251,20 +251,20 @@ describe('Component: ListVotesComponent', () => {
         beforeEach(() => spyOnProperty(page.voteRetrievalSvc, 'summaries$').and.callFake(() => {
           const summaries = Mock.AnonymousVotingContractCollections.map((collection, idx) => ({
             index: idx,
-            address: {status: RETRIEVAL_STATUS.AVAILABLE, value: collection.address},
+            address: {status: RetrievalStatus.available, value: collection.address},
             phase: {
-              status: RETRIEVAL_STATUS.AVAILABLE,
+              status: RetrievalStatus.available,
               value: VotePhases[Mock.AnonymousVotingContractCollections[idx].currentPhase]
             },
-            topic: {status: RETRIEVAL_STATUS.AVAILABLE, value: collection.parameters.topic}
+            topic: {status: RetrievalStatus.available, value: collection.parameters.topic}
           }));
-          summaries[unavailableIndex].topic = {status: RETRIEVAL_STATUS.UNAVAILABLE, value: null};
+          summaries[unavailableIndex].topic = {status: RetrievalStatus.unavailable, value: null};
           return Observable.of(summaries);
         }));
 
-        it(`should display ${RETRIEVAL_STATUS.RETRIEVING}`, () => {
+        it(`should display ${RetrievalStatus.retrieving}`, () => {
           init_topics();
-          expect(displayedTopics[unavailableIndex]).toEqual(RETRIEVAL_STATUS.UNAVAILABLE);
+          expect(displayedTopics[unavailableIndex]).toEqual(RetrievalStatus.unavailable);
         });
 
         it('should not affect the other topics', () => {
@@ -333,10 +333,10 @@ describe('Component: ListVotesComponent', () => {
 
         const completeSummary = (idx) => ({
           index: idx,
-          address: {status: RETRIEVAL_STATUS.AVAILABLE, value: Mock.AnonymousVotingContractCollections[idx].address},
-          phase: {status: RETRIEVAL_STATUS.AVAILABLE, value: VotePhases[0]},
+          address: {status: RetrievalStatus.available, value: Mock.AnonymousVotingContractCollections[idx].address},
+          phase: {status: RetrievalStatus.available, value: VotePhases[0]},
           topic: {
-            status: RETRIEVAL_STATUS.AVAILABLE,
+            status: RetrievalStatus.available,
             value: Mock.AnonymousVotingContractCollections[idx].parameters.topic
           }
         });
@@ -362,7 +362,7 @@ describe('Component: ListVotesComponent', () => {
         describe('case: one of the contracts is retrieving the phase', () => {
           it('should prevent the row from being selected', () => {
             spyOnProperty(page.voteRetrievalSvc, 'summaries$').and.returnValue(
-              Observable.of(setPhaseStatus(incompleteIndex, RETRIEVAL_STATUS.RETRIEVING))
+              Observable.of(setPhaseStatus(incompleteIndex, RetrievalStatus.retrieving))
             );
             fixture = TestBed.createComponent(ListVotesComponent);
             fixture.detectChanges();
@@ -374,7 +374,7 @@ describe('Component: ListVotesComponent', () => {
 
           it('should not prevent other rows from being selected', () => {
             spyOnProperty(page.voteRetrievalSvc, 'summaries$').and.returnValue(
-              Observable.of(setPhaseStatus(incompleteIndex, RETRIEVAL_STATUS.RETRIEVING))
+              Observable.of(setPhaseStatus(incompleteIndex, RetrievalStatus.retrieving))
             );
             fixture = TestBed.createComponent(ListVotesComponent);
             fixture.detectChanges();
@@ -390,7 +390,7 @@ describe('Component: ListVotesComponent', () => {
 
           it('should enable the row selection once the phase is retrieved', () => {
             spyOnProperty(page.voteRetrievalSvc, 'summaries$').and.returnValue(
-              Observable.of(setPhaseStatus(incompleteIndex, RETRIEVAL_STATUS.RETRIEVING))
+              Observable.of(setPhaseStatus(incompleteIndex, RetrievalStatus.retrieving))
                 .concat(Observable.of(completeSummaries))
             );
             fixture = TestBed.createComponent(ListVotesComponent);
@@ -407,7 +407,7 @@ describe('Component: ListVotesComponent', () => {
         describe('case: one of the phases is unavailable', () => {
           beforeEach(() => {
             spyOnProperty(page.voteRetrievalSvc, 'summaries$').and.returnValue(
-              Observable.of(setPhaseStatus(incompleteIndex, RETRIEVAL_STATUS.UNAVAILABLE))
+              Observable.of(setPhaseStatus(incompleteIndex, RetrievalStatus.unavailable))
             );
             fixture = TestBed.createComponent(ListVotesComponent);
             fixture.detectChanges();
@@ -433,7 +433,7 @@ describe('Component: ListVotesComponent', () => {
 
           it('should prevent the row from being selected', () => {
             spyOnProperty(page.voteRetrievalSvc, 'summaries$').and.returnValue(
-              Observable.of(setTopicStatus(incompleteIndex, RETRIEVAL_STATUS.RETRIEVING))
+              Observable.of(setTopicStatus(incompleteIndex, RetrievalStatus.retrieving))
             );
             fixture = TestBed.createComponent(ListVotesComponent);
             fixture.detectChanges();
@@ -445,7 +445,7 @@ describe('Component: ListVotesComponent', () => {
 
           it('should not prevent other rows from being selected', () => {
             spyOnProperty(page.voteRetrievalSvc, 'summaries$').and.returnValue(
-              Observable.of(setTopicStatus(incompleteIndex, RETRIEVAL_STATUS.RETRIEVING))
+              Observable.of(setTopicStatus(incompleteIndex, RetrievalStatus.retrieving))
             );
             fixture = TestBed.createComponent(ListVotesComponent);
             fixture.detectChanges();
@@ -461,7 +461,7 @@ describe('Component: ListVotesComponent', () => {
 
           it('should enable the row selection once the topic is retrieved', () => {
             spyOnProperty(page.voteRetrievalSvc, 'summaries$').and.returnValue(
-              Observable.of(setTopicStatus(incompleteIndex, RETRIEVAL_STATUS.RETRIEVING))
+              Observable.of(setTopicStatus(incompleteIndex, RetrievalStatus.retrieving))
                 .concat(Observable.of(completeSummaries))
             );
             fixture = TestBed.createComponent(ListVotesComponent);
@@ -478,7 +478,7 @@ describe('Component: ListVotesComponent', () => {
         describe('case: one of the topics is unavailable', () => {
           beforeEach(() => {
             spyOnProperty(page.voteRetrievalSvc, 'summaries$').and.returnValue(
-              Observable.of(setTopicStatus(incompleteIndex, RETRIEVAL_STATUS.UNAVAILABLE))
+              Observable.of(setTopicStatus(incompleteIndex, RetrievalStatus.unavailable))
             );
             fixture = TestBed.createComponent(ListVotesComponent);
             fixture.detectChanges();

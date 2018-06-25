@@ -32,10 +32,10 @@ export interface IDynamicValue<T> {
   value: T;
 }
 
-export const RETRIEVAL_STATUS = {
-  RETRIEVING: 'RETRIEVING...',
-  AVAILABLE: 'AVAILABLE',
-  UNAVAILABLE: 'UNAVAILABLE'
+export const RetrievalStatus = {
+  retrieving: 'RETRIEVING...',
+  available: 'AVAILABLE',
+  unavailable: 'UNAVAILABLE'
 };
 
 

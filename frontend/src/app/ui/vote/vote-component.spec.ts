@@ -10,7 +10,7 @@ import { address } from '../../core/ethereum/type.mappings';
 import {
   IRegistration,
   IVotingContractDetails,
-  RETRIEVAL_STATUS
+  RetrievalStatus
 } from '../../core/vote-retrieval/vote-retreival.service.constants';
 import { VoteRetrievalService } from '../../core/vote-retrieval/vote-retrieval.service';
 import { MaterialModule } from '../../material/material.module';
@@ -76,14 +76,14 @@ describe('Component: VoteComponent', () => {
     const collection = Mock.AnonymousVotingContractCollections[idx];
     return {
       index: idx,
-      address: {status: RETRIEVAL_STATUS.AVAILABLE, value: collection.address},
-      topic: {status: RETRIEVAL_STATUS.AVAILABLE, value: collection.parameters.topic},
-      phase: {status: RETRIEVAL_STATUS.AVAILABLE, value: VotePhases[collection.currentPhase]},
-      numPendingRegistrations: {status: RETRIEVAL_STATUS.AVAILABLE, value: 0},
-      key: {status: RETRIEVAL_STATUS.AVAILABLE, value: collection.parameters.registration_key},
-      candidates: {status: RETRIEVAL_STATUS.AVAILABLE, value: collection.parameters.candidates},
-      registration: {status: RETRIEVAL_STATUS.AVAILABLE, value: {}},
-      results: {status: RETRIEVAL_STATUS.AVAILABLE, value: []}
+      address: {status: RetrievalStatus.available, value: collection.address},
+      topic: {status: RetrievalStatus.available, value: collection.parameters.topic},
+      phase: {status: RetrievalStatus.available, value: VotePhases[collection.currentPhase]},
+      numPendingRegistrations: {status: RetrievalStatus.available, value: 0},
+      key: {status: RetrievalStatus.available, value: collection.parameters.registration_key},
+      candidates: {status: RetrievalStatus.available, value: collection.parameters.candidates},
+      registration: {status: RetrievalStatus.available, value: {}},
+      results: {status: RetrievalStatus.available, value: []}
     };
   };
 
@@ -245,7 +245,7 @@ describe('Component: VoteComponent', () => {
         describe(`case: the ${name} is being retrieved`, () => {
           beforeEach(() => {
             const details = completeDetails(idx);
-            details[property] = {status: RETRIEVAL_STATUS.RETRIEVING, value: null};
+            details[property] = {status: RetrievalStatus.retrieving, value: null};
             spyOn(page.voteRetrievalSvc, 'detailsAtIndex$').and.returnValue(Observable.of(details));
             fixture.detectChanges();
           });
@@ -264,7 +264,7 @@ describe('Component: VoteComponent', () => {
         describe(`case: the ${name} is unavailable`, () => {
           beforeEach(() => {
             const details = completeDetails(idx);
-            details[property] = {status: RETRIEVAL_STATUS.UNAVAILABLE, value: null};
+            details[property] = {status: RetrievalStatus.unavailable, value: null};
             spyOn(page.voteRetrievalSvc, 'detailsAtIndex$').and.returnValue(Observable.of(details));
             fixture.detectChanges();
           });
@@ -297,7 +297,7 @@ describe('Component: VoteComponent', () => {
 
             beforeEach(() => {
               details = completeDetails(idx);
-              details.phase = {status: RETRIEVAL_STATUS.AVAILABLE, value: VotePhases[0]};
+              details.phase = {status: RetrievalStatus.available, value: VotePhases[0]};
             });
 
             describe('section: first (Registration) expansion panel', () => {
@@ -371,7 +371,7 @@ describe('Component: VoteComponent', () => {
 
             beforeEach(() => {
               details = completeDetails(idx);
-              details.phase = {status: RETRIEVAL_STATUS.AVAILABLE, value: VotePhases[1]};
+              details.phase = {status: RetrievalStatus.available, value: VotePhases[1]};
             });
 
             describe('section: first (Registration) expansion panel', () => {
@@ -445,7 +445,7 @@ describe('Component: VoteComponent', () => {
 
             beforeEach(() => {
               details = completeDetails(idx);
-              details.phase = {status: RETRIEVAL_STATUS.AVAILABLE, value: VotePhases[2]};
+              details.phase = {status: RetrievalStatus.available, value: VotePhases[2]};
             });
 
             describe('section: first (Registration) expansion panel', () => {

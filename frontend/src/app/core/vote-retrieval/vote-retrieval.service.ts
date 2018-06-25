@@ -36,7 +36,7 @@ import {
   IRegistration,
   IVotingContractDetails,
   IVotingContractSummary,
-  RETRIEVAL_STATUS
+  RetrievalStatus
 } from './vote-retreival.service.constants';
 
 export interface IVoteRetrievalService {
@@ -106,7 +106,7 @@ export class VoteRetrievalService implements IVoteRetrievalService {
     return this.summaries$
       .filter(summaries => idx < summaries.length)
       .map(summaries => summaries[idx])
-      .filter(summary => summary.address.status === RETRIEVAL_STATUS.AVAILABLE)
+      .filter(summary => summary.address.status === RetrievalStatus.available)
       .switchMap(summary => {
         const contractManager = this.anonymousVotingContractSvc.at(summary.address.value);
 
@@ -216,11 +216,11 @@ export class VoteRetrievalService implements IVoteRetrievalService {
   private wrapRetrieval<T>(obs: Observable<T>): Observable<IDynamicValue<T>> {
     return obs
       .map(val => val === null ?
-        {status: RETRIEVAL_STATUS.UNAVAILABLE, value: null} :
-        {status: RETRIEVAL_STATUS.AVAILABLE, value: val}
+        {status: RetrievalStatus.unavailable, value: null} :
+        {status: RetrievalStatus.available, value: val}
       )
-      .defaultIfEmpty({status: RETRIEVAL_STATUS.UNAVAILABLE, value: null})
-      .startWith({status: RETRIEVAL_STATUS.RETRIEVING, value: null});
+      .defaultIfEmpty({status: RetrievalStatus.unavailable, value: null})
+      .startWith({status: RetrievalStatus.retrieving, value: null});
   }
 
   /**

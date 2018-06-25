@@ -18,7 +18,7 @@ import {
   IDynamicValue,
   IRegistration,
   IVotingContractDetails,
-  RETRIEVAL_STATUS, } from './vote-retreival.service.constants';
+  RetrievalStatus, } from './vote-retreival.service.constants';
 import { VoteRetrievalService } from './vote-retrieval.service';
 
 describe('Service: VoteRetrievalService', () => {
@@ -131,16 +131,16 @@ describe('Service: VoteRetrievalService', () => {
             init_individual_summaries_and_subscribe();
           });
 
-          it(`should set the null address to ${RETRIEVAL_STATUS.UNAVAILABLE}`, () => {
+          it(`should set the null address to ${RetrievalStatus.unavailable}`, () => {
             expect(individualNextHandler[nullAddressIdx].calls.mostRecent().args[0].address)
-              .toEqual({status: RETRIEVAL_STATUS.UNAVAILABLE, value: null});
+              .toEqual({status: RetrievalStatus.unavailable, value: null});
           });
 
           it('should not affect the other addresses', () => {
             individualNextHandler.map((handler, idx) => {
               if (idx !== nullAddressIdx) {
                 expect(handler.calls.mostRecent().args[0].address)
-                  .toEqual({status: RETRIEVAL_STATUS.AVAILABLE, value: Mock.addresses[idx]});
+                  .toEqual({status: RetrievalStatus.available, value: Mock.addresses[idx]});
               }
             });
           });
@@ -158,10 +158,10 @@ describe('Service: VoteRetrievalService', () => {
             init_individual_summaries_and_subscribe();
           });
 
-          it(`should be initialised to ${RETRIEVAL_STATUS.RETRIEVING}`, () => {
+          it(`should be initialised to ${RetrievalStatus.retrieving}`, () => {
             individualNextHandler.map(handler => {
               expect(handler.calls.mostRecent().args[0].phase)
-                .toEqual({status: RETRIEVAL_STATUS.RETRIEVING, value: null});
+                .toEqual({status: RetrievalStatus.retrieving, value: null});
             });
           });
         });
@@ -171,7 +171,7 @@ describe('Service: VoteRetrievalService', () => {
             init_individual_summaries_and_subscribe();
             individualNextHandler.map((handler, idx) => {
               expect(handler.calls.mostRecent().args[0].phase).toEqual({
-                status: RETRIEVAL_STATUS.AVAILABLE,
+                status: RetrievalStatus.available,
                 value: VotePhases[Mock.AnonymousVotingContractCollections[idx].currentPhase]
               });
             });
@@ -188,16 +188,16 @@ describe('Service: VoteRetrievalService', () => {
             init_individual_summaries_and_subscribe();
           });
 
-          it(`should set the phase to ${RETRIEVAL_STATUS.UNAVAILABLE}`, () => {
+          it(`should set the phase to ${RetrievalStatus.unavailable}`, () => {
             expect(individualNextHandler[nullAddressIdx].calls.mostRecent().args[0].phase)
-              .toEqual({status: RETRIEVAL_STATUS.UNAVAILABLE, value: null});
+              .toEqual({status: RetrievalStatus.unavailable, value: null});
           });
 
           it('should not affect the other phases', () => {
             individualNextHandler.map((handler, idx) => {
               if (idx !== nullAddressIdx) {
                 expect(handler.calls.mostRecent().args[0].phase).toEqual({
-                  status: RETRIEVAL_STATUS.AVAILABLE,
+                  status: RetrievalStatus.available,
                   value: VotePhases[Mock.AnonymousVotingContractCollections[idx].currentPhase]
                 });
               }
@@ -219,16 +219,16 @@ describe('Service: VoteRetrievalService', () => {
             init_individual_summaries_and_subscribe();
           });
 
-          it(`should emit ${RETRIEVAL_STATUS.UNAVAILABLE}`, () => {
+          it(`should emit ${RetrievalStatus.unavailable}`, () => {
             expect(individualNextHandler[emptyIndex].calls.mostRecent().args[0].phase)
-              .toEqual({status: RETRIEVAL_STATUS.UNAVAILABLE, value: null});
+              .toEqual({status: RetrievalStatus.unavailable, value: null});
           });
 
           it('should not affect other contract phase observables', () => {
             individualNextHandler.map((handler, idx) => {
               if (idx !== emptyIndex) {
                 expect(handler.calls.mostRecent().args[0].phase).toEqual({
-                  status: RETRIEVAL_STATUS.AVAILABLE,
+                  status: RetrievalStatus.available,
                   value: VotePhases[Mock.AnonymousVotingContractCollections[idx].currentPhase]
                 });
               }
@@ -297,11 +297,11 @@ describe('Service: VoteRetrievalService', () => {
           });
 
 
-          it(`should be initialised to ${RETRIEVAL_STATUS.RETRIEVING}`, () => {
+          it(`should be initialised to ${RetrievalStatus.retrieving}`, () => {
             init_individual_summaries_and_subscribe();
             individualNextHandler.map(handler => {
               expect(handler.calls.mostRecent().args[0].topic)
-                .toEqual({status: RETRIEVAL_STATUS.RETRIEVING, value: null});
+                .toEqual({status: RetrievalStatus.retrieving, value: null});
             });
           });
         });
@@ -312,11 +312,11 @@ describe('Service: VoteRetrievalService', () => {
 
           beforeEach(() => spyOn(ipfsSvc, 'catJSON').and.returnValue(unresolvedPromise));
 
-          it(`should be initialised to ${RETRIEVAL_STATUS.RETRIEVING}`, () => {
+          it(`should be initialised to ${RetrievalStatus.retrieving}`, () => {
             init_individual_summaries_and_subscribe();
             individualNextHandler.map(handler => {
               expect(handler.calls.mostRecent().args[0].topic)
-                .toEqual({status: RETRIEVAL_STATUS.RETRIEVING, value: null});
+                .toEqual({status: RetrievalStatus.retrieving, value: null});
             });
           });
         });
@@ -326,7 +326,7 @@ describe('Service: VoteRetrievalService', () => {
             init_individual_summaries_and_subscribe();
             individualNextHandler.map((handler, idx) => {
               expect(handler.calls.mostRecent().args[0].topic)
-                .toEqual({status: RETRIEVAL_STATUS.AVAILABLE, value: topics[idx]});
+                .toEqual({status: RetrievalStatus.available, value: topics[idx]});
             });
           });
         });
@@ -341,16 +341,16 @@ describe('Service: VoteRetrievalService', () => {
             init_individual_summaries_and_subscribe();
           });
 
-          it(`should set the topic to ${RETRIEVAL_STATUS.UNAVAILABLE}`, () => {
+          it(`should set the topic to ${RetrievalStatus.unavailable}`, () => {
             expect(individualNextHandler[nullAddressIdx].calls.mostRecent().args[0].topic)
-              .toEqual({status: RETRIEVAL_STATUS.UNAVAILABLE, value: null});
+              .toEqual({status: RetrievalStatus.unavailable, value: null});
           });
 
           it('should not affect the other topics', () => {
             individualNextHandler.map((handler, idx) => {
               if (idx !== nullAddressIdx) {
                 expect(handler.calls.mostRecent().args[0].topic)
-                  .toEqual({status: RETRIEVAL_STATUS.AVAILABLE, value: topics[idx]});
+                  .toEqual({status: RetrievalStatus.available, value: topics[idx]});
               }
             });
           });
@@ -370,16 +370,16 @@ describe('Service: VoteRetrievalService', () => {
             init_individual_summaries_and_subscribe();
           });
 
-          it(`should emit ${RETRIEVAL_STATUS.UNAVAILABLE}`, () => {
+          it(`should emit ${RetrievalStatus.unavailable}`, () => {
             expect(individualNextHandler[emptyIndex].calls.mostRecent().args[0].topic)
-              .toEqual({status: RETRIEVAL_STATUS.UNAVAILABLE, value: null});
+              .toEqual({status: RetrievalStatus.unavailable, value: null});
           });
 
           it('should not affect other contract topic values', () => {
             individualNextHandler.map((handler, idx) => {
               if (idx !== emptyIndex) {
                 expect(handler.calls.mostRecent().args[0].topic)
-                  .toEqual({status: RETRIEVAL_STATUS.AVAILABLE, value: topics[idx]});
+                  .toEqual({status: RetrievalStatus.available, value: topics[idx]});
               }
             });
           });
@@ -401,16 +401,16 @@ describe('Service: VoteRetrievalService', () => {
             expect(errSvc.add).toHaveBeenCalledWith(VoteRetrievalErrors.ipfs.retrieval, error);
           });
 
-          it(`should emit ${RETRIEVAL_STATUS.UNAVAILABLE}`, () => {
+          it(`should emit ${RetrievalStatus.unavailable}`, () => {
             expect(individualNextHandler[failedIndex].calls.mostRecent().args[0].topic)
-              .toEqual({status: RETRIEVAL_STATUS.UNAVAILABLE, value: null});
+              .toEqual({status: RetrievalStatus.unavailable, value: null});
           });
 
           it('should not affect other contract topic values', () => {
             individualNextHandler.map((handler, idx) => {
               if (idx !== failedIndex) {
                 expect(handler.calls.mostRecent().args[0].topic)
-                  .toEqual({status: RETRIEVAL_STATUS.AVAILABLE, value: topics[idx]});
+                  .toEqual({status: RetrievalStatus.available, value: topics[idx]});
               }
             });
           });
@@ -436,16 +436,16 @@ describe('Service: VoteRetrievalService', () => {
             );
           });
 
-          it(`should emit ${RETRIEVAL_STATUS.UNAVAILABLE}`, () => {
+          it(`should emit ${RetrievalStatus.unavailable}`, () => {
             expect(individualNextHandler[invalidIndex].calls.mostRecent().args[0].topic)
-              .toEqual({status: RETRIEVAL_STATUS.UNAVAILABLE, value: null});
+              .toEqual({status: RetrievalStatus.unavailable, value: null});
           });
 
           it('should not affect other contract topic values', () => {
             individualNextHandler.map((handler, idx) => {
               if (idx !== invalidIndex) {
                 expect(handler.calls.mostRecent().args[0].topic)
-                  .toEqual({status: RETRIEVAL_STATUS.AVAILABLE, value: topics[idx]});
+                  .toEqual({status: RetrievalStatus.available, value: topics[idx]});
               }
             });
           });
@@ -569,7 +569,7 @@ describe('Service: VoteRetrievalService', () => {
           });
 
           it('should return "2"', () => {
-            expect(lastEmitted().numPendingRegistrations.status).toEqual(RETRIEVAL_STATUS.AVAILABLE);
+            expect(lastEmitted().numPendingRegistrations.status).toEqual(RetrievalStatus.available);
             expect(lastEmitted().numPendingRegistrations.value).toEqual(2);
           });
         });
@@ -615,7 +615,7 @@ describe('Service: VoteRetrievalService', () => {
           });
 
           it('should return an empty object', () => {
-            expect(lastEmitted().registration.status).toEqual(RETRIEVAL_STATUS.AVAILABLE);
+            expect(lastEmitted().registration.status).toEqual(RetrievalStatus.available);
             expect(lastEmitted().registration.value).toEqual({});
           });
         });
@@ -631,7 +631,7 @@ describe('Service: VoteRetrievalService', () => {
           });
 
           it('should be unavailable', () => {
-            expect(lastEmitted().registration.status).toEqual(RETRIEVAL_STATUS.UNAVAILABLE);
+            expect(lastEmitted().registration.status).toEqual(RetrievalStatus.unavailable);
             expect(lastEmitted().registration.value).toEqual(null);
           });
         });
@@ -647,7 +647,7 @@ describe('Service: VoteRetrievalService', () => {
           });
 
           it('should be unavailable', () => {
-            expect(lastEmitted().registration.status).toEqual(RETRIEVAL_STATUS.UNAVAILABLE);
+            expect(lastEmitted().registration.status).toEqual(RetrievalStatus.unavailable);
             expect(lastEmitted().registration.value).toEqual(null);
           });
         });
@@ -669,7 +669,7 @@ describe('Service: VoteRetrievalService', () => {
           });
 
           it('should be unavailable', () => {
-            expect(lastEmitted().registration.status).toEqual(RETRIEVAL_STATUS.UNAVAILABLE);
+            expect(lastEmitted().registration.status).toEqual(RetrievalStatus.unavailable);
             expect(lastEmitted().registration.value).toEqual(null);
           });
         });
@@ -679,7 +679,7 @@ describe('Service: VoteRetrievalService', () => {
 
           it('should return all blind signatures', () => {
             const reg: IDynamicValue<IRegistration> = lastEmitted().registration;
-            expect(reg.status).toEqual(RETRIEVAL_STATUS.AVAILABLE);
+            expect(reg.status).toEqual(RetrievalStatus.available);
             expect(Object.keys(reg.value).length).toEqual(Mock.Voters.length);
             Mock.Voters.map(voter => {
               expect(reg.value[voter.public_address]).toBeDefined();
@@ -712,7 +712,7 @@ describe('Service: VoteRetrievalService', () => {
           });
 
           it('should return a list of candidates with 0 votes ', () => {
-            expect(lastEmitted().results.status).toEqual(RETRIEVAL_STATUS.AVAILABLE);
+            expect(lastEmitted().results.status).toEqual(RetrievalStatus.available);
             expect(lastEmitted().results.value)
               .toEqual(voteCollection.parameters.candidates.map(candidate => ({candidate: candidate, count: 0})));
           });
@@ -734,7 +734,7 @@ describe('Service: VoteRetrievalService', () => {
           });
 
           it('should be unavailable', () => {
-            expect(lastEmitted().results.status).toEqual(RETRIEVAL_STATUS.UNAVAILABLE);
+            expect(lastEmitted().results.status).toEqual(RetrievalStatus.unavailable);
             expect(lastEmitted().results.value).toEqual(null);
           });
         });
@@ -755,7 +755,7 @@ describe('Service: VoteRetrievalService', () => {
           });
 
           it('should be unavailable', () => {
-            expect(lastEmitted().results.status).toEqual(RETRIEVAL_STATUS.UNAVAILABLE);
+            expect(lastEmitted().results.status).toEqual(RetrievalStatus.unavailable);
             expect(lastEmitted().results.value).toEqual(null);
           });
         });
@@ -781,7 +781,7 @@ describe('Service: VoteRetrievalService', () => {
           });
 
           it('should be unavailable', () => {
-            expect(lastEmitted().results.status).toEqual(RETRIEVAL_STATUS.UNAVAILABLE);
+            expect(lastEmitted().results.status).toEqual(RetrievalStatus.unavailable);
             expect(lastEmitted().results.value).toEqual(null);
           });
         });
@@ -800,7 +800,7 @@ describe('Service: VoteRetrievalService', () => {
           });
 
           it('should return a histogram of the voter choices', () => {
-            expect(lastEmitted().results.status).toEqual(RETRIEVAL_STATUS.AVAILABLE);
+            expect(lastEmitted().results.status).toEqual(RetrievalStatus.available);
             const results = lastEmitted().results.value;
             voteCollection.parameters.candidates.map((candidate, idx) => {
               const count = Mock.Voters.filter(voter => voter.vote.candidateIdx === idx).length;
