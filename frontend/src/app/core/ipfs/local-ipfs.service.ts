@@ -8,10 +8,10 @@ import { IIPFSService } from './ipfs.service';
 
 @Injectable()
 export class IPFSService implements IIPFSService {
-  private HASH_SPACE_SIZE: number = 10 ** 6;
+  private hashSpaceSize: number = 10 ** 6;
 
   addJSON(data: object): Promise<string> {
-    const hash: string = String(Math.floor(Math.random() * this.HASH_SPACE_SIZE));
+    const hash: string = String(Math.floor(Math.random() * this.hashSpaceSize));
     localStorage.setItem(hash, JSON.stringify(data));
     return Promise.resolve(hash);
   }
