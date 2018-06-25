@@ -4,7 +4,7 @@ import { Mock } from '../module';
 
 export class NoRestrictionContract implements IContract {
   get address(): address {
-    return Mock.NO_RESTRICTION_ADDRESS;
+    return Mock.noRestrictionAddress;
   }
 
   allEvents() {

@@ -72,9 +72,9 @@ describe('Service: CryptographyService', () => {
   describe('method: blind', () => {
     it('should return the blinded value corresponding to the message, factor and key', () => {
       const blinded: string = cryptoSvc.blind(
-        Mock.BLINDING.message.plain, Mock.BLINDING.factor.plain, Mock.BLINDING.public_key
+        Mock.blinding.message.plain, Mock.blinding.factor.plain, Mock.blinding.public_key
       );
-      expect(blinded).toEqual(Mock.BLINDING.blinded_message);
+      expect(blinded).toEqual(Mock.blinding.blinded_message);
     });
 
     xdescribe('case: the key is null', () => {
@@ -93,9 +93,9 @@ describe('Service: CryptographyService', () => {
   describe('method: unblind', () => {
     it('should return the unblinded signature corresponding to the blinded signature, factor and key', () => {
       const unblinded: string = cryptoSvc.unblind(
-        Mock.BLINDING.signed_blinded_message, Mock.BLINDING.factor.plain, Mock.BLINDING.public_key
+        Mock.blinding.signed_blinded_message, Mock.blinding.factor.plain, Mock.blinding.public_key
       );
-      expect(unblinded).toEqual(Mock.BLINDING.signed_unblinded_message);
+      expect(unblinded).toEqual(Mock.blinding.signed_unblinded_message);
     });
 
     xdescribe('case: the blinded signature is null', () => {
@@ -119,14 +119,14 @@ describe('Service: CryptographyService', () => {
   describe('method: signature', () => {
     it('should return true when comparing the blinded message to the unblinded message', () => {
       const verify: boolean = cryptoSvc.verify(
-        Mock.BLINDING.blinded_message, Mock.BLINDING.signed_blinded_message, Mock.BLINDING.public_key
+        Mock.blinding.blinded_message, Mock.blinding.signed_blinded_message, Mock.blinding.public_key
       );
       expect(verify).toEqual(true);
     });
 
     it('should return true when comparing the hashed message to the signed unblinded message', () => {
       const verify: boolean = cryptoSvc.verify(
-        Mock.BLINDING.message.hash, Mock.BLINDING.signed_unblinded_message, Mock.BLINDING.public_key
+        Mock.blinding.message.hash, Mock.blinding.signed_unblinded_message, Mock.blinding.public_key
       );
       expect(verify).toEqual(true);
     });

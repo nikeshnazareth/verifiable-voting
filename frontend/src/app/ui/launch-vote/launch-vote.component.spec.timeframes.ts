@@ -22,7 +22,7 @@ export function timeframe_tests(getFixture) {
     beforeEach(() => {
       fixture = getFixture();
       jasmine.clock().install();
-      jasmine.clock().mockDate(Mock.TODAY);
+      jasmine.clock().mockDate(Mock.today);
 
       fixture.detectChanges();
       const step: DebugElement = fixture.debugElement.queryAll(By.css('.mat-step'))[1];
@@ -55,7 +55,7 @@ export function timeframe_tests(getFixture) {
         });
 
         xit('TODO: should be initialised to the current date', () => {
-          expect(regOpenInput.nativeElement.value).toEqual(Mock.TODAY.toLocaleDateString());
+          expect(regOpenInput.nativeElement.value).toEqual(Mock.today.toLocaleDateString());
         });
 
         it('should be readonly', () => {
@@ -112,7 +112,7 @@ export function timeframe_tests(getFixture) {
         });
 
         it('should have a minimum value of tomorrow', () => {
-          const tomorrowDate: string = dayAfter(Mock.TODAY).toISOString().split('T')[0];
+          const tomorrowDate: string = dayAfter(Mock.today).toISOString().split('T')[0];
           expect(regDeadlineInput.attributes.min).toEqual(tomorrowDate);
         });
 
@@ -133,19 +133,19 @@ export function timeframe_tests(getFixture) {
           });
 
           it('should be invalid when set to today', () => {
-            DOMInteractionUtility.setValueOn(regDeadlineInput, Mock.TODAY.toString());
+            DOMInteractionUtility.setValueOn(regDeadlineInput, Mock.today.toString());
             fixture.detectChanges();
             expect(ctrl.valid).toEqual(false);
           });
 
           it('should be invalid when set to yesterday', () => {
-            DOMInteractionUtility.setValueOn(regDeadlineInput, dayBefore(Mock.TODAY).toString());
+            DOMInteractionUtility.setValueOn(regDeadlineInput, dayBefore(Mock.today).toString());
             fixture.detectChanges();
             expect(ctrl.valid).toEqual(false);
           });
 
           it('should be valid when set to tomorrow', () => {
-            DOMInteractionUtility.setValueOn(regDeadlineInput, dayAfter(Mock.TODAY).toString());
+            DOMInteractionUtility.setValueOn(regDeadlineInput, dayAfter(Mock.today).toString());
             fixture.detectChanges();
             expect(ctrl.valid).toEqual(true);
           });

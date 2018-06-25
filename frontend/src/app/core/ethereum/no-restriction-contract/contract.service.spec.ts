@@ -43,7 +43,7 @@ describe('Service: NoRestrictionContractService', () => {
     it('should resolve with the contract address', done => {
       noRestrictionSvc = new NoRestrictionContractService(web3Svc, contractSvc, errSvc);
       noRestrictionSvc.address
-        .then(addr => expect(addr).toEqual(Mock.NO_RESTRICTION_ADDRESS))
+        .then(addr => expect(addr).toEqual(Mock.noRestrictionAddress))
         .then(done);
     });
 

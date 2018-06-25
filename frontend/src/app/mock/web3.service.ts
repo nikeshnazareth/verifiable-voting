@@ -18,11 +18,11 @@ export class Web3Service implements IWeb3Service {
   }
 
   sha3(preimage: string): string {
-    if (preimage === Mock.BLINDING.message.plain) {
-      return Mock.BLINDING.message.hash;
+    if (preimage === Mock.blinding.message.plain) {
+      return Mock.blinding.message.hash;
     }
-    if (preimage === Mock.BLINDING.factor.plain) {
-      return Mock.BLINDING.factor.hash;
+    if (preimage === Mock.blinding.factor.plain) {
+      return Mock.blinding.factor.hash;
     }
     return `HASH_OF_(${preimage})`;
   }

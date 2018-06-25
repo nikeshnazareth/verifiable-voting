@@ -29,7 +29,7 @@ export class VoteListingContract implements VoteListingAPI {
   }
 
   get address(): address {
-    return Mock.VOTE_LISTING_ADDRESS;
+    return Mock.voteListingAddress;
   }
 
   allEvents(): IContractEventStream {
