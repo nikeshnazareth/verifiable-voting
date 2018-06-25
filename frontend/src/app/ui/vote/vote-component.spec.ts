@@ -15,7 +15,7 @@ import {
 import { VoteRetrievalService } from '../../core/vote-retrieval/vote-retrieval.service';
 import { MaterialModule } from '../../material/material.module';
 import { Mock } from '../../mock/module';
-import { ICandidateTotal } from './results-component';
+import { ICandidateTotal } from './results/results-component';
 import { VoteComponent } from './vote-component';
 import { VoteComponentMessages } from './vote-component-messages';
 

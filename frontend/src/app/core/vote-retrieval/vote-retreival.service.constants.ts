@@ -1,4 +1,4 @@
-import { ICandidateTotal } from '../../ui/vote/results-component';
+import { ICandidateTotal } from '../../ui/vote/results/results-component';
 import { IRSAKey } from '../cryptography/rsa-key.interface';
 import { address } from '../ethereum/type.mappings';
 
