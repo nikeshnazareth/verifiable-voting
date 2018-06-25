@@ -18,11 +18,11 @@ export class ListVotesComponent implements OnInit {
   public contractsSummary$: Observable<IVotingContractSummary[]>;
   public displayedColumns: string[] = ['index', 'phase', 'topic'];
 
-  private _rowClicked$: EventEmitter<number>;
+  private rowClicked$: EventEmitter<number>;
 
   constructor(private voteRetrievalSvc: VoteRetrievalService) {
-    this._rowClicked$ = new EventEmitter<number>();
-    this.selectedContract$ = this._initialiseSelectedContract$();
+    this.rowClicked$ = new EventEmitter<number>();
+    this.selectedContract$ = this.initialiseSelectedContract$();
   }
 
   ngOnInit() {
@@ -44,8 +44,8 @@ export class ListVotesComponent implements OnInit {
    * @returns {Observable<number>}
    * @private
    */
-  private _initialiseSelectedContract$(): Observable<number> {
-    return this._rowClicked$
+  private initialiseSelectedContract$(): Observable<number> {
+    return this.rowClicked$
       .withLatestFrom(this.voteRetrievalSvc.summaries$)
       .map(([idx, summaries]) => summaries[idx])
       .filter(summary => summary.address.status === RETRIEVAL_STATUS.AVAILABLE)

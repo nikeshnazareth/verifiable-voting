@@ -18,5 +18,5 @@
   </ng-container>
 
   <mat-header-row *matHeaderRowDef="displayedColumns"></mat-header-row>
-  <mat-row *matRowDef="let row; columns: displayedColumns" (click)="_rowClicked$.emit(row.index)"></mat-row>
+  <mat-row *matRowDef="let row; columns: displayedColumns" (click)="rowClicked$.emit(row.index)"></mat-row>
 </mat-table>
