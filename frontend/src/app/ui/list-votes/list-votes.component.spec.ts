@@ -3,7 +3,7 @@ import { async, ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core
 import { By } from '@angular/platform-browser';
 
 import { Observable } from 'rxjs/Observable';
-import { VotePhases } from '../../core/ethereum/anonymous-voting-contract/contract.api';
+import { VotePhases } from '../../core/ethereum/anonymous-voting-contract/contract.constants';
 import { IVotingContractSummary, RETRIEVAL_STATUS } from '../../core/vote-retrieval/vote-retreival.service.constants';
 import { IVoteRetrievalService, VoteRetrievalService } from '../../core/vote-retrieval/vote-retrieval.service';
 import { MaterialModule } from '../../material/material.module';

@@ -5,7 +5,7 @@ import {
 IAnonymousVotingContractManager,
 IRegistrationHashes, IVoteHash
 } from '../../core/ethereum/anonymous-voting-contract/contract-manager';
-import { VotePhases } from '../../core/ethereum/anonymous-voting-contract/contract.api';
+import { VotePhases } from '../../core/ethereum/anonymous-voting-contract/contract.constants';
 import { ITransactionReceipt } from '../../core/ethereum/transaction.interface';
 import { address } from '../../core/ethereum/type.mappings';
 import { IVoteConstants } from '../../core/ethereum/vote-listing-contract/contract.service';

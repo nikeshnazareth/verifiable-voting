@@ -1,4 +1,4 @@
-import { VotePhases } from '../../core/ethereum/anonymous-voting-contract/contract.api';
+import { VotePhases } from '../../core/ethereum/anonymous-voting-contract/contract.constants';
 import {
   IVotingContractDetails,
   RETRIEVAL_STATUS

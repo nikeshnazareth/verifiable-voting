@@ -25,7 +25,7 @@ import { Observable } from 'rxjs/Observable';
 
 import { CryptographyService } from '../cryptography/cryptography.service';
 import { ErrorService } from '../error-service/error.service';
-import { VotePhases } from '../ethereum/anonymous-voting-contract/contract.api';
+import { VotePhases } from '../ethereum/anonymous-voting-contract/contract.constants';
 import { AnonymousVotingContractService } from '../ethereum/anonymous-voting-contract/contract.service';
 import { VoteListingContractService } from '../ethereum/vote-listing-contract/contract.service';
 import { IPFSService } from '../ipfs/ipfs.service';

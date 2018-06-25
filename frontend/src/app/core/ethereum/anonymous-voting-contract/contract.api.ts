@@ -74,9 +74,5 @@ export namespace VoteSubmitted {
   }
 }
 
-export const VotePhases = [
-  'REGISTRATION',
-  'VOTING',
-  'COMPLETE'
-];
+
 

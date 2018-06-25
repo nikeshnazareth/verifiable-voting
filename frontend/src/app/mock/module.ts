@@ -1,4 +1,4 @@
-import { AnonymousVotingAPI, VotePhases } from '../core/ethereum/anonymous-voting-contract/contract.api';
+import { AnonymousVotingAPI} from '../core/ethereum/anonymous-voting-contract/contract.api';
 import { ITransactionReceipt } from '../core/ethereum/transaction.interface';
 import { address } from '../core/ethereum/type.mappings';
 import { IVoteConstants } from '../core/ethereum/vote-listing-contract/contract.service';
@@ -29,6 +29,7 @@ import {
 import { VoteManagerService } from './vote-manager.service';
 import { VoteRetrievalService } from './vote-retrieval.service';
 import { Web3Service } from './web3.service';
+import { VotePhases } from '../core/ethereum/anonymous-voting-contract/contract.constants';
 
 
 const msPerDay: number = 1000 * 60 * 60 * 24;

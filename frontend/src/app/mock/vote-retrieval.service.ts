@@ -1,6 +1,6 @@
 import { Observable } from 'rxjs/Observable';
 
-import { VotePhases } from '../core/ethereum/anonymous-voting-contract/contract.api';
+import { VotePhases } from '../core/ethereum/anonymous-voting-contract/contract.constants';
 import { address } from '../core/ethereum/type.mappings';
 import {
   IVotingContractDetails,
