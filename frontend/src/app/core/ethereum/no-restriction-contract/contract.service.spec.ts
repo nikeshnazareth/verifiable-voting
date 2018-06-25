@@ -4,9 +4,9 @@ import { Mock } from '../../../mock/module';
 import { ErrorService } from '../../error-service/error.service';
 import { ITruffleContractWrapperService, TruffleContractWrapperService } from '../truffle-contract-wrapper.service';
 import { IWeb3Service, Web3Service } from '../web3.service';
+import { NoRestrictionContractErrors } from './contract-errors';
 import {
-  INoRestrictionContractService, NoRestrictionContractErrors,
-  NoRestrictionContractService
+  INoRestrictionContractService, NoRestrictionContractService
 } from './contract.service';
 
 describe('Service: NoRestrictionContractService', () => {

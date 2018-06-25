@@ -5,16 +5,11 @@ import { ErrorService } from '../../error-service/error.service';
 import { ITruffleContractAbstraction, TruffleContractWrapperService } from '../truffle-contract-wrapper.service';
 import { address } from '../type.mappings';
 import { Web3Service } from '../web3.service';
+import { NoRestrictionContractErrors } from './contract-errors';
 
 export interface INoRestrictionContractService {
   address: Promise<address>;
 }
-
-export const NoRestrictionContractErrors = {
-  network: new Error('Unable to find the NoRestriction contract on the blockchain. ' +
-    `Ensure MetaMask (or the web3 provider) is connected to the ${APP_CONFIG.network.name}`)
-};
-
 
 @Injectable()
 export class NoRestrictionContractService implements INoRestrictionContractService {
