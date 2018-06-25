@@ -1,8 +1,8 @@
 import { IWeb3Provider, IWeb3Service } from '../core/ethereum/web3.service';
 import { Mock } from './module';
 
-const ARBITRARY_WEB3_PROVIDER: string = 'MOCK_WEB3_PROVIDER';
-const ARIBTRARY_ETH_ACCOUNT: string = '0xMOCK_ETHEREUM_ACCOUNT';
+const arbitraryWeb3Provider: string = 'MOCK_WEB3_PROVIDER';
+const arbitraryEthAcount: string = '0xMOCK_ETHEREUM_ACCOUNT';
 
 export class Web3Service implements IWeb3Service {
   get isInjected(): boolean {
@@ -10,11 +10,11 @@ export class Web3Service implements IWeb3Service {
   }
 
   get currentProvider(): IWeb3Provider {
-    return this.isInjected ? ARBITRARY_WEB3_PROVIDER : null;
+    return this.isInjected ? arbitraryWeb3Provider : null;
   }
 
   get defaultAccount(): string {
-    return this.isInjected ? ARIBTRARY_ETH_ACCOUNT : null;
+    return this.isInjected ? arbitraryEthAcount : null;
   }
 
   sha3(preimage: string): string {
