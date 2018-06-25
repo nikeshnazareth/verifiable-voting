@@ -28,14 +28,16 @@ import { ErrorService } from '../error-service/error.service';
 import { VotePhases } from '../ethereum/anonymous-voting-contract/contract.constants';
 import { AnonymousVotingContractService } from '../ethereum/anonymous-voting-contract/contract.service';
 import { VoteListingContractService } from '../ethereum/vote-listing-contract/contract.service';
-import { IVote} from '../ipfs/formats.interface';
-import { IBlindedAddress, IBlindSignature, IVoteParameters } from '../ipfs/formats.interface';
 import { IPFSService } from '../ipfs/ipfs.service';
+import { FormatValidator } from './format-validator';
 import { VoteRetrievalErrors } from './vote-retreival-errors';
 import {
-IDynamicValue, IRegistration, IVotingContractDetails,
-IVotingContractSummary,
-RETRIEVAL_STATUS} from './vote-retreival.service.constants';
+  IDynamicValue,
+  IRegistration,
+  IVotingContractDetails,
+  IVotingContractSummary,
+  RETRIEVAL_STATUS
+} from './vote-retreival.service.constants';
 
 export interface IVoteRetrievalService {
   summaries$: Observable<IVotingContractSummary[]>;
@@ -72,7 +74,7 @@ export class VoteRetrievalService implements IVoteRetrievalService {
 
         const topic$ = this._wrapRetrieval(
           this.anonymousVotingContractSvc.at(addr).constants$
-            .switchMap(constants => this._retrieveIPFSHash(constants.paramsHash, this._parametersFormatError))
+            .switchMap(constants => this._retrieveIPFSHash(constants.paramsHash, FormatValidator.parametersFormatError))
             .map(params => params.topic)
         );
 
@@ -109,7 +111,7 @@ export class VoteRetrievalService implements IVoteRetrievalService {
         const contractManager = this.anonymousVotingContractSvc.at(summary.address.value);
 
         const params$ = contractManager.constants$
-          .switchMap(constants => this._retrieveIPFSHash(constants.paramsHash, this._parametersFormatError));
+          .switchMap(constants => this._retrieveIPFSHash(constants.paramsHash, FormatValidator.parametersFormatError));
 
         const numPendingRegistrations$ = this._wrapRetrieval(
           contractManager.registrationHashes$
@@ -128,11 +130,11 @@ export class VoteRetrievalService implements IVoteRetrievalService {
               Observable.from(Object.keys(regHashes))
                 .mergeMap(voter => {
                   const blindedAddress$ =
-                    this._retrieveIPFSHash(regHashes[voter].blindedAddress, this._blindAddressFormatError)
+                    this._retrieveIPFSHash(regHashes[voter].blindedAddress, FormatValidator.blindAddressFormatError)
                       .map(obj => obj.blinded_address);
 
                   const blindSignature$ =
-                    this._retrieveIPFSHash(regHashes[voter].signature, this._blindSignatureFormatError)
+                    this._retrieveIPFSHash(regHashes[voter].signature, FormatValidator.blindSignatureFormatError)
                       .map(obj => obj.blinded_signature);
 
                   return blindedAddress$.combineLatest(blindSignature$, (addr, sig) => ({
@@ -167,7 +169,7 @@ export class VoteRetrievalService implements IVoteRetrievalService {
         const tally$ = this._wrapRetrieval(
           contractManager.voteHashes$
             .mergeMap(voteHashEvent =>
-              this._retrieveIPFSHash(voteHashEvent.voteHash, this._voteFormatError)
+              this._retrieveIPFSHash(voteHashEvent.voteHash, FormatValidator.voteFormatError)
                 .defaultIfEmpty(null)
                 .switchMap(vote => vote === null ? Observable.throw(null) : Observable.of(vote))
             )
@@ -256,65 +258,7 @@ export class VoteRetrievalService implements IVoteRetrievalService {
       });
   }
 
-  /**
-   * Confirms the specified object matches the IVoteParameters format
-   * @param {Object} obj the object to check
-   * @returns {Error} null if the object matches or an appropriate error otherwise
-   * @private
-   */
-  private _parametersFormatError(obj: object): Error {
-    const params: IVoteParameters = <IVoteParameters> obj;
-    const valid: boolean =
-      params &&
-      params.topic && typeof params.topic === 'string' &&
-      params.candidates && Array.isArray(params.candidates) &&
-      params.candidates.every(el => typeof el === 'string') &&
-      params.registration_key &&
-      params.registration_key.modulus && typeof params.registration_key.modulus === 'string' &&
-      params.registration_key.public_exp && typeof params.registration_key.public_exp === 'string';
 
-    return valid ? null : VoteRetrievalErrors.format.parameters(params);
-  }
-
-  /**
-   * Confirms the specified object matches the IBlindAddress format
-   * @param {Object} obj the object to check
-   * @returns {Error} null if the object matches or an appropriate error otherwise
-   * @private
-   */
-  private _blindAddressFormatError(obj: object): Error {
-    const blindAddress: IBlindedAddress = <IBlindedAddress> obj;
-    const valid = blindAddress &&
-      blindAddress.blinded_address && typeof blindAddress.blinded_address === 'string';
-    return valid ? null : VoteRetrievalErrors.format.blindedAddress(obj);
-  }
-
-  /**
-   * Confirms the specified object matches the IBlindSignature format
-   * @param {Object} obj the object to check
-   * @returns {Error} null if the object matches or an appropriate error otherwise
-   * @private
-   */
-  private _blindSignatureFormatError(obj: object): Error {
-    const blindSignature: IBlindSignature = <IBlindSignature> obj;
-    const valid = blindSignature &&
-      blindSignature.blinded_signature && typeof blindSignature.blinded_signature === 'string';
-    return valid ? null : VoteRetrievalErrors.format.blindSignature(obj);
-  }
-
-  /**
-   * Confirms the specified object matches the IVote format
-   * @param {Object} obj the object to check
-   * @returns {Error} null if the object matches or an appropriate error otherwise
-   * @private
-   */
-  private _voteFormatError(obj: object): Error {
-    const vote: IVote = <IVote> obj;
-    const valid = vote &&
-      vote.signed_address && typeof vote.signed_address === 'string' &&
-      typeof vote.candidateIdx === 'number';
-    return valid ? null : VoteRetrievalErrors.format.vote(obj);
-  }
 }
 
 interface IIPFSCache {
