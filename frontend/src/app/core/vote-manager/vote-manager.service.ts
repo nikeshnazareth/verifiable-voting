@@ -19,6 +19,7 @@ import { address } from '../ethereum/type.mappings';
 import { VoteListingContractService } from '../ethereum/vote-listing-contract/contract.service';
 import { IVoteParameters } from '../ipfs/formats.interface';
 import { IPFSService } from '../ipfs/ipfs.service';
+import { VoteManagerErrors } from './vote-manager-errors';
 
 export interface IVoteManagerService {
   deployVote$(registrationDeadline: number,
@@ -40,15 +41,6 @@ export interface IVoteManagerService {
           blindingFactor: string,
           candidateIdx: number): Observable<ITransactionReceipt>;
 }
-
-export const VoteManagerServiceErrors = {
-  ipfs: {
-    addParametersHash: (params) => new Error(`Unable to add parameters (${params}) to IPFS`),
-    addBlindedAddress: () => new Error('Unable to add blinded address to IPFS'),
-    addVote: () => new Error('Unable to add the vote to IPFS')
-  },
-  unauthorised: () => new Error('The specified anonymous address and blinding factor do not match the registered values'),
-};
 
 @Injectable()
 export class VoteManagerService implements IVoteManagerService {
@@ -78,7 +70,7 @@ export class VoteManagerService implements IVoteManagerService {
               registrationAuth: address): Observable<ITransactionReceipt> {
     return Observable.fromPromise(this.ipfsSvc.addJSON(params))
       .catch(err => {
-        this.errSvc.add(VoteManagerServiceErrors.ipfs.addParametersHash(params), err);
+        this.errSvc.add(VoteManagerErrors.ipfs.addParametersHash(params), err);
         return <Observable<string>> Observable.empty();
       })
       .switchMap(hash => this.voteListingSvc.deployVote$({
@@ -111,7 +103,7 @@ export class VoteManagerService implements IVoteManagerService {
       .map(wrappedBlindedAddr => this.ipfsSvc.addJSON(wrappedBlindedAddr))
       .switchMap(blindedAddrHashPromise => Observable.fromPromise(blindedAddrHashPromise))
       .catch(err => {
-        this.errSvc.add(VoteManagerServiceErrors.ipfs.addBlindedAddress(), err);
+        this.errSvc.add(VoteManagerErrors.ipfs.addBlindedAddress(), err);
         return <Observable<string>> Observable.empty();
       })
       .switchMap(blindedAddrHash =>
@@ -146,7 +138,7 @@ export class VoteManagerService implements IVoteManagerService {
       .map(vote => this.ipfsSvc.addJSON(vote))
       .switchMap(voteHashPromise => Observable.fromPromise(voteHashPromise))
       .catch(err => {
-        this.errSvc.add(VoteManagerServiceErrors.ipfs.addVote(), err);
+        this.errSvc.add(VoteManagerErrors.ipfs.addVote(), err);
         return <Observable<string>> Observable.empty();
       })
       .switchMap(voteHash =>
@@ -164,7 +156,7 @@ export class VoteManagerService implements IVoteManagerService {
    */
   private _confirmAuthorised(anonymousAddr: address, signedAddr: string, registrationKey: IRSAKey): boolean {
     if (!this.cryptoSvc.verify(anonymousAddr, signedAddr, registrationKey)) {
-      this.errSvc.add(VoteManagerServiceErrors.unauthorised(), null);
+      this.errSvc.add(VoteManagerErrors.unauthorised(), null);
       return false;
     }
     return true;

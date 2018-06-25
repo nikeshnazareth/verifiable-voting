@@ -8,8 +8,9 @@ import { ErrorService } from '../error-service/error.service';
 import { AnonymousVotingContractService } from '../ethereum/anonymous-voting-contract/contract.service';
 import { VoteListingContractService } from '../ethereum/vote-listing-contract/contract.service';
 import { IPFSService } from '../ipfs/ipfs.service';
-import { VoteManagerService, VoteManagerServiceErrors } from './vote-manager.service';
 import Spy = jasmine.Spy;
+import { VoteManagerErrors } from './vote-manager-errors';
+import { VoteManagerService} from './vote-manager.service';
 
 describe('Service: VoteManagerService', () => {
   let voteListingSvc: VoteListingContractService;
@@ -93,7 +94,7 @@ describe('Service: VoteManagerService', () => {
       it('should notify the error service', fakeAsync(() => {
         init_and_call_deployVote$();
         expect(errSvc.add)
-          .toHaveBeenCalledWith(VoteManagerServiceErrors.ipfs.addParametersHash(voteDetails.parameters), addError);
+          .toHaveBeenCalledWith(VoteManagerErrors.ipfs.addParametersHash(voteDetails.parameters), addError);
       }));
 
       it('should return an empty observable', fakeAsync(() => {
@@ -182,7 +183,7 @@ describe('Service: VoteManagerService', () => {
       it('should notify the error service', () => {
         init_and_call_registerAt$();
         expect(errSvc.add)
-          .toHaveBeenCalledWith(VoteManagerServiceErrors.ipfs.addBlindedAddress(), addError);
+          .toHaveBeenCalledWith(VoteManagerErrors.ipfs.addBlindedAddress(), addError);
       });
 
       it('should return an empty observable', () => {
@@ -283,7 +284,7 @@ describe('Service: VoteManagerService', () => {
       });
 
       it('should notify the Error Service', () => {
-        expect(errSvc.add).toHaveBeenCalledWith(VoteManagerServiceErrors.unauthorised(), null);
+        expect(errSvc.add).toHaveBeenCalledWith(VoteManagerErrors.unauthorised(), null);
       });
 
       it('should return an empty observable', () => {
@@ -300,7 +301,7 @@ describe('Service: VoteManagerService', () => {
       });
 
       it('should notify the Error Service', () => {
-        expect(errSvc.add).toHaveBeenCalledWith(VoteManagerServiceErrors.ipfs.addVote(), error);
+        expect(errSvc.add).toHaveBeenCalledWith(VoteManagerErrors.ipfs.addVote(), error);
       });
 
       it('should return an empty observable', () => {
