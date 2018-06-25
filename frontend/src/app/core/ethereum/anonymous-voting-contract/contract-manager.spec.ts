@@ -3,9 +3,10 @@ import { Observable } from 'rxjs/Observable';
 
 import { IAnonymousVotingContractCollection, IVoter, Mock } from '../../../mock/module';
 import { ErrorService } from '../../error-service/error.service';
+import { AnonymousVotingContractErrors } from './contract-errors';
 import Spy = jasmine.Spy;
 import { RegistrationComplete, VoterInitiatedRegistration, VoteSubmitted } from './contract-events.interface';
-import { AnonymousVotingContractManager, AnonymousVotingContractManagerErrors } from './contract-manager';
+import { AnonymousVotingContractManager} from './contract-manager';
 import { AnonymousVotingAPI} from './contract.api';
 
 describe('class: AnonymousVotingContractManager', () => {
@@ -56,7 +57,7 @@ describe('class: AnonymousVotingContractManager', () => {
       beforeEach(fakeAsync(() => init_constant$_and_subscribe()));
 
       it('should notify the Error Service', () => {
-        expect(errSvc.add).toHaveBeenCalledWith(AnonymousVotingContractManagerErrors.constants, retrievalError);
+        expect(errSvc.add).toHaveBeenCalledWith(AnonymousVotingContractErrors.constants, retrievalError);
       });
 
       it('should return an empty observable', () => {
@@ -421,7 +422,7 @@ describe('class: AnonymousVotingContractManager', () => {
 
       it('should notify the Error Service', () => {
         init_register$_and_subscribe();
-        expect(errSvc.add).toHaveBeenCalledWith(AnonymousVotingContractManagerErrors.registration, error);
+        expect(errSvc.add).toHaveBeenCalledWith(AnonymousVotingContractErrors.registration, error);
       });
 
       it('should return an empty observable', () => {
@@ -484,7 +485,7 @@ describe('class: AnonymousVotingContractManager', () => {
 
       it('should notify the Error Service', () => {
         init_vote$_and_subscribe();
-        expect(errSvc.add).toHaveBeenCalledWith(AnonymousVotingContractManagerErrors.vote, error);
+        expect(errSvc.add).toHaveBeenCalledWith(AnonymousVotingContractErrors.vote, error);
       });
 
       it('should return an empty observable', () => {

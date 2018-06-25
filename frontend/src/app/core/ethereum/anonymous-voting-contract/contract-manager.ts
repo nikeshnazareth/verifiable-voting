@@ -11,6 +11,7 @@ import { IContractLog } from '../contract.interface';
 import { ITransactionReceipt } from '../transaction.interface';
 import { address } from '../type.mappings';
 import { IVoteConstants } from '../vote-listing-contract/contract.service';
+import { AnonymousVotingContractErrors } from './contract-errors';
 import { RegistrationComplete, VoterInitiatedRegistration, VoteSubmitted } from './contract-events.interface';
 import { AnonymousVotingAPI } from './contract.api';
 
@@ -31,12 +32,7 @@ export interface IAnonymousVotingContractManager {
   vote$(anonymousAddr: address, voteHash: string): Observable<ITransactionReceipt>;
 }
 
-export const AnonymousVotingContractManagerErrors = {
-  events: new Error('Unexpected error in the AnonymousVoting contract event stream'),
-  constants: new Error('Unable to retrieve the defining constants from the AnonymousVoting contract'),
-  registration: new Error('Unable to register the voter'),
-  vote: new Error('Unable to complete vote')
-};
+
 
 export class AnonymousVotingContractManager implements IAnonymousVotingContractManager {
   private _events$: ReplaySubject<IContractLog>;
@@ -110,7 +106,7 @@ export class AnonymousVotingContractManager implements IAnonymousVotingContractM
       .map(contract => contract.register(blindAddressHash, {from: voterAddr}))
       .switchMap(registerPromise => Observable.fromPromise(registerPromise))
       .catch(err => {
-        this.errSvc.add(AnonymousVotingContractManagerErrors.registration, err);
+        this.errSvc.add(AnonymousVotingContractErrors.registration, err);
         return <Observable<ITransactionReceipt>> Observable.empty();
       });
   }
@@ -127,7 +123,7 @@ export class AnonymousVotingContractManager implements IAnonymousVotingContractM
       .map(contract => contract.vote(voteHash, {from: anonymousAddr}))
       .switchMap(votePromise => Observable.fromPromise(votePromise))
       .catch(err => {
-        this.errSvc.add(AnonymousVotingContractManagerErrors.vote, err);
+        this.errSvc.add(AnonymousVotingContractErrors.vote, err);
         return <Observable<ITransactionReceipt>> Observable.empty();
       });
   }
@@ -142,7 +138,7 @@ export class AnonymousVotingContractManager implements IAnonymousVotingContractM
       .map(contract => contract.allEvents({fromBlock: 0, toBlock: 'latest'}))
       .switchMap(events => <Observable<IContractLog>> Observable.create(observer => {
         events.watch((err, log) => err ?
-          this.errSvc.add(AnonymousVotingContractManagerErrors.events, err) :
+          this.errSvc.add(AnonymousVotingContractErrors.events, err) :
           observer.next(log)
         );
         return () => events.stopWatching();
@@ -166,7 +162,7 @@ export class AnonymousVotingContractManager implements IAnonymousVotingContractM
       ]))
       .switchMap(promise => Observable.fromPromise(promise))
       .catch(err => {
-        this.errSvc.add(AnonymousVotingContractManagerErrors.constants, err);
+        this.errSvc.add(AnonymousVotingContractErrors.constants, err);
         return <Observable<IVoteConstants>> Observable.empty();
       })
       .map(arr => ({
