@@ -6,6 +6,7 @@ import { ErrorService } from '../../error-service/error.service';
 import { ITruffleContractAbstraction, TruffleContractWrapperService } from '../truffle-contract-wrapper.service';
 import { address } from '../type.mappings';
 import { Web3Service } from '../web3.service';
+import { AnonymousVotingContractErrors } from './contract-errors';
 import { AnonymousVotingContractManager, IAnonymousVotingContractManager } from './contract-manager';
 import { AnonymousVotingAPI } from './contract.api';
 
@@ -80,8 +81,4 @@ interface IContractCache {
   [addr: string]: IAnonymousVotingContractManager;
 }
 
-const AnonymousVotingContractErrors = {
-  network: (addr) => new Error(`Unable to find the AnonymousVoting contract on the blockchain at address ${addr}. ` +
-    'Ensure the address is correct ' +
-    `and MetaMask (or the web3 provider) is connected to the ${APP_CONFIG.network.name}`)
-};
+
