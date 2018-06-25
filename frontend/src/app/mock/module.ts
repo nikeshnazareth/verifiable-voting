@@ -21,7 +21,7 @@ import {
   TruffleNoRestrictionAbstraction,
   TruffleNoRestrictionWrapperService
 } from './no-restriction-contract/truffle-contract-wrapper.service';
-import { MOCK_BLINDING } from './sample-blinding';
+import { mockBlinding } from './sample-blinding';
 import { ITriggerableEventStream, TriggerableEventStream } from './triggerable-event-stream';
 import { VoteListingContract } from './vote-listing-contract/contract';
 import { VoteListingContractService } from './vote-listing-contract/contract.service';
@@ -45,7 +45,7 @@ export class Mock {
   public static today: Date = today;
   public static voteListingAddress: address = 'MOCK_VOTE_LISTING_ADDRESS';
   public static noRestrictionAddress: address = 'MOCK_NO_RESTRICTION_ADDRESS';
-  public static blinding = MOCK_BLINDING;
+  public static blinding = mockBlinding;
 
   // generic services
   public static Web3Service = Web3Service;
