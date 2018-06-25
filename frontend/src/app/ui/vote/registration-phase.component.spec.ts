@@ -8,7 +8,8 @@ import { Observable } from 'rxjs/Observable';
 import { CryptographyService } from '../../core/cryptography/cryptography.service';
 import { ErrorService } from '../../core/error-service/error.service';
 import { address } from '../../core/ethereum/type.mappings';
-import { Web3Service, Web3ServiceErrors } from '../../core/ethereum/web3.service';
+import { Web3Errors } from '../../core/ethereum/web3-errors';
+import { Web3Service} from '../../core/ethereum/web3.service';
 import { VoteManagerService } from '../../core/vote-manager/vote-manager.service';
 import { MaterialModule } from '../../material/material.module';
 import { DOMInteractionUtility } from '../../mock/dom-interaction-utility';
@@ -184,7 +185,7 @@ describe('Component: RegistrationPhaseComponent', () => {
         it('should raise an error with the Error Service if the default account is undefined', () => {
           spyOnProperty(page.web3Svc, 'defaultAccount').and.returnValue(undefined);
           DOMInteractionUtility.clickOn(Page.voterAddressButton);
-          expect(page.errSvc.add).toHaveBeenCalledWith(Web3ServiceErrors.account, null);
+          expect(page.errSvc.add).toHaveBeenCalledWith(Web3Errors.account, null);
         });
       });
 
@@ -290,7 +291,7 @@ describe('Component: RegistrationPhaseComponent', () => {
         it('should raise an error with the Error Service if the default account is undefined', () => {
           spyOnProperty(page.web3Svc, 'defaultAccount').and.returnValue(undefined);
           DOMInteractionUtility.clickOn(Page.anonymousAddressButton);
-          expect(page.errSvc.add).toHaveBeenCalledWith(Web3ServiceErrors.account, null);
+          expect(page.errSvc.add).toHaveBeenCalledWith(Web3Errors.account, null);
         });
       });
 
