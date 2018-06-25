@@ -17,15 +17,15 @@ export interface IAnonymousVotingContractService {
 
 @Injectable()
 export class AnonymousVotingContractService implements IAnonymousVotingContractService {
-  private _abstraction$: Observable<ITruffleContractAbstraction>;
-  private _contractCache: IContractCache;
+  private abstraction$: Observable<ITruffleContractAbstraction>;
+  private contractCache: IContractCache;
 
   constructor(private web3Svc: Web3Service,
               private contractSvc: TruffleContractWrapperService,
               private errSvc: ErrorService) {
 
-    this._abstraction$ = this._initContractAbstraction();
-    this._contractCache = {};
+    this.abstraction$ = this.initContractAbstraction();
+    this.contractCache = {};
   }
 
   /**
@@ -34,10 +34,10 @@ export class AnonymousVotingContractService implements IAnonymousVotingContractS
    * @returns {IAnonymousVotingContractManager} an object to interact with the specified contract
    */
   at(addr: address): IAnonymousVotingContractManager {
-    if (!this._contractCache[addr]) {
-      this._contractCache[addr] = new AnonymousVotingContractManager(this._contractAt(addr), this.errSvc);
+    if (!this.contractCache[addr]) {
+      this.contractCache[addr] = new AnonymousVotingContractManager(this.contractAt(addr), this.errSvc);
     }
-    return this._contractCache[addr];
+    return this.contractCache[addr];
   }
 
   /**
@@ -47,7 +47,7 @@ export class AnonymousVotingContractService implements IAnonymousVotingContractS
    * of the AnonymousVoting contract or Observable.empty() if web3 is not injected
    * @private
    */
-  private _initContractAbstraction(): Observable<ITruffleContractAbstraction> {
+  private initContractAbstraction(): Observable<ITruffleContractAbstraction> {
     if (this.web3Svc.currentProvider) {
       const abstraction: ITruffleContractAbstraction = this.contractSvc.wrap(APP_CONFIG.contracts.anonymous_voting);
       abstraction.setProvider(this.web3Svc.currentProvider);
@@ -65,8 +65,8 @@ export class AnonymousVotingContractService implements IAnonymousVotingContractS
    * @returns {Observable<AnonymousVotingContract>} An observable of the contract object<br/>
    * or the equivalent of Observable.empty() if the contract cannot be found
    */
-  private _contractAt(addr: address): Observable<AnonymousVotingAPI> {
-    return this._abstraction$
+  private contractAt(addr: address): Observable<AnonymousVotingAPI> {
+    return this.abstraction$
       .map(abstraction => abstraction.at(addr))
       .switchMap(contractPromise => Observable.fromPromise(contractPromise))
       .map(contract => <AnonymousVotingAPI> contract)
