@@ -1,7 +1,6 @@
 import { Observable } from 'rxjs/Observable';
 
 import { VotePhases } from '../core/ethereum/anonymous-voting-contract/contract.constants';
-import { address } from '../core/ethereum/type.mappings';
 import {
   IVotingContractDetails,
   IVotingContractSummary, RETRIEVAL_STATUS
@@ -60,12 +59,5 @@ export class VoteRetrievalService implements IVoteRetrievalService {
         registration: {status: RETRIEVAL_STATUS.AVAILABLE, value: {}},
         results: {status: RETRIEVAL_STATUS.AVAILABLE, value: []}
       });
-  }
-
-  blindSignatureAt$(contractAddr: address, publicVoterAddr: address) {
-    return Observable.of(
-      Mock.Voters.filter(voter => voter.public_address === publicVoterAddr)[0]
-        .signed_blinded_address
-    );
   }
 }
