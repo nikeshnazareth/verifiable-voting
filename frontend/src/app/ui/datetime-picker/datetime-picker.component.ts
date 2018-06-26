@@ -18,7 +18,7 @@ export class DatetimePickerComponent implements OnInit, ControlValueAccessor {
   minuteOptions: number[];
   offsetOptions: number[];
 
-  // To use this component as a form control, we need to call propagateChange whenever one of these values (through the view)
+  // To use this component as a form control, we need to call propagateChange whenever one of these values changes (through the view)
   // This is achieved by creating getter/setter proxies for each value
   private _date: Date;
   private _hours: number;
@@ -44,6 +44,27 @@ export class DatetimePickerComponent implements OnInit, ControlValueAccessor {
       this._minutes = newDate.getMinutes();
       this._offsetHours = this.getOffsetHours(newDate);
     }
+  }
+
+  /**
+   * @returns {Date} the combination of all this component's date/time pieces in a single Date value
+   */
+  get value(): Date {
+    const msPerHour: number = 1000 * 60 * 60;
+    if (this.date) {
+      let componentTime = new Date(Date.UTC(
+        this.date.getUTCFullYear(),
+        this.date.getUTCMonth(),
+        this.date.getUTCDate() + 1,
+        this.hours,
+        this.minutes,
+        0,
+        0
+      )).getTime();
+      componentTime = componentTime - this.offsetHours * msPerHour;
+      return new Date(componentTime);
+    }
+    return null;
   }
 
   /**
@@ -90,22 +111,22 @@ export class DatetimePickerComponent implements OnInit, ControlValueAccessor {
 
   set date(d: Date) {
     this._date = d;
-    this.propagateChange(this.currentValue);
+    this.propagateChange(this.value);
   }
 
   set hours(h: number) {
     this._hours = h;
-    this.propagateChange(this.currentValue);
+    this.propagateChange(this.value);
   }
 
   set minutes(m: number) {
     this._minutes = m;
-    this.propagateChange(this.currentValue);
+    this.propagateChange(this.value);
   }
 
   set offsetHours(offset: number) {
     this._offsetHours = offset;
-    this.propagateChange(this.currentValue);
+    this.propagateChange(this.value);
   }
 
   /**
@@ -135,27 +156,6 @@ export class DatetimePickerComponent implements OnInit, ControlValueAccessor {
     this.hours = 0;
     this.minutes = 0;
     this.offsetHours = this.getOffsetHours(new Date()); // use the current timezone by default
-  }
-
-  /**
-   * @returns {Date} the combination of all this component's date/time pieces in a single Date value
-   */
-  private get currentValue(): Date {
-    const msPerHour: number = 1000 * 60 * 60;
-    if (this.date) {
-      let componentTime = new Date(Date.UTC(
-        this.date.getUTCFullYear(),
-        this.date.getUTCMonth(),
-        this.date.getUTCDate() + 1,
-        this.hours,
-        this.minutes,
-        0,
-        0
-      )).getTime();
-      componentTime = componentTime - this.offsetHours * msPerHour;
-      return new Date(componentTime);
-    }
-    return null;
   }
 
   /**
