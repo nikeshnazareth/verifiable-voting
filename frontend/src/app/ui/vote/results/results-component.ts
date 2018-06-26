@@ -8,14 +8,23 @@ export interface ICandidateTotal {
 
 @Component({
   selector: 'vv-results',
-  template: `
-    <div *ngFor="let candidateTotal of tally">
-      {{candidateTotal.candidate}} : {{candidateTotal.count}}
-    </div>
-  `,
+  templateUrl: './results-component.html',
 })
 export class ResultsComponent {
-  @Input() tally: ICandidateTotal[];
+  public sortedTally: ICandidateTotal[];
+  public displayedColumns: string[] = ['candidate', 'count'];
+
+  constructor() {
+    this.sortedTally = [];
+  }
+
+  @Input()
+  set tally(val: ICandidateTotal[]) {
+    if (val) {
+      this.sortedTally = val.map(v => v); // make a shallow copy
+      this.sortedTally.sort((a, b) => b.count - a.count);
+    }
+  }
 }
 
 
