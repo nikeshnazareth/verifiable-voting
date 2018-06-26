@@ -1,6 +1,7 @@
 import { Component } from '@angular/core';
-import { MatSnackBar} from '@angular/material';
+import { MatSnackBar } from '@angular/material';
 import 'rxjs/add/operator/concatMap';
+import 'rxjs/add/operator/distinctUntilChanged';
 import 'rxjs/add/operator/do';
 import 'rxjs/add/operator/filter';
 
@@ -38,7 +39,9 @@ export class AppComponent {
     this.errSvc.error$
       .filter(err => err.friendly != null)
       .do(err => err.detailed ? console.log(err.detailed) : null)
-      .concatMap(err => this.snackBar.open(err.friendly.message, 'CLOSE').onAction())
+      .map(err => err.friendly.message)
+      .distinctUntilChanged()
+      .concatMap(msg => this.snackBar.open(msg, 'CLOSE').onAction())
       .subscribe();
   }
 }

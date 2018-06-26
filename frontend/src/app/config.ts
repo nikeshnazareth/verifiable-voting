@@ -2,8 +2,10 @@ import * as AnonymousVoting from '../../../backend/build/contracts/AnonymousVoti
 import * as NoRestriction from '../../../backend/build/contracts/NoRestriction.json';
 import * as VoteListing from '../../../backend/build/contracts/VoteListing.json';
 
+const networkName: string = 'ROPSTEN (test) network';
+
 export let APP_CONFIG = {
-  // infura.io provides a REST interfact at this address into an IPFS node
+  // infura.io provides a REST interface at this address into an IPFS node
   ipfs: {
     host: 'ipfs.infura.io',
     port: 5001,
@@ -17,9 +19,10 @@ export let APP_CONFIG = {
   },
   // network name used in error messages
   network: {
-    name: 'ROPSTEN (test) network'
+    name: networkName
   },
   errors: {
-    web3: new Error('No web3 provider found. Please install the MetaMask extension'),
+    web3: new Error('In order to view or participate in any votes, this website requires a connection to an Ethereum blockchain.' +
+      ` Please install the MetaMask browser extension and configure it to use the ${networkName}`)
   }
 };
