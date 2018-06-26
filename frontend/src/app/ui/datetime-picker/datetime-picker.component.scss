@@ -1,0 +1,24 @@
+
+$date-width: 100px;
+$time-width: 40px;
+$offset-width: 45px;
+$group-margin: 20px;
+
+
+.date-picker {
+  width: $date-width;
+}
+
+.hour-picker {
+  margin-left: $group-margin;
+  width: $time-width;
+}
+
+.minute-picker {
+  width: $time-width;
+}
+
+.offset-picker {
+  width: $offset-width;
+  margin-left: $group-margin;
+}
