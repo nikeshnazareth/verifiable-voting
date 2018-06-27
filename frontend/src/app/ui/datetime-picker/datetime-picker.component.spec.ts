@@ -8,7 +8,7 @@ import { MaterialModule } from '../../material/material.module';
 import { DatetimePickerTestComponent } from './datetime-picker-test.component.spec';
 import { DatetimePickerComponent } from './datetime-picker.component';
 
-fdescribe('Component: DatetimePickerComponent', () => {
+describe('Component: DatetimePickerComponent', () => {
   let fixture: ComponentFixture<DatetimePickerTestComponent>;
 
   class Page {

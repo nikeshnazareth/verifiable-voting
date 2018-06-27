@@ -120,6 +120,5 @@ export function submit_button_tests(getFixture) {
         });
       }
     );
-  }
-    ;
+  };
 }

@@ -35,16 +35,10 @@ import { Web3Service } from './web3.service';
 
 
 const msPerDay: number = 1000 * 60 * 60 * 24;
-// TODO: I've set this to noon because I'm in the +10 timezone, so being earlier than 10am local time
-// is the previous night UTC. The fact that this is relevant implies that the date boundaries
-// are not calculated correctly, which will cause issues with the minimum phase deadlines. Fix this!
 const today = new Date(2018, 6, 28, 12); // Noon Tau Day
-const todayString = '06/28/2018';
 
 export class Mock {
   // constants
-  public static today: Date = today;
-  public static todayString = todayString;
   public static voteListingAddress: address = 'MOCK_VOTE_LISTING_ADDRESS';
   public static noRestrictionAddress: address = 'MOCK_NO_RESTRICTION_ADDRESS';
   public static blinding = mockBlinding;

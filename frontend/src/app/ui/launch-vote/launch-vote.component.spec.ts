@@ -10,6 +10,7 @@ import { MaterialModule } from '../../material/material.module';
 import { Mock } from '../../mock/module';
 import { LaunchVoteComponent } from './launch-vote.component';
 
+import { DatetimePickerComponent } from '../datetime-picker/datetime-picker.component';
 import { submit_button_tests } from './launch-vote-component.spec.submit';
 import { candidate_list_tests } from './launch-vote.component.spec.candidate_list';
 import { eligibility_tests } from './launch-vote.component.spec.eligibility';
@@ -24,7 +25,8 @@ describe('Component: LaunchVoteComponent', () => {
   beforeEach(async(() => {
     TestBed.configureTestingModule({
       declarations: [
-        LaunchVoteComponent
+        LaunchVoteComponent,
+        DatetimePickerComponent
       ],
       imports: [
         BrowserAnimationsModule,
