@@ -1,9 +1,9 @@
-import { AnonymousVotingAPI} from '../core/ethereum/anonymous-voting-contract/contract.api';
+import { AnonymousVotingAPI } from '../core/ethereum/anonymous-voting-contract/contract.api';
 import { VotePhases } from '../core/ethereum/anonymous-voting-contract/contract.constants';
 import { ITransactionReceipt } from '../core/ethereum/transaction.interface';
 import { address } from '../core/ethereum/type.mappings';
 import { IVoteConstants } from '../core/ethereum/vote-listing-contract/contract.service';
-import { IVote} from '../core/ipfs/formats.interface';
+import { IVote } from '../core/ipfs/formats.interface';
 
 import { IVoteParameters } from '../core/ipfs/formats.interface';
 import { AnonymousVotingContract } from './anonymous-voting-contract/contract';
@@ -39,10 +39,12 @@ const msPerDay: number = 1000 * 60 * 60 * 24;
 // is the previous night UTC. The fact that this is relevant implies that the date boundaries
 // are not calculated correctly, which will cause issues with the minimum phase deadlines. Fix this!
 const today = new Date(2018, 6, 28, 12); // Noon Tau Day
+const todayString = '06/28/2018';
 
 export class Mock {
   // constants
   public static today: Date = today;
+  public static todayString = todayString;
   public static voteListingAddress: address = 'MOCK_VOTE_LISTING_ADDRESS';
   public static noRestrictionAddress: address = 'MOCK_NO_RESTRICTION_ADDRESS';
   public static blinding = mockBlinding;

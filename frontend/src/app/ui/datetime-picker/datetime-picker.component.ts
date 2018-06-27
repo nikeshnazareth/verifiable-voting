@@ -39,7 +39,7 @@ export class DatetimePickerComponent implements OnInit, ControlValueAccessor {
   writeValue(val: any) {
     if (val) {
       const newDate: Date = <Date> val;
-      this._date = new Date(Date.UTC(newDate.getFullYear(), newDate.getMonth(), newDate.getDate() + 1));
+      this._date = new Date(Date.UTC(newDate.getFullYear(), newDate.getMonth(), newDate.getDate()));
       this._hours = newDate.getHours();
       this._minutes = newDate.getMinutes();
       this._offsetHours = this.getOffsetHours(newDate);
@@ -55,7 +55,7 @@ export class DatetimePickerComponent implements OnInit, ControlValueAccessor {
       let componentTime = new Date(Date.UTC(
         this.date.getUTCFullYear(),
         this.date.getUTCMonth(),
-        this.date.getUTCDate() + 1,
+        this.date.getUTCDate(),
         this.hours,
         this.minutes,
         0,
