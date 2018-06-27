@@ -5,39 +5,25 @@
  */
 
 import { Injectable } from '@angular/core';
-import { Observable } from 'rxjs/Observable';
-import 'rxjs/add/operator/switchMap';
 import 'rxjs/add/observable/fromPromise';
+import 'rxjs/add/observable/of';
+import 'rxjs/add/operator/switchMap';
+import { Observable } from 'rxjs/Observable';
 
-import { IPFSService } from '../ipfs/ipfs.service';
+import { CryptographyService } from '../cryptography/cryptography.service';
+import { IRSAKey } from '../cryptography/rsa-key.interface';
 import { ErrorService } from '../error-service/error.service';
-import { address } from '../ethereum/type.mappings';
-import { ITransactionReceipt } from '../ethereum/transaction.interface';
-import { IVoteTimeframes, VoteListingContractService } from '../ethereum/vote-listing-contract/contract.service';
-import { CryptographyService, IRSAKey } from '../cryptography/cryptography.service';
 import { AnonymousVotingContractService } from '../ethereum/anonymous-voting-contract/contract.service';
-
-export interface IVoteParameters {
-  topic: string;
-  candidates: string[];
-  registration_key: IRSAKey;
-}
-
-export interface IBlindedAddress {
-  blinded_address: string;
-}
-
-export interface IBlindedSignature {
-  blinded_signature: string;
-}
-
-export interface IVote {
-  signed_address: string;
-  candidateIdx: number;
-}
+import { ITransactionReceipt } from '../ethereum/transaction.interface';
+import { address } from '../ethereum/type.mappings';
+import { VoteListingContractService } from '../ethereum/vote-listing-contract/contract.service';
+import { IVoteParameters } from '../ipfs/formats.interface';
+import { IPFSService } from '../ipfs/ipfs.service';
+import { VoteManagerErrors } from './vote-manager-errors';
 
 export interface IVoteManagerService {
-  deployVote$(timeframes: IVoteTimeframes,
+  deployVote$(registrationDeadline: number,
+              votingDeadline: number,
               params: IVoteParameters,
               eligibilityContract: address,
               registrationAuthority: address): Observable<ITransactionReceipt>;
@@ -56,20 +42,11 @@ export interface IVoteManagerService {
           candidateIdx: number): Observable<ITransactionReceipt>;
 }
 
-export const VoteManagerServiceErrors = {
-  ipfs: {
-    addParametersHash: (params) => new Error(`Unable to add parameters (${params}) to IPFS`),
-    addBlindedAddress: () => new Error('Unable to add blinded address to IPFS'),
-    addVote: () => new Error('Unable to add the vote to IPFS')
-  },
-  unauthorised: () => new Error('The specified anonymous address and blinding factor do not match the registered values'),
-};
-
 @Injectable()
 export class VoteManagerService implements IVoteManagerService {
 
   constructor(private voteListingSvc: VoteListingContractService,
-              private anonymousVotingSvc: AnonymousVotingContractService,
+              private anonymousVotingContractSvc: AnonymousVotingContractService,
               private cryptoSvc: CryptographyService,
               private ipfsSvc: IPFSService,
               private errSvc: ErrorService) {
@@ -78,23 +55,31 @@ export class VoteManagerService implements IVoteManagerService {
   /**
    * Adds the parameters to IPFS and deploys a new AnonymousVoting contract with the resulting hash
    * and the other specified parameters
-   * @param {IVoteTimeframes} timeframes the unix timestamps of the vote phase deadlines
+   * @param {number} registrationDeadline the unix timestamp of the registration phase deadline
+   * @param {number} votingDeadline the unix timestamp of the voting phase deadline
    * @param {IVoteParameters} params the vote parameters to add to IPFS
    * @param {address} eligibilityContract the contract that determines if an address is eligible to vote
    * @param {address} registrationAuth the address that can publish the blinded signatures
    * @returns {Observable<ITransactionReceipt>} an observable that emits the deployment transaction receipt</br>
    * or an empty observable if there is an error
    */
-  deployVote$(timeframes: IVoteTimeframes,
+  deployVote$(registrationDeadline: number,
+              votingDeadline: number,
               params: IVoteParameters,
               eligibilityContract: address,
               registrationAuth: address): Observable<ITransactionReceipt> {
     return Observable.fromPromise(this.ipfsSvc.addJSON(params))
       .catch(err => {
-        this.errSvc.add(VoteManagerServiceErrors.ipfs.addParametersHash(params), err);
+        this.errSvc.add(VoteManagerErrors.ipfs.addParametersHash(params), err);
         return <Observable<string>> Observable.empty();
       })
-      .switchMap(hash => this.voteListingSvc.deployVote$(timeframes, hash, eligibilityContract, registrationAuth));
+      .switchMap(hash => this.voteListingSvc.deployVote$({
+        paramsHash: hash,
+        eligibilityContract: eligibilityContract,
+        registrationAuthority: registrationAuth,
+        registrationDeadline: registrationDeadline,
+        votingDeadline: votingDeadline
+      }));
   }
 
   /**
@@ -118,12 +103,12 @@ export class VoteManagerService implements IVoteManagerService {
       .map(wrappedBlindedAddr => this.ipfsSvc.addJSON(wrappedBlindedAddr))
       .switchMap(blindedAddrHashPromise => Observable.fromPromise(blindedAddrHashPromise))
       .catch(err => {
-        this.errSvc.add(VoteManagerServiceErrors.ipfs.addBlindedAddress(), err);
+        this.errSvc.add(VoteManagerErrors.ipfs.addBlindedAddress(), err);
         return <Observable<string>> Observable.empty();
       })
-      .switchMap(blindedAddrHash => this.anonymousVotingSvc.registerAt$(
-        contractAddr, voterAddr, blindedAddrHash
-      ));
+      .switchMap(blindedAddrHash =>
+        this.anonymousVotingContractSvc.at(contractAddr).register$(voterAddr, blindedAddrHash)
+      );
   }
 
   /**
@@ -145,7 +130,7 @@ export class VoteManagerService implements IVoteManagerService {
           candidateIdx: number): Observable<ITransactionReceipt> {
     return Observable.of(this.cryptoSvc.unblind(blindedSignature, blindingFactor, registrationKey))
       .filter(signedAddress => signedAddress != null)
-      .filter(signedAddress => this._confirmAuthorised(anonymousAddr, signedAddress, registrationKey))
+      .filter(signedAddress => this.confirmAuthorised(anonymousAddr, signedAddress, registrationKey))
       .map(signedAddress => ({
         signed_address: signedAddress,
         candidateIdx: candidateIdx
@@ -153,10 +138,12 @@ export class VoteManagerService implements IVoteManagerService {
       .map(vote => this.ipfsSvc.addJSON(vote))
       .switchMap(voteHashPromise => Observable.fromPromise(voteHashPromise))
       .catch(err => {
-        this.errSvc.add(VoteManagerServiceErrors.ipfs.addVote(), err);
+        this.errSvc.add(VoteManagerErrors.ipfs.addVote(), err);
         return <Observable<string>> Observable.empty();
       })
-      .switchMap(voteHash => this.anonymousVotingSvc.voteAt$(contractAddr, anonymousAddr, voteHash));
+      .switchMap(voteHash =>
+        this.anonymousVotingContractSvc.at(contractAddr).vote$(anonymousAddr, voteHash)
+      );
   }
 
   /**
@@ -167,9 +154,9 @@ export class VoteManagerService implements IVoteManagerService {
    * @returns {boolean} whether the signed address matches the anonymous address
    * @private
    */
-  private _confirmAuthorised(anonymousAddr: address, signedAddr: string, registrationKey: IRSAKey): boolean {
+  private confirmAuthorised(anonymousAddr: address, signedAddr: string, registrationKey: IRSAKey): boolean {
     if (!this.cryptoSvc.verify(anonymousAddr, signedAddr, registrationKey)) {
-      this.errSvc.add(VoteManagerServiceErrors.unauthorised(), null);
+      this.errSvc.add(VoteManagerErrors.unauthorised(), null);
       return false;
     }
     return true;

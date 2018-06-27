@@ -1,16 +1,17 @@
 import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 
-import { VoteListingContractErrors, VoteListingContractService } from './contract.service';
-import { ITruffleContractWrapperService, TruffleContractWrapperService } from '../truffle-contract-wrapper.service';
-import { IWeb3Service, Web3Service } from '../web3.service';
-import { VoteCreatedEvent } from './contract.api';
-import { ErrorService } from '../../error-service/error.service';
-import { IAnonymousVotingContractCollection, Mock } from '../../../mock/module';
-import { IContractLog } from '../contract.interface';
-import { address } from '../type.mappings';
 import { APP_CONFIG } from '../../../config';
 import { BigNumber } from '../../../mock/bignumber';
+import { IAnonymousVotingContractCollection, Mock } from '../../../mock/module';
+import { ErrorService } from '../../error-service/error.service';
+import { IContractLog } from '../contract.interface';
+import { ITruffleContractWrapperService, TruffleContractWrapperService } from '../truffle-contract-wrapper.service';
+import { address } from '../type.mappings';
+import { IWeb3Service, Web3Service } from '../web3.service';
 import Spy = jasmine.Spy;
+import { VoteListingContractErrors } from './contract-errors';
+import { VoteCreatedEvent } from './contract-events.interface';
+import { VoteListingContractService } from './contract.service';
 
 describe('Service: VoteListingContractService', () => {
   let voteListingContractSvc: VoteListingContractService;
@@ -68,12 +69,7 @@ describe('Service: VoteListingContractService', () => {
 
     const init_and_call_deployVote = () => {
       voteListingContractSvc = new VoteListingContractService(web3Svc, contractSvc, errSvc);
-      voteListingContractSvc.deployVote$(
-        voteCollection.timeframes,
-        voteCollection.params_hash,
-        voteCollection.eligibilityContract,
-        voteCollection.registrationAuthority
-      )
+      voteListingContractSvc.deployVote$(voteCollection.voteConstants)
         .subscribe(onNext, onError, onCompleted);
       tick();
     };

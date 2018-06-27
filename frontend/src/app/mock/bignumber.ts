@@ -1,4 +1,4 @@
-import { IBigNumber } from '../core/ethereum/web3.service';
+import { IBigNumber } from '../core/ethereum/type.mappings';
 
 export class BigNumber implements IBigNumber {
   private value: number;

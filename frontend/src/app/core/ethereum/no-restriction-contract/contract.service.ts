@@ -1,33 +1,28 @@
 import { Injectable } from '@angular/core';
 
-import { ITruffleContractAbstraction, TruffleContractWrapperService } from '../truffle-contract-wrapper.service';
-import { Web3Service } from '../web3.service';
-import { ErrorService } from '../../error-service/error.service';
 import { APP_CONFIG } from '../../../config';
+import { ErrorService } from '../../error-service/error.service';
+import { ITruffleContractAbstraction, TruffleContractWrapperService } from '../truffle-contract-wrapper.service';
 import { address } from '../type.mappings';
+import { Web3Service } from '../web3.service';
+import { NoRestrictionContractErrors } from './contract-errors';
 
 export interface INoRestrictionContractService {
   address: Promise<address>;
 }
 
-export const NoRestrictionContractErrors = {
-  network: new Error('Unable to find the NoRestriction contract on the blockchain. ' +
-    `Ensure MetaMask (or the web3 provider) is connected to the ${APP_CONFIG.network.name}`)
-};
-
-
 @Injectable()
 export class NoRestrictionContractService implements INoRestrictionContractService {
-  private _addressPromise: Promise<address>;
+  private addressPromise: Promise<address>;
 
   constructor(private web3Svc: Web3Service,
               private contractSvc: TruffleContractWrapperService,
               private errSvc: ErrorService) {
-    this._addressPromise = this._initAddressPromise();
+    this.addressPromise = this.initAddressPromise();
   }
 
   get address(): Promise<address> {
-    return this._addressPromise;
+    return this.addressPromise;
   }
 
   /**
@@ -39,7 +34,7 @@ export class NoRestrictionContractService implements INoRestrictionContractServi
    * or null if there is an error
    * @private
    */
-  private _initAddressPromise(): Promise<address> {
+  private initAddressPromise(): Promise<address> {
     if (this.web3Svc.currentProvider) {
       const abstraction: ITruffleContractAbstraction = this.contractSvc.wrap(APP_CONFIG.contracts.no_restriction);
       abstraction.setProvider(this.web3Svc.currentProvider);

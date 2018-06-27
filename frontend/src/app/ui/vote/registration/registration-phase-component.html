@@ -1,0 +1,58 @@
+<form (ngSubmit)="submission$.next(form.value)" [formGroup]="form">
+  <div>
+    0x
+    <mat-form-field>
+      <input matInput formControlName="voterAddress" placeholder="Public Address">
+    </mat-form-field>
+    <button mat-button color="primary" type="button" id="fillVoterAddress"
+            (click)="fillAddress(form.controls.voterAddress)">
+      Use Active Account
+    </button>
+  </div>
+  <div>
+    <mat-checkbox formControlName="voterAddressAck"></mat-checkbox>
+    <b>I ACKNOWLEDGE</b> that this is a public address.
+    It will be used to confirm that I am eligible to vote.
+  </div>
+  <mat-divider></mat-divider>
+  <div>
+    0x
+    <mat-form-field>
+      <input matInput formControlName="anonymousAddress" placeholder="Anonymous Address">
+    </mat-form-field>
+    <button mat-button color="primary" type="button" id="fillAnonymousAddress"
+            (click)="fillAddress(form.controls.anonymousAddress)">
+      Use Active Account
+    </button>
+  </div>
+  <div>
+    <mat-checkbox formControlName="anonymousAddressAck"></mat-checkbox>
+    <b>I ACKNOWLEDGE</b> that this address will be publicly associated with my vote and should, therefore,
+    remain anonymous.<br/>
+    It is recommended that I create a new account specifically for this vote, never use it for any other purpose,
+    and never reveal it to anyone.
+  </div>
+  <mat-divider></mat-divider>
+  <div>
+    <mat-form-field>
+      <input matInput formControlName="blindingFactor" placeholder="Random Blinding Factor">
+    </mat-form-field>
+    <button mat-button color="primary" type="button" id="refreshBlindingFactor" (click)="refreshBlindingFactor()">
+      Regenerate
+    </button>
+  </div>
+  <div>
+    <mat-checkbox formControlName="blindingFactorSaveAck"></mat-checkbox>
+    <b>I ACKNOWLEDGE</b> that this value must be saved (before pressing REGISTER below).<br/>
+    If I cannot produce it during the Voting phase, I will be unable to vote.<br/>
+    ( This requirement is an unfortunate inconvenience of this early version. It will be removed in future versions )
+  </div>
+  <div>
+    <mat-checkbox formControlName="blindingFactorProtectAck"></mat-checkbox>
+    <b>I ACKNOWLEDGE</b> that this value secures my anonymity and should be protected accordingly.<br/>
+    Anyone who knows this value will be able to associate my vote with my public address.
+  </div>
+  <mat-divider></mat-divider>
+  <button type="submit" [disabled]="!form.valid" mat-raised-button color="primary">REGISTER</button>
+</form>
+

@@ -1,71 +1,98 @@
 import { AnonymousVotingAPI } from '../../core/ethereum/anonymous-voting-contract/contract.api';
 import { IContractEventStream } from '../../core/ethereum/contract.interface';
+import { ITransactionReceipt } from '../../core/ethereum/transaction.interface';
 import { address } from '../../core/ethereum/type.mappings';
 import { BigNumber } from '../bignumber';
 import { Mock } from '../module';
-import { ITransactionReceipt } from '../../core/ethereum/transaction.interface';
 
 export class AnonymousVotingContract implements AnonymousVotingAPI {
-  private REGISTRATION_DEADLINE: number;
-  private VOTING_DEADLINE: number;
-  private PARAMETERS_IPFS_HASH: string;
-  private ELIGIBILITY_CONTRACT: address;
-  private REGISTRATION_AUTHORITY: address;
+  private regDeadline: number;
+  private voteDeadline: number;
+  private paramsIPFSHash: string;
+  private eligibility: address;
+  private regAuthority: address;
 
   constructor(registrationDeadline: number,
               votingDeadline: number,
               parameters_hash: string,
               eligibility_contract: address,
               registration_authority: address) {
-    this.REGISTRATION_DEADLINE = registrationDeadline;
-    this.VOTING_DEADLINE = votingDeadline;
-    this.PARAMETERS_IPFS_HASH = parameters_hash;
-    this.ELIGIBILITY_CONTRACT = eligibility_contract;
-    this.REGISTRATION_AUTHORITY = registration_authority;
+    this.regDeadline = registrationDeadline;
+    this.voteDeadline = votingDeadline;
+    this.paramsIPFSHash = parameters_hash;
+    this.eligibility = eligibility_contract;
+    this.regAuthority = registration_authority;
   }
 
-  currentPhase = {
-    call: () => Promise.resolve(new BigNumber(
-      Mock.AnonymousVotingContractCollections
-        .filter(collection => collection.params_hash === this.PARAMETERS_IPFS_HASH)[0]
-        .currentPhase
-    ))
-  };
+  get currentPhase() {
+    return {
+      call: () => Promise.resolve(new BigNumber(
+        Mock.AnonymousVotingContractCollections
+          .filter(collection => collection.voteConstants.paramsHash === this.paramsIPFSHash)[0]
+          .currentPhase
+      ))
+    };
+  }
 
-  registrationDeadline = {
-    call: () => Promise.resolve(new BigNumber(this.REGISTRATION_DEADLINE))
-  };
+  get registrationDeadline() {
+    return {
+      call: () => Promise.resolve(new BigNumber(this.regDeadline))
+    };
+  }
 
-  votingDeadline = {
-    call: () => Promise.resolve(new BigNumber(this.VOTING_DEADLINE))
-  };
+  get votingDeadline() {
+    return {
+      call: () => Promise.resolve(new BigNumber(this.voteDeadline))
+    };
+  }
 
-  parametersHash = {
-    call: () => Promise.resolve(this.PARAMETERS_IPFS_HASH)
-  };
+  get parametersHash() {
+    return {
+      call: () => Promise.resolve(this.paramsIPFSHash)
+    };
+  }
 
-  eligibilityContract = {
-    call: () => Promise.resolve(this.ELIGIBILITY_CONTRACT)
-  };
+  get eligibilityContract() {
+    return {
+      call: () => Promise.resolve(this.eligibility)
+    };
+  }
 
-  registrationAuthority = {
-    call: () => Promise.resolve(this.REGISTRATION_AUTHORITY)
-  };
+  get registrationAuthority() {
+    return {
+      call: () => Promise.resolve(this.regAuthority)
+    };
+  }
 
-  pendingRegistrations = {
-    call: () => Promise.resolve(new BigNumber(
-      Mock.AnonymousVotingContractCollections
-        .filter(collection => collection.params_hash === this.PARAMETERS_IPFS_HASH)[0]
-        .pendingRegistrations
-    ))
-  };
+  get pendingRegistrations() {
+    return {
+      call: () => Promise.resolve(new BigNumber(
+        Mock.AnonymousVotingContractCollections
+          .filter(collection => collection.voteConstants.paramsHash === this.paramsIPFSHash)[0]
+          .pendingRegistrations
+      ))
+    };
+  }
 
-  blindedAddress = {
-    call: (publicVoterAddr: address) => {
-      const voter = Mock.Voters.filter(v => v.public_address === publicVoterAddr)[0];
-      return Promise.resolve([voter.blinded_address_hash, voter.signed_blinded_address_hash]);
-    }
-  };
+  get blindedAddress() {
+    return {
+      call: (publicVoterAddr: address) => {
+        const voter = Mock.Voters.filter(v => v.public_address === publicVoterAddr)[0];
+        return Promise.resolve([voter.blinded_address_hash, voter.signed_blinded_address_hash]);
+      }
+    };
+  }
+
+  get voteHashes() {
+    return {
+      call: (anonymousAddr: address) => {
+        return Promise.resolve(
+          Mock.Voters.filter(v => v.anonymous_address === anonymousAddr)[0]
+            .vote_hash
+        );
+      }
+    };
+  }
 
   register(_blindedAddressHash: string): Promise<ITransactionReceipt> {
     return Promise.resolve(
@@ -87,13 +114,13 @@ export class AnonymousVotingContract implements AnonymousVotingAPI {
 
   get address(): address {
     return Mock.AnonymousVotingContractCollections
-      .filter(collection => collection.params_hash === this.PARAMETERS_IPFS_HASH)[0]
+      .filter(collection => collection.voteConstants.paramsHash === this.paramsIPFSHash)[0]
       .address;
   }
 
   allEvents(): IContractEventStream {
     return Mock.AnonymousVotingContractCollections
-      .filter(collection => collection.params_hash === this.PARAMETERS_IPFS_HASH)[0]
+      .filter(collection => collection.voteConstants.paramsHash === this.paramsIPFSHash)[0]
       .eventStream;
   }
 }

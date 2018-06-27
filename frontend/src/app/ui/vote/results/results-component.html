@@ -1,0 +1,15 @@
+<mat-table [dataSource]="sortedTally">
+  <!-- Candidate column -->
+  <ng-container matColumnDef="candidate">
+    <mat-header-cell *matHeaderCellDef>Candidate</mat-header-cell>
+    <mat-cell *matCellDef="let candidateTotal">{{ candidateTotal.candidate }}</mat-cell>
+  </ng-container>
+
+  <!-- Count column -->
+  <ng-container matColumnDef="count">
+    <mat-header-cell *matHeaderCellDef>Votes</mat-header-cell>
+    <mat-cell *matCellDef="let candidateTotal">{{ candidateTotal.count }}</mat-cell>
+  </ng-container>
+
+  <mat-row *matRowDef="let row; columns: displayedColumns"></mat-row>
+</mat-table>

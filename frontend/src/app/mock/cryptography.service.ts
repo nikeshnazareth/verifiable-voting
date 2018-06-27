@@ -1,4 +1,5 @@
-import { ICryptographyService, IRSAKey } from '../core/cryptography/cryptography.service';
+import { ICryptographyService} from '../core/cryptography/cryptography.service';
+import { IRSAKey } from '../core/cryptography/rsa-key.interface';
 import { Mock } from './module';
 
 export class CryptographyService implements ICryptographyService {

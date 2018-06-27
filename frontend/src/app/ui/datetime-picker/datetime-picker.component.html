@@ -1,0 +1,22 @@
+<mat-form-field class="date-picker">
+  <input matInput [matDatepicker]="datepicker" type="text" [(ngModel)]="date" [placeholder]="placeholder">
+  <mat-datepicker-toggle matSuffix [for]="datepicker"></mat-datepicker-toggle>
+  <mat-datepicker #datepicker></mat-datepicker>
+</mat-form-field>
+<mat-form-field class="hour-picker">
+  <mat-select [(value)]="hours">
+    <mat-option *ngFor="let hour of hourOptions" [value]="hour">{{padToTwoDigits(hour)}}</mat-option>
+  </mat-select>
+</mat-form-field>
+<span>:</span>
+<mat-form-field class="minute-picker">
+  <mat-select [(value)]="minutes">
+    <mat-option *ngFor="let minute of minuteOptions" [value]="minute">{{padToTwoDigits(minute)}}</mat-option>
+  </mat-select>
+</mat-form-field>
+<mat-form-field class="offset-picker">
+  <mat-select [(value)]="offsetHours">
+    <mat-option *ngFor="let offset of offsetOptions" [value]="offset">{{addSign(offset)}}</mat-option>
+  </mat-select>
+</mat-form-field>
+<span>UTC</span>

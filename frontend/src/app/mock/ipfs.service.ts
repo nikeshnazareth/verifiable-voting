@@ -1,6 +1,7 @@
+import { IVote} from '../core/ipfs/formats.interface';
+import { IBlindedAddress, IBlindSignature, IVoteParameters } from '../core/ipfs/formats.interface';
 import { IIPFSService } from '../core/ipfs/ipfs.service';
 import { Mock } from './module';
-import { IBlindedAddress, IBlindedSignature, IVote, IVoteParameters } from '../core/vote-manager/vote-manager.service';
 
 export class IPFSService implements IIPFSService {
 
@@ -9,7 +10,7 @@ export class IPFSService implements IIPFSService {
       return Promise.resolve(
         Mock.AnonymousVotingContractCollections
           .filter(collection => collection.parameters.topic === (<IVoteParameters> data).topic)[0]
-          .params_hash
+          .voteConstants.paramsHash
       );
     }
 
@@ -24,7 +25,7 @@ export class IPFSService implements IIPFSService {
     if (data.hasOwnProperty('blinded_signature')) {
       return Promise.resolve(
         Mock.Voters
-          .filter(voter => voter.signed_blinded_address === (<IBlindedSignature> data).blinded_signature)[0]
+          .filter(voter => voter.signed_blinded_address === (<IBlindSignature> data).blinded_signature)[0]
           .signed_blinded_address_hash
       );
     }
@@ -37,12 +38,12 @@ export class IPFSService implements IIPFSService {
       );
     }
 
-    throw new Error('Unexpected data added to the Mock IPFS service');
+    return Promise.reject(new Error('Unexpected data added to the Mock IPFS service'));
   }
 
   catJSON(hash: string): Promise<object> {
     const matchingContracts = Mock.AnonymousVotingContractCollections
-      .filter(collection => collection.params_hash === hash);
+      .filter(collection => collection.voteConstants.paramsHash === hash);
     if (matchingContracts.length > 0) {
       return Promise.resolve(matchingContracts[0].parameters);
     }
@@ -61,6 +62,11 @@ export class IPFSService implements IIPFSService {
       });
     }
 
-    throw new Error('Unexpected hash requested from the Mock IPFS service');
+    const matchingVotersByVote = Mock.Voters.filter(voter => voter.vote_hash === hash);
+    if (matchingVotersByVote.length > 0) {
+      return Promise.resolve(matchingVotersByVote[0].vote);
+    }
+
+    return Promise.reject(new Error('Unexpected hash requested from the Mock IPFS service'));
   }
 }

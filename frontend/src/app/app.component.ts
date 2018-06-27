@@ -1,5 +1,9 @@
 import { Component } from '@angular/core';
-import { MatSnackBar, SimpleSnackBar, MatSnackBarRef } from '@angular/material';
+import { MatSnackBar } from '@angular/material';
+import 'rxjs/add/operator/concatMap';
+import 'rxjs/add/operator/distinctUntilChanged';
+import 'rxjs/add/operator/do';
+import 'rxjs/add/operator/filter';
 
 import { ErrorService } from './core/error-service/error.service';
 
@@ -13,8 +17,8 @@ import { ErrorService } from './core/error-service/error.service';
       <!-- @.disabled refers to the tab slide-in and slide-out animation -->
       <mat-tab-group [@.disabled]="true">
         <mat-tab label="Deployed Votes">
-          <vv-list-votes (selectedContract$)="_voteSelected = $event"></vv-list-votes>
-          <vv-vote [index]="_voteSelected"></vv-vote>
+          <vv-list-votes (selectedContract$)="voteSelected = $event"></vv-list-votes>
+          <vv-vote [index]="voteSelected"></vv-vote>
         </mat-tab>
         <mat-tab label="Create new vote">
           <vv-launch-vote></vv-launch-vote>
@@ -27,15 +31,17 @@ import { ErrorService } from './core/error-service/error.service';
   `
 })
 export class AppComponent {
-  private _voteSelected: number;
+  public voteSelected: number;
 
   constructor(private errSvc: ErrorService,
               private snackBar: MatSnackBar) {
-    errSvc.error$.subscribe(err => {
-      const snackbarRef: MatSnackBarRef<SimpleSnackBar> = this.snackBar.open(err.friendly, 'CLOSE');
-      snackbarRef.onAction().subscribe(() => snackbarRef.dismiss());
-      console.log(err.friendly);
-      console.log(err.detailed);
-    });
+
+    this.errSvc.error$
+      .filter(err => err.friendly != null)
+      .do(err => err.detailed ? console.log(err.detailed) : null)
+      .map(err => err.friendly.message)
+      .distinctUntilChanged()
+      .concatMap(msg => this.snackBar.open(msg, 'CLOSE').onAction())
+      .subscribe();
   }
 }

@@ -286,12 +286,12 @@ contract('AnonymousVoting', (accounts) => {
                 assert.equal(pendingRegistrations, 2);
             });
 
-            it('should emit a "VoterInitiatedRegistration" event with the sender as a parameter', async () => {
+            it('should emit a "VoterInitiatedRegistration" event with the sender and hash as parameters', async () => {
                 const tx = await instance.register(BLINDED_ADDRESS_HASH, {from: PUBLIC_VOTER_ADDRESS});
                 assert.equal(tx.logs.length, 1);
                 const log = tx.logs[0];
                 assert.equal(log.event, 'VoterInitiatedRegistration');
-                assert.deepEqual(log.args, {voter: PUBLIC_VOTER_ADDRESS});
+                assert.deepEqual(log.args, {voter: PUBLIC_VOTER_ADDRESS, blindedAddressHash: BLINDED_ADDRESS_HASH});
             });
 
         });
@@ -392,14 +392,14 @@ contract('AnonymousVoting', (accounts) => {
                 assert.equal(pendingRegistrations, 0);
             });
 
-            it('should emit a "RegistrationComplete" event with the voter as a parameter', async () => {
+            it('should emit a "RegistrationComplete" event with the voter and hash as parameters', async () => {
                 const tx = await instance.completeRegistration(
                     PUBLIC_VOTER_ADDRESS, BLIND_SIGNATURE_HASH, {from: REGISTRATION_AUTH}
                 );
                 assert.equal(tx.logs.length, 1);
                 const log = tx.logs[0];
                 assert.equal(log.event, 'RegistrationComplete');
-                assert.deepEqual(log.args, {voter: PUBLIC_VOTER_ADDRESS});
+                assert.deepEqual(log.args, {voter: PUBLIC_VOTER_ADDRESS, signatureHash: BLIND_SIGNATURE_HASH});
             });
         });
 
@@ -424,7 +424,7 @@ contract('AnonymousVoting', (accounts) => {
                 assert.equal(tx.logs.length, 1);
                 const log = tx.logs[0];
                 assert.equal(log.event, 'RegistrationComplete');
-                assert.deepEqual(log.args, {voter: PUBLIC_VOTER_ADDRESS});
+                assert.deepEqual(log.args, {voter: PUBLIC_VOTER_ADDRESS, signatureHash: BLIND_SIGNATURE_HASH});
             });
         });
 
@@ -496,12 +496,12 @@ contract('AnonymousVoting', (accounts) => {
                 assert.equal(voteHash, VOTE_HASH);
             });
 
-            it('should emit a "VoteSubmitted" event with the anonymous voter address as a parameter', async () => {
+            it('should emit a "VoteSubmitted" event with the anonymous voter address and vote hash as parameters', async () => {
                 const tx = await instance.vote(VOTE_HASH, {from: ANONYMOUS_VOTER_ADDRESS});
                 assert.equal(tx.logs.length, 1);
                 const log = tx.logs[0];
                 assert.equal(log.event, 'VoteSubmitted');
-                assert.deepEqual(log.args, {voter: ANONYMOUS_VOTER_ADDRESS});
+                assert.deepEqual(log.args, {voter: ANONYMOUS_VOTER_ADDRESS, voteHash: VOTE_HASH});
             });
         });
 
@@ -527,7 +527,7 @@ contract('AnonymousVoting', (accounts) => {
                 assert.deepEqual(tx.logs[0].args.phase.toNumber(), PHASES.VOTING);
 
                 assert.equal(tx.logs[1].event, 'VoteSubmitted');
-                assert.deepEqual(tx.logs[1].args, {voter: ANONYMOUS_VOTER_ADDRESS});
+                assert.deepEqual(tx.logs[1].args, {voter: ANONYMOUS_VOTER_ADDRESS, voteHash: VOTE_HASH});
             });
         });
 

@@ -1,12 +1,11 @@
 import { Observable } from 'rxjs/Observable';
 
-import { IVoteRetrievalService } from '../core/vote-retrieval/vote-retrieval.service';
-import { VotePhases } from '../core/ethereum/anonymous-voting-contract/contract.api';
+import { VotePhases } from '../core/ethereum/anonymous-voting-contract/contract.constants';
 import {
   IVotingContractDetails,
-  IVotingContractSummary, RETRIEVAL_STATUS
+  IVotingContractSummary, RetrievalStatus
 } from '../core/vote-retrieval/vote-retreival.service.constants';
-import { address } from '../core/ethereum/type.mappings';
+import { IVoteRetrievalService } from '../core/vote-retrieval/vote-retrieval.service';
 import { Mock } from './module';
 
 export class VoteRetrievalService implements IVoteRetrievalService {
@@ -14,66 +13,51 @@ export class VoteRetrievalService implements IVoteRetrievalService {
     return Observable.of(
       Mock.AnonymousVotingContractCollections.map((collection, idx) => ({
         index: idx,
-        address: collection.address,
-        phase: VotePhases[Mock.AnonymousVotingContractCollections[idx].currentPhase],
-        topic: collection.parameters.topic
+        address: {status: RetrievalStatus.available, value: collection.address},
+        phase: {
+          status: RetrievalStatus.available,
+          value: VotePhases[Mock.AnonymousVotingContractCollections[idx].currentPhase]
+        },
+        topic: {status: RetrievalStatus.available, value: collection.parameters.topic}
       }))
     );
   }
 
   detailsAtIndex$(index: number): Observable<IVotingContractDetails> {
-    return index == null || typeof index === 'undefined' ?
-      Observable.of(UnavailableDetails) :
+    return index === null || typeof index === 'undefined' ?
       Observable.of({
         index: index,
-        address: Mock.AnonymousVotingContractCollections[index].address,
-        phase: VotePhases[Mock.AnonymousVotingContractCollections[index].currentPhase],
-        parameters: Mock.AnonymousVotingContractCollections[index].parameters,
-        registrationDeadline: {
-          status: RETRIEVAL_STATUS.AVAILABLE,
-          value: new Date(Mock.AnonymousVotingContractCollections[index].timeframes.registrationDeadline)
+        address: {status: RetrievalStatus.unavailable, value: null},
+        topic: {status: RetrievalStatus.unavailable, value: null},
+        phase: {status: RetrievalStatus.unavailable, value: null},
+        numPendingRegistrations: {status: RetrievalStatus.unavailable, value: null},
+        key: {status: RetrievalStatus.unavailable, value: null},
+        candidates: {status: RetrievalStatus.unavailable, value: null},
+        registration: {status: RetrievalStatus.unavailable, value: null},
+        results: {status: RetrievalStatus.unavailable, value: null}
+      }) :
+      Observable.of({
+        index: index,
+        address: {status: RetrievalStatus.available, value: Mock.addresses[index]},
+        topic: {
+          status: RetrievalStatus.available,
+          value: Mock.AnonymousVotingContractCollections[index].parameters.topic
         },
-        votingDeadline: {
-          status: RETRIEVAL_STATUS.AVAILABLE,
-          value: new Date(Mock.AnonymousVotingContractCollections[index].timeframes.votingDeadline)
+        phase: {
+          status: RetrievalStatus.available,
+          value: VotePhases[Mock.AnonymousVotingContractCollections[index].currentPhase]
         },
-        pendingRegistrations: {
-          status: RETRIEVAL_STATUS.AVAILABLE,
-          value: Mock.AnonymousVotingContractCollections[index].pendingRegistrations
-        }
+        numPendingRegistrations: {status: RetrievalStatus.available, value: 0},
+        key: {
+          status: RetrievalStatus.available,
+          value: Mock.AnonymousVotingContractCollections[index].parameters.registration_key
+        },
+        candidates: {
+          status: RetrievalStatus.available,
+          value: Mock.AnonymousVotingContractCollections[index].parameters.candidates
+        },
+        registration: {status: RetrievalStatus.available, value: {}},
+        results: {status: RetrievalStatus.available, value: []}
       });
   }
-
-  blindSignatureAt$(contractAddr: address, publicVoterAddr: address) {
-    return Observable.of(
-      Mock.Voters.filter(voter => voter.public_address === publicVoterAddr)[0]
-        .signed_blinded_address
-    );
-  }
 }
-
-const UnavailableDetails: IVotingContractDetails = {
-  index: null,
-  address: RETRIEVAL_STATUS.UNAVAILABLE,
-  phase: RETRIEVAL_STATUS.UNAVAILABLE,
-  parameters: {
-    topic: RETRIEVAL_STATUS.UNAVAILABLE,
-    candidates: [],
-    registration_key: {
-      modulus: RETRIEVAL_STATUS.UNAVAILABLE,
-      public_exp: RETRIEVAL_STATUS.UNAVAILABLE
-    }
-  },
-  registrationDeadline: {
-    status: RETRIEVAL_STATUS.UNAVAILABLE,
-    value: null
-  },
-  votingDeadline: {
-    status: RETRIEVAL_STATUS.UNAVAILABLE,
-    value: null
-  },
-  pendingRegistrations: {
-    status: RETRIEVAL_STATUS.UNAVAILABLE,
-    value: null
-  }
-};

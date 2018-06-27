@@ -1,13 +1,13 @@
 import { TestBed } from '@angular/core/testing';
-import {
-  INoRestrictionContractService, NoRestrictionContractErrors,
-  NoRestrictionContractService
-} from './contract.service';
-import { IWeb3Service, Web3Service } from '../web3.service';
-import { ITruffleContractWrapperService, TruffleContractWrapperService } from '../truffle-contract-wrapper.service';
-import { ErrorService } from '../../error-service/error.service';
-import { Mock } from '../../../mock/module';
 import { APP_CONFIG } from '../../../config';
+import { Mock } from '../../../mock/module';
+import { ErrorService } from '../../error-service/error.service';
+import { ITruffleContractWrapperService, TruffleContractWrapperService } from '../truffle-contract-wrapper.service';
+import { IWeb3Service, Web3Service } from '../web3.service';
+import { NoRestrictionContractErrors } from './contract-errors';
+import {
+  INoRestrictionContractService, NoRestrictionContractService
+} from './contract.service';
 
 describe('Service: NoRestrictionContractService', () => {
   let noRestrictionSvc: INoRestrictionContractService;
@@ -43,7 +43,7 @@ describe('Service: NoRestrictionContractService', () => {
     it('should resolve with the contract address', done => {
       noRestrictionSvc = new NoRestrictionContractService(web3Svc, contractSvc, errSvc);
       noRestrictionSvc.address
-        .then(addr => expect(addr).toEqual(Mock.NO_RESTRICTION_ADDRESS))
+        .then(addr => expect(addr).toEqual(Mock.noRestrictionAddress))
         .then(done);
     });
 

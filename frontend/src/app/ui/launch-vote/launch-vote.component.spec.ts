@@ -1,30 +1,32 @@
-import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { TestBed, async, ComponentFixture } from '@angular/core/testing';
-import { DebugElement, OnInit } from '@angular/core';
+import { DebugElement } from '@angular/core';
+import { async, ComponentFixture, TestBed } from '@angular/core/testing';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { By } from '@angular/platform-browser';
+import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 
-import { LaunchVoteComponent } from './launch-vote.component';
-import { MaterialModule } from '../../material/material.module';
 import { NoRestrictionContractService } from '../../core/ethereum/no-restriction-contract/contract.service';
 import { VoteManagerService } from '../../core/vote-manager/vote-manager.service';
+import { MaterialModule } from '../../material/material.module';
 import { Mock } from '../../mock/module';
+import { LaunchVoteComponent } from './launch-vote.component';
 
-import { topic_input_tests } from './launch-vote.component.spec.topic_input';
-import { timeframe_tests } from './launch-vote.component.spec.timeframes';
-import { new_candidate_tests } from './launch-vote.component.spec.new_candidate';
+import { DatetimePickerComponent } from '../datetime-picker/datetime-picker.component';
+import { submit_button_tests } from './launch-vote-component.spec.submit';
 import { candidate_list_tests } from './launch-vote.component.spec.candidate_list';
 import { eligibility_tests } from './launch-vote.component.spec.eligibility';
+import { new_candidate_tests } from './launch-vote.component.spec.new_candidate';
 import { registration_key_tests } from './launch-vote.component.spec.registration_key';
-import { submit_button_tests } from './launch-vote-component.spec.submit';
+import { timeframe_tests } from './launch-vote.component.spec.timeframes';
+import { topic_input_tests } from './launch-vote.component.spec.topic_input';
 
 describe('Component: LaunchVoteComponent', () => {
-  let fixture: ComponentFixture<TestLaunchVoteComponent>;
+  let fixture: ComponentFixture<LaunchVoteComponent>;
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
       declarations: [
-        TestLaunchVoteComponent
+        LaunchVoteComponent,
+        DatetimePickerComponent
       ],
       imports: [
         BrowserAnimationsModule,
@@ -39,7 +41,7 @@ describe('Component: LaunchVoteComponent', () => {
     })
       .compileComponents()
       .then(() => {
-        fixture = TestBed.createComponent(TestLaunchVoteComponent);
+        fixture = TestBed.createComponent(LaunchVoteComponent);
       });
   }));
 
@@ -108,19 +110,3 @@ describe('Component: LaunchVoteComponent', () => {
     describe('Submit button', submit_button_tests(() => fixture));
   });
 });
-
-/**
- * Class to expose protected values for testing purposes
- * It is more correct to confirm the functionality using only public values
- * but testing form validation is a lot easier if we can see the validators directly
- * (instead of testing their effects, which cannot be isolated,
- *  since the relevant effects are synthesised across many components )
- */
-export class TestLaunchVoteComponent extends LaunchVoteComponent implements OnInit {
-  public form: FormGroup;
-
-  ngOnInit() {
-    super.ngOnInit();
-    this.form = this.launchVoteForm;
-  }
-}

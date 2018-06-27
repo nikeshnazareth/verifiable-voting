@@ -1,47 +1,47 @@
-import { address } from '../core/ethereum/type.mappings';
-import { AnonymousVotingAPI, VotePhases } from '../core/ethereum/anonymous-voting-contract/contract.api';
-import { AnonymousVotingContract } from './anonymous-voting-contract/contract';
-import { AnonymousVotingContractService } from './anonymous-voting-contract/contract.service';
-import { IPFSService } from './ipfs.service';
+import { AnonymousVotingAPI } from '../core/ethereum/anonymous-voting-contract/contract.api';
+import { VotePhases } from '../core/ethereum/anonymous-voting-contract/contract.constants';
 import { ITransactionReceipt } from '../core/ethereum/transaction.interface';
-import { IVote, IVoteParameters } from '../core/vote-manager/vote-manager.service';
-import { IVoteTimeframes } from '../core/ethereum/vote-listing-contract/contract.service';
-import { NoRestrictionContract } from './no-restriction-contract/contract';
-import { ITriggerableEventStream, TriggerableEventStream } from './triggerable-event-stream';
+import { address } from '../core/ethereum/type.mappings';
+import { IVoteConstants } from '../core/ethereum/vote-listing-contract/contract.service';
+import { IVote } from '../core/ipfs/formats.interface';
+
+import { IVoteParameters } from '../core/ipfs/formats.interface';
+import { AnonymousVotingContract } from './anonymous-voting-contract/contract';
+import { AnonymousVotingContractManager } from './anonymous-voting-contract/contract-manager';
+import { AnonymousVotingContractService } from './anonymous-voting-contract/contract.service';
 import {
   TruffleAnonymousVotingAbstraction,
   TruffleAnonymousVotingWrapperService
 } from './anonymous-voting-contract/truffle-contract-wrapper.service';
+import { CryptographyService } from './cryptography.service';
+import { IPFSService } from './ipfs.service';
+import { NoRestrictionContract } from './no-restriction-contract/contract';
+import { NoRestrictionContractService } from './no-restriction-contract/contract.service';
 import {
   TruffleNoRestrictionAbstraction,
   TruffleNoRestrictionWrapperService
 } from './no-restriction-contract/truffle-contract-wrapper.service';
+import { mockBlinding } from './sample-blinding';
+import { ITriggerableEventStream, TriggerableEventStream } from './triggerable-event-stream';
+import { VoteListingContract } from './vote-listing-contract/contract';
+import { VoteListingContractService } from './vote-listing-contract/contract.service';
 import {
   TruffleVoteListingAbstraction,
   TruffleVoteListingWrapperService
 } from './vote-listing-contract/truffle-contract-wrapper.service';
-import { VoteListingContract } from './vote-listing-contract/contract';
-import { VoteListingContractService } from './vote-listing-contract/contract.service';
 import { VoteManagerService } from './vote-manager.service';
-import { NoRestrictionContractService } from './no-restriction-contract/contract.service';
-import { Web3Service } from './web3.service';
 import { VoteRetrievalService } from './vote-retrieval.service';
-import { MOCK_BLINDING } from './sample-blinding';
-import { CryptographyService } from './cryptography.service';
+import { Web3Service } from './web3.service';
 
 
 const msPerDay: number = 1000 * 60 * 60 * 24;
-// TODO: I've set this to noon because I'm in the +10 timezone, so being earlier than 10am local time
-// is the previous night UTC. The fact that this is relevant implies that the date boundaries
-// are not calculated correctly, which will cause issues with the minimum phase deadlines. Fix this!
-const TODAY = new Date(2018, 6, 28, 12); // Noon Tau Day
+const today = new Date(2018, 6, 28, 12); // Noon Tau Day
 
 export class Mock {
   // constants
-  public static TODAY: Date = TODAY;
-  public static VOTE_LISTING_ADDRESS: address = 'MOCK_VOTE_LISTING_ADDRESS';
-  public static NO_RESTRICTION_ADDRESS: address = 'MOCK_NO_RESTRICTION_ADDRESS';
-  public static BLINDING = MOCK_BLINDING;
+  public static voteListingAddress: address = 'MOCK_VOTE_LISTING_ADDRESS';
+  public static noRestrictionAddress: address = 'MOCK_NO_RESTRICTION_ADDRESS';
+  public static blinding = mockBlinding;
 
   // generic services
   public static Web3Service = Web3Service;
@@ -52,6 +52,7 @@ export class Mock {
 
   // contract service
   public static AnonymousVotingContractService = AnonymousVotingContractService;
+  public static AnonymousVotingContractManager = AnonymousVotingContractManager;
   public static VoteListingContractService = VoteListingContractService;
   public static NoRestrictionContractService = NoRestrictionContractService;
 
@@ -68,7 +69,7 @@ export class Mock {
   // for now, the LaunchVote component gets the eligibility address straight from the NoRestriction contract
   // so override the values to match. This hack will be fixed when the LaunchVote component introduces options
     .map(collection => {
-      collection.eligibilityContract = Mock.NO_RESTRICTION_ADDRESS;
+      collection.voteConstants.eligibilityContract = Mock.noRestrictionAddress;
       return collection;
     });
   public static Voters = range(4).map(i => generateMockVoter(i));
@@ -84,10 +85,7 @@ export class Mock {
 export interface IAnonymousVotingContractCollection {
   address: string;
   parameters: IVoteParameters;
-  eligibilityContract: address;
-  registrationAuthority: address;
-  timeframes: IVoteTimeframes;
-  params_hash: string;
+  voteConstants: IVoteConstants;
   deploy_receipt: ITransactionReceipt;
   currentPhase: number;
   pendingRegistrations: number;
@@ -96,11 +94,11 @@ export interface IAnonymousVotingContractCollection {
 }
 
 function generateMockVoteContract(idx: number): IAnonymousVotingContractCollection {
-  const REGISTRATION_DEADLINE: number = TODAY.getTime() + 5 * msPerDay;
-  const VOTING_DEADLINE: number = REGISTRATION_DEADLINE + 7 * msPerDay;
-  const PARAMS_HASH: string = 'MOCK_PARAMETERS_IPFS_HASH_' + idx;
-  const ELIGIBILITY_CONTRACT: address = 'deadbeef' + idx;
-  const REGISTRATION_AUTHORITY: address = Array(40).fill(idx).join('');
+  const registrationDeadline: number = today.getTime() + 5 * msPerDay;
+  const votingDeadline: number = registrationDeadline + 7 * msPerDay;
+  const paramsHash: string = 'MOCK_PARAMETERS_IPFS_HASH_' + idx;
+  const eligibilityContract: address = 'deadbeef' + idx;
+  const registrationAuthority: address = Array(40).fill(idx).join('');
 
   return {
     address: 'MOCK_ADDRESS_' + idx,
@@ -116,20 +114,20 @@ function generateMockVoteContract(idx: number): IAnonymousVotingContractCollecti
         public_exp: '10001' + idx
       }
     },
-    eligibilityContract: ELIGIBILITY_CONTRACT,
-    registrationAuthority: REGISTRATION_AUTHORITY,
-    timeframes: {
-      registrationDeadline: REGISTRATION_DEADLINE,
-      votingDeadline: VOTING_DEADLINE
+    voteConstants: {
+      paramsHash: paramsHash,
+      eligibilityContract: eligibilityContract,
+      registrationAuthority: registrationAuthority,
+      registrationDeadline: registrationDeadline,
+      votingDeadline: votingDeadline
     },
-    params_hash: PARAMS_HASH,
     deploy_receipt: {
       tx: 'MOCK_DEPLOY_TX_RECEIPT_' + idx
     },
     currentPhase: (idx + 11) * 11 % VotePhases.length,
     pendingRegistrations: (idx + 3) % 5,
     instance: new AnonymousVotingContract(
-      REGISTRATION_DEADLINE, VOTING_DEADLINE, PARAMS_HASH, ELIGIBILITY_CONTRACT, REGISTRATION_AUTHORITY
+      registrationDeadline, votingDeadline, paramsHash, eligibilityContract, registrationAuthority
     ),
     eventStream: new TriggerableEventStream()
   };

@@ -1,14 +1,18 @@
 import { Observable } from 'rxjs/Observable';
 
-import { IVoteManagerService, IVoteParameters } from '../core/vote-manager/vote-manager.service';
+import { IRSAKey } from '../core/cryptography/rsa-key.interface';
 import { ITransactionReceipt } from '../core/ethereum/transaction.interface';
-import { IVoteTimeframes } from '../core/ethereum/vote-listing-contract/contract.service';
-import { Mock } from './module';
 import { address } from '../core/ethereum/type.mappings';
-import { IRSAKey } from '../core/cryptography/cryptography.service';
+import { IVoteParameters } from '../core/ipfs/formats.interface';
+import { IVoteManagerService} from '../core/vote-manager/vote-manager.service';
+import { Mock } from './module';
 
 export class VoteManagerService implements IVoteManagerService {
-  deployVote$(timeframes: IVoteTimeframes, params: IVoteParameters): Observable<ITransactionReceipt> {
+  deployVote$(registrationDeadline: number,
+              votingDeadline: number,
+              params: IVoteParameters,
+              eligibilityContract: address,
+              registrationAuthority: address): Observable<ITransactionReceipt> {
     return Observable.of(
       Mock.AnonymousVotingContractCollections
         .filter(collection => collection.parameters.topic === params.topic)[0]

@@ -1,17 +1,17 @@
-import * as IPFS from 'ipfs-mini';
 import { Injectable } from '@angular/core';
+import * as IPFS from 'ipfs-mini';
 import { APP_CONFIG } from '../../config';
 import { IIPFSService } from './ipfs.service';
 
 @Injectable()
 export class IPFSService implements IIPFSService {
-  private _node: IIPFSNode;
+  private node: IIPFSNode;
 
   /**
    * Configure the service to use the IPFS node defined in APP_CONFIG
    */
   constructor() {
-    this._node = new IPFS(APP_CONFIG.ipfs);
+    this.node = new IPFS(APP_CONFIG.ipfs);
   }
 
   /**
@@ -21,7 +21,7 @@ export class IPFSService implements IIPFSService {
    */
   addJSON(data: object): Promise<string> {
     return new Promise((resolve, reject) => {
-      this._node.addJSON(data, (error, hash) => error ? reject(error) : resolve(hash));
+      this.node.addJSON(data, (error, hash) => error ? reject(error) : resolve(hash));
     });
   }
 
@@ -32,7 +32,7 @@ export class IPFSService implements IIPFSService {
    */
   catJSON(hash: string): Promise<object> {
     return new Promise((resolve, reject) => {
-      this._node.catJSON(hash, (error, data) => error ? reject(error) : resolve(data));
+      this.node.catJSON(hash, (error, data) => error ? reject(error) : resolve(data));
     });
   }
 

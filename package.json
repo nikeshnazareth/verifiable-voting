@@ -19,5 +19,8 @@
   "bugs": {
     "url": "https://github.com/nikeshnazareth/verifiable-voting/issues"
   },
-  "homepage": "https://github.com/nikeshnazareth/verifiable-voting#readme"
+  "homepage": "https://github.com/nikeshnazareth/verifiable-voting#readme",
+  "dependencies": {
+    "truffle-hdwallet-provider": "0.0.5"
+  }
 }

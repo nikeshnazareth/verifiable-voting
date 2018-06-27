@@ -42,20 +42,23 @@ contract AnonymousVoting is VotePhases {
     /**
         @notice An event generated whenever a voter successfully calls the "register" function
         @param voter the public address of the authorised voter
+        @param blindedAddressHash the IPFS hash of the blinded address
     */
-    event VoterInitiatedRegistration(address voter);
+    event VoterInitiatedRegistration(address voter, string blindedAddressHash);
 
     /**
         @notice An event genenerated whenever the registration authority publishes a blinded signature
         @param voter the public address of the registered voter
+        @param signatureHash the IPFS hash of the blind signature
     */
-    event RegistrationComplete(address voter);
+    event RegistrationComplete(address voter, string signatureHash);
 
     /**
         @notice An event generated whenever someone votes
         @param voter the anonymous address of the voter
+        @param voteHash the IPFS hash of the vote and proof of registration
     */
-    event VoteSubmitted(address voter);
+    event VoteSubmitted(address voter, string voteHash);
 
     /**
         @notice Deploys the AnonymousVoting contract and sets the vote parameters
@@ -95,7 +98,7 @@ contract AnonymousVoting is VotePhases {
         // overflow protection for correctness but unnecessary in practice
         assert(pendingRegistrations > 0);
 
-        emit VoterInitiatedRegistration(msg.sender);
+        emit VoterInitiatedRegistration(msg.sender, _blindedAddressHash);
     }
 
     /**
@@ -116,7 +119,7 @@ contract AnonymousVoting is VotePhases {
         assert(pendingRegistrations > 0);
         pendingRegistrations = pendingRegistrations - 1;
 
-        emit RegistrationComplete(_voter);
+        emit RegistrationComplete(_voter, _signatureHash);
     }
 
     /**
@@ -134,6 +137,6 @@ contract AnonymousVoting is VotePhases {
 
         voteHashes[msg.sender] = _voteHash;
 
-        emit VoteSubmitted(msg.sender);
+        emit VoteSubmitted(msg.sender, _voteHash);
     }
 }

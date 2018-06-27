@@ -1,18 +1,19 @@
-import { ComponentFixture } from '@angular/core/testing';
 import { DebugElement } from '@angular/core';
-import { By } from '@angular/platform-browser';
+import { ComponentFixture } from '@angular/core/testing';
 import { FormArray, FormBuilder, FormGroup } from '@angular/forms';
+import { By } from '@angular/platform-browser';
 import { Observable } from 'rxjs/Observable';
 
-import { TestLaunchVoteComponent } from './launch-vote.component.spec';
-import { IVoteParameters, VoteManagerService } from '../../core/vote-manager/vote-manager.service';
+import { IVoteParameters } from '../../core/ipfs/formats.interface';
+import { VoteManagerService } from '../../core/vote-manager/vote-manager.service';
 import { DOMInteractionUtility } from '../../mock/dom-interaction-utility';
 import { Mock } from '../../mock/module';
+import { LaunchVoteComponent } from './launch-vote.component';
 
 export function submit_button_tests(getFixture) {
 
   return () => {
-    let fixture: ComponentFixture<TestLaunchVoteComponent>;
+    let fixture: ComponentFixture<LaunchVoteComponent>;
     let buttons: DebugElement [];
     let button: DebugElement;
     let form: FormGroup;
@@ -37,15 +38,15 @@ export function submit_button_tests(getFixture) {
       const registration_key: FormGroup = <FormGroup> form.controls.registration_key;
 
       form.controls.topic.patchValue(voteDetails.parameters.topic);
-      timeframes.controls.registrationCloses.patchValue(new Date(voteDetails.timeframes.registrationDeadline));
-      timeframes.controls.votingCloses.patchValue(new Date(voteDetails.timeframes.votingDeadline));
+      timeframes.controls.registrationCloses.patchValue(new Date(voteDetails.voteConstants.registrationDeadline));
+      timeframes.controls.votingCloses.patchValue(new Date(voteDetails.voteConstants.votingDeadline));
       voteDetails.parameters.candidates.forEach(candidate => {
         candidates.push(fb.group({name: [candidate]}));
       });
-      form.controls.eligibility.patchValue(voteDetails.eligibilityContract);
+      form.controls.eligibility.patchValue(voteDetails.voteConstants.eligibilityContract);
       registration_key.controls.modulus.patchValue(voteDetails.parameters.registration_key.modulus);
       registration_key.controls.exponent.patchValue(voteDetails.parameters.registration_key.public_exp);
-      registration_key.controls.registrationAuthority.patchValue(voteDetails.registrationAuthority);
+      registration_key.controls.registrationAuthority.patchValue(voteDetails.voteConstants.registrationAuthority);
       fixture.detectChanges();
     };
 
@@ -90,10 +91,11 @@ export function submit_button_tests(getFixture) {
           };
 
           expect(voteManagerSvc.deployVote$).toHaveBeenCalledWith(
-            voteDetails.timeframes,
+            voteDetails.voteConstants.registrationDeadline,
+            voteDetails.voteConstants.votingDeadline,
             params,
-            voteDetails.eligibilityContract,
-            '0x' + voteDetails.registrationAuthority
+            voteDetails.voteConstants.eligibilityContract,
+            '0x' + voteDetails.voteConstants.registrationAuthority
           );
         });
 
@@ -118,6 +120,5 @@ export function submit_button_tests(getFixture) {
         });
       }
     );
-  }
-    ;
+  };
 }

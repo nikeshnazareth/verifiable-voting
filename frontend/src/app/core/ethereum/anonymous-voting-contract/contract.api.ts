@@ -1,8 +1,6 @@
-import { IContract, IContractLog } from '../contract.interface';
-import { address, uint } from '../type.mappings';
 import { ITransactionProperties, ITransactionReceipt } from '../transaction.interface';
-import { IBigNumber } from '../web3.service';
-
+import { address, uint } from '../type.mappings';
+import { VotePhasesAPI } from './vote-phases-contract.api';
 
 export interface AnonymousVotingAPI extends VotePhasesAPI {
   // string public parametersHash;
@@ -31,7 +29,10 @@ export interface AnonymousVotingAPI extends VotePhasesAPI {
   blindedAddress: {
     call(addr: address): Promise<string[]>
   };
-
+  // mapping(address => string) public voteHashes;
+  voteHashes: {
+    call(addr: address): Promise<string>;
+  };
   // function register(string _blindedAddressHash) public
   register(_blindedAddressHash: string, props?: ITransactionProperties): Promise<ITransactionReceipt>;
 
@@ -39,65 +40,5 @@ export interface AnonymousVotingAPI extends VotePhasesAPI {
   vote(_voteHash: string, props?: ITransactionProperties): Promise<ITransactionReceipt>;
 }
 
-export namespace NewPhaseEvent {
-  export const name: string = 'NewPhase';
 
-  export interface Log extends IContractLog {
-    args: {
-      phase: IBigNumber;
-    };
-  }
-}
 
-export namespace VoterInitiatedRegistration {
-  export const name: string = 'VoterInitiatedRegistration';
-
-  export interface Log extends IContractLog {
-    args: {
-      voter: address;
-    };
-  }
-}
-
-export namespace RegistrationComplete {
-  export const name: string = 'RegistrationComplete';
-
-  export interface Log extends IContractLog {
-    args: {
-      voter: address;
-    };
-  }
-}
-
-export namespace VoteSubmitted {
-  export const name: string = 'VoteSubmitted';
-
-  export interface Log extends IContractLog {
-    args: {
-      voter: address;
-    };
-  }
-}
-
-export const VotePhases = [
-  'REGISTRATION',
-  'VOTING',
-  'COMPLETE'
-];
-
-interface VotePhasesAPI extends IContract {
-  // Phase public currentPhase;
-  currentPhase: {
-    call(): Promise<uint>;
-  };
-
-  // uint public registrationDeadline;
-  registrationDeadline: {
-    call(): Promise<uint>;
-  };
-
-  // uint public votingDeadline;
-  votingDeadline: {
-    call(): Promise<uint>;
-  };
-}

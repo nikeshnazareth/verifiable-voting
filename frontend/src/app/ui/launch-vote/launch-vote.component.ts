@@ -1,20 +1,20 @@
 import { Component, OnInit } from '@angular/core';
-import { AbstractControl, FormBuilder, FormGroup, Validators, FormArray } from '@angular/forms';
+import { AbstractControl, FormArray, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Observable } from 'rxjs/Observable';
 
 import { NoRestrictionContractService } from '../../core/ethereum/no-restriction-contract/contract.service';
-import { IVoteParameters, VoteManagerService } from '../../core/vote-manager/vote-manager.service';
-import { IVoteTimeframes } from '../../core/ethereum/vote-listing-contract/contract.service';
 import { address } from '../../core/ethereum/type.mappings';
+import { IVoteParameters } from '../../core/ipfs/formats.interface';
+import { VoteManagerService } from '../../core/vote-manager/vote-manager.service';
 
 @Component({
   selector: 'vv-launch-vote',
   templateUrl: './launch-vote.component.html'
 })
 export class LaunchVoteComponent implements OnInit {
-  protected launchVoteForm: FormGroup;
-  private minRegistrationClosesDate: Date;
-  private minVotingClosesDate$: Observable<Date>;
+  public form: FormGroup;
+  public minRegistrationClosesDate: Date;
+  public minVotingClosesDate$: Observable<Date>;
 
   public constructor(private fb: FormBuilder,
                      private noRestrictionSvc: NoRestrictionContractService,
@@ -25,8 +25,8 @@ export class LaunchVoteComponent implements OnInit {
     this.createForm();
   }
 
-  private createForm() {
-    this.launchVoteForm = this.fb.group({
+  public createForm() {
+    this.form = this.fb.group({
       topic: ['', Validators.required],
       timeframes: this.fb.group({
         registrationOpens: [new Date(), Validators.required],
@@ -43,7 +43,6 @@ export class LaunchVoteComponent implements OnInit {
       })
     });
 
-    this.setTimeframeRestrictions();
     this.removeEmptyCandidates();
     this.populateEligibility();
   }
@@ -52,13 +51,11 @@ export class LaunchVoteComponent implements OnInit {
    * Pass the form values to the VoteManager service to deploy the vote
    * If successful, reset the form
    */
-  private onSubmit() {
-    const voteDetails = this.launchVoteForm.value;
+  public onSubmit() {
+    const voteDetails = this.form.value;
 
-    const timeframes: IVoteTimeframes = {
-      registrationDeadline: new Date(voteDetails.timeframes.registrationCloses).getTime(),
-      votingDeadline: new Date(voteDetails.timeframes.votingCloses).getTime()
-    };
+    const registrationDeadline = new Date(voteDetails.timeframes.registrationCloses).getTime();
+    const votingDeadline = new Date(voteDetails.timeframes.votingCloses).getTime();
     const params: IVoteParameters = {
       topic: voteDetails.topic,
       candidates: voteDetails.candidates.map(candidate => candidate.name),
@@ -70,25 +67,29 @@ export class LaunchVoteComponent implements OnInit {
     const eligibilityContract: address = voteDetails.eligibility;
     const registrationAuthority: address = '0x' + voteDetails.registration_key.registrationAuthority;
 
-    this.voteManagerSvc.deployVote$(timeframes, params, eligibilityContract, registrationAuthority)
-      .map(receipt => this.launchVoteForm.reset())
+    this.voteManagerSvc.deployVote$(registrationDeadline, votingDeadline, params, eligibilityContract, registrationAuthority)
+      .map(receipt => this.form.reset())
       .subscribe(); /// this finishes immediately so we don't need to unsubscribe
   }
 
   /**
-   * Constrain the timeframes to ensure:
-   *  - the registration phase must end the day after it opens or later
-   *  - the voting phase must end :
-   *    - the day after the registration closes or later if the registration deadline is defined
-   *    - two days after the registration phase opens or later otherwise
+   * Append a new FormGroup to the candidates FormArray with the contents of the
+   * newCandidate input box. Then, clear the input box
    */
-  private setTimeframeRestrictions() {
-    this.minRegistrationClosesDate = this.dayAfter(this.launchVoteForm.get('timeframes.registrationOpens').value);
+  public addCandidate() {
+    const newCandidate: AbstractControl = this.form.get('newCandidate');
+    if (newCandidate.value) {
+      this.candidates.push(this.fb.group({name: [newCandidate.value]}));
+      newCandidate.reset();
+    }
+  }
 
-    this.minVotingClosesDate$ = this.launchVoteForm.get('timeframes.registrationCloses').valueChanges
-      .startWith(null)
-      .map(date => date ? date : this.minRegistrationClosesDate)
-      .map(this.dayAfter);
+  /**
+   * Syntax convenience function
+   * @returns {FormArray} the candidates form array in the form
+   */
+  public get candidates(): FormArray {
+    return <FormArray> this.form.get('candidates');
   }
 
   /**
@@ -107,36 +108,7 @@ export class LaunchVoteComponent implements OnInit {
    */
   private populateEligibility() {
     this.noRestrictionSvc.address
-      .then(addr => this.launchVoteForm.get('eligibility').setValue(addr)) // addr may be null if there was an error
+      .then(addr => this.form.get('eligibility').setValue(addr)) // addr may be null if there was an error
       .catch(() => null); // do nothing - the NoRestrictionService will notify the error service
-  }
-
-  /**
-   * Append a new FormGroup to the candidates FormArray with the contents of the
-   * newCandidate input box. Then, clear the input box
-   */
-  private addCandidate() {
-    const newCandidate: AbstractControl = this.launchVoteForm.get('newCandidate');
-    if (newCandidate.value) {
-      this.candidates.push(this.fb.group({name: [newCandidate.value]}));
-      newCandidate.reset();
-    }
-  }
-
-  /**
-   * @param {Date} d the original date
-   * @returns {Date} the day after the specified date
-   */
-  private dayAfter(d: Date) {
-    const msPerDay: number = 1000 * 60 * 60 * 24;
-    return new Date(d.getTime() + msPerDay);
-  }
-
-  /**
-   * Syntax convenience function
-   * @returns {FormArray} the candidates form array in the form
-   */
-  private get candidates(): FormArray {
-    return <FormArray> this.launchVoteForm.get('candidates');
   }
 }

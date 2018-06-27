@@ -1,31 +1,37 @@
 import { fakeAsync, TestBed, tick } from '@angular/core/testing';
+import 'rxjs/add/operator/distinctUntilChanged';
 import { Observable } from 'rxjs/Observable';
 import { Subscription } from 'rxjs/Subscription';
-import { Subject } from 'rxjs/Subject';
-import 'rxjs/add/operator/distinctUntilChanged';
 
-import { VoteRetrievalService } from './vote-retrieval.service';
-import {
-  IVotingContractDetails, RETRIEVAL_STATUS,
-  VoteRetrievalServiceErrors
-} from './vote-retreival.service.constants';
-import { VoteListingContractService } from '../ethereum/vote-listing-contract/contract.service';
-import { AnonymousVotingContractService } from '../ethereum/anonymous-voting-contract/contract.service';
-import { IPFSService } from '../ipfs/ipfs.service';
+import { IAnonymousVotingContractCollection, Mock } from '../../mock/module';
+import { CryptographyService } from '../cryptography/cryptography.service';
 import { ErrorService } from '../error-service/error.service';
-import { VotePhases } from '../ethereum/anonymous-voting-contract/contract.api';
-import { IVoteParameters } from '../vote-manager/vote-manager.service';
-import { address } from '../ethereum/type.mappings';
-import { IAnonymousVotingContractCollection, IVoter, Mock } from '../../mock/module';
+import { IRegistrationHashes } from '../ethereum/anonymous-voting-contract/contract-manager';
+import { VotePhases } from '../ethereum/anonymous-voting-contract/contract.constants';
+import { AnonymousVotingContractService } from '../ethereum/anonymous-voting-contract/contract.service';
+import { VoteListingContractService } from '../ethereum/vote-listing-contract/contract.service';
+import { IVoteParameters } from '../ipfs/formats.interface';
+import { IPFSService } from '../ipfs/ipfs.service';
 import Spy = jasmine.Spy;
+import { VoteRetrievalErrors } from './vote-retreival-errors';
+import {
+  IDynamicValue,
+  IRegistration,
+  IVotingContractDetails,
+  RetrievalStatus,
+} from './vote-retreival.service.constants';
+import { VoteRetrievalService } from './vote-retrieval.service';
 
 describe('Service: VoteRetrievalService', () => {
 
   let voteListingSvc: VoteListingContractService;
-  let anonymousVotingSvc: AnonymousVotingContractService;
+  let anonymousVotingContractSvc: AnonymousVotingContractService;
+  let cryptoSvc: CryptographyService;
   let ipfsSvc: IPFSService;
   let errSvc: ErrorService;
-  const voteRetrievalSvc = () => new VoteRetrievalService(voteListingSvc, anonymousVotingSvc, ipfsSvc, errSvc);
+  const voteRetrievalSvc = () => new VoteRetrievalService(
+    voteListingSvc, anonymousVotingContractSvc, cryptoSvc, ipfsSvc, errSvc
+  );
 
   let onNext: Spy;
   let onError: (Error) => void;
@@ -37,11 +43,13 @@ describe('Service: VoteRetrievalService', () => {
         ErrorService,
         {provide: VoteListingContractService, useClass: Mock.VoteListingContractService},
         {provide: AnonymousVotingContractService, useClass: Mock.AnonymousVotingContractService},
+        {provide: CryptographyService, useClass: Mock.CryptographyService},
         {provide: IPFSService, useClass: Mock.IPFSService},
       ]
     });
     voteListingSvc = TestBed.get(VoteListingContractService);
-    anonymousVotingSvc = TestBed.get(AnonymousVotingContractService);
+    anonymousVotingContractSvc = TestBed.get(AnonymousVotingContractService);
+    cryptoSvc = TestBed.get(CryptographyService);
     ipfsSvc = TestBed.get(IPFSService);
     errSvc = TestBed.get(ErrorService);
 
@@ -124,15 +132,16 @@ describe('Service: VoteRetrievalService', () => {
             init_individual_summaries_and_subscribe();
           });
 
-          it('should set the null address to "UNAVAILABLE"', () => {
+          it(`should set the null address to ${RetrievalStatus.unavailable}`, () => {
             expect(individualNextHandler[nullAddressIdx].calls.mostRecent().args[0].address)
-              .toEqual(RETRIEVAL_STATUS.UNAVAILABLE);
+              .toEqual({status: RetrievalStatus.unavailable, value: null});
           });
 
           it('should not affect the other addresses', () => {
             individualNextHandler.map((handler, idx) => {
               if (idx !== nullAddressIdx) {
-                expect(handler.calls.mostRecent().args[0].address).toEqual(Mock.addresses[idx]);
+                expect(handler.calls.mostRecent().args[0].address)
+                  .toEqual({status: RetrievalStatus.available, value: Mock.addresses[idx]});
               }
             });
           });
@@ -140,29 +149,32 @@ describe('Service: VoteRetrievalService', () => {
       });
 
       describe('parameter: phase', () => {
-        const mockPhases = [0, 2, 1, 1];
-
         describe('case: before phases are retrieved', () => {
-          it('should be initialised to "RETRIEVING..."', () => {
+          beforeEach(() => {
+            spyOn(anonymousVotingContractSvc, 'at').and.callFake(addr => {
+              const contractManager = new Mock.AnonymousVotingContractManager(addr);
+              spyOnProperty(contractManager, 'phase$').and.returnValue(Observable.never());
+              return contractManager;
+            });
             init_individual_summaries_and_subscribe();
+          });
+
+          it(`should be initialised to ${RetrievalStatus.retrieving}`, () => {
             individualNextHandler.map(handler => {
-              expect(handler.calls.mostRecent().args[0].phase).toEqual(RETRIEVAL_STATUS.RETRIEVING);
+              expect(handler.calls.mostRecent().args[0].phase)
+                .toEqual({status: RetrievalStatus.retrieving, value: null});
             });
           });
         });
 
         describe('case: after phases are retrieved', () => {
-          beforeEach(() => {
-            spyOn(anonymousVotingSvc, 'phaseAt$').and.callFake(addr => {
-              const idx: number = Mock.addresses.findIndex(el => el === addr);
-              return Observable.of(mockPhases[idx]);
-            });
-            init_individual_summaries_and_subscribe();
-          });
-
           it('should emit the current phase', () => {
+            init_individual_summaries_and_subscribe();
             individualNextHandler.map((handler, idx) => {
-              expect(handler.calls.mostRecent().args[0].phase).toEqual(VotePhases[mockPhases[idx]]);
+              expect(handler.calls.mostRecent().args[0].phase).toEqual({
+                status: RetrievalStatus.available,
+                value: VotePhases[Mock.AnonymousVotingContractCollections[idx].currentPhase]
+              });
             });
           });
         });
@@ -174,46 +186,52 @@ describe('Service: VoteRetrievalService', () => {
             const addresses = Mock.addresses.map(v => v); // make a shallow copy
             addresses[nullAddressIdx] = null;
             spyOnProperty(voteListingSvc, 'deployedVotes$').and.returnValue(Observable.from(addresses));
-            spyOn(anonymousVotingSvc, 'phaseAt$').and.callFake(addr => {
-              const idx: number = Mock.addresses.findIndex(el => el === addr);
-              return Observable.of(mockPhases[idx]);
-            });
             init_individual_summaries_and_subscribe();
           });
 
-          it('should set the phase to "UNAVAILABLE"', () => {
+          it(`should set the phase to ${RetrievalStatus.unavailable}`, () => {
             expect(individualNextHandler[nullAddressIdx].calls.mostRecent().args[0].phase)
-              .toEqual(RETRIEVAL_STATUS.UNAVAILABLE);
+              .toEqual({status: RetrievalStatus.unavailable, value: null});
           });
 
           it('should not affect the other phases', () => {
             individualNextHandler.map((handler, idx) => {
               if (idx !== nullAddressIdx) {
-                expect(handler.calls.mostRecent().args[0].phase).toEqual(VotePhases[mockPhases[idx]]);
+                expect(handler.calls.mostRecent().args[0].phase).toEqual({
+                  status: RetrievalStatus.available,
+                  value: VotePhases[Mock.AnonymousVotingContractCollections[idx].currentPhase]
+                });
               }
             });
           });
         });
 
-        describe('case: AnonymousVotingService.phaseAt$ returns an empty observable for one address', () => {
+        describe('case: One of the AnonymousVotingContractManagers phase$ values is an empty observable', () => {
           const emptyIndex: number = 1;
 
           beforeEach(() => {
-            spyOn(anonymousVotingSvc, 'phaseAt$').and.callFake(addr => {
-              const idx: number = Mock.addresses.findIndex(el => el === addr);
-              return idx === emptyIndex ? Observable.empty() : Observable.of(mockPhases[idx]);
+            spyOn(anonymousVotingContractSvc, 'at').and.callFake(addr => {
+              const contractManager = new Mock.AnonymousVotingContractManager(addr);
+              if (addr === Mock.addresses[emptyIndex]) {
+                spyOnProperty(contractManager, 'phase$').and.returnValue(Observable.empty());
+              }
+              return contractManager;
             });
             init_individual_summaries_and_subscribe();
           });
 
-          it('should emit "UNAVAILABLE"', () => {
-            expect(individualNextHandler[emptyIndex].calls.mostRecent().args[0].phase).toEqual('UNAVAILABLE');
+          it(`should emit ${RetrievalStatus.unavailable}`, () => {
+            expect(individualNextHandler[emptyIndex].calls.mostRecent().args[0].phase)
+              .toEqual({status: RetrievalStatus.unavailable, value: null});
           });
 
           it('should not affect other contract phase observables', () => {
             individualNextHandler.map((handler, idx) => {
               if (idx !== emptyIndex) {
-                expect(handler.calls.mostRecent().args[0].phase).toEqual(VotePhases[mockPhases[idx]]);
+                expect(handler.calls.mostRecent().args[0].phase).toEqual({
+                  status: RetrievalStatus.available,
+                  value: VotePhases[Mock.AnonymousVotingContractCollections[idx].currentPhase]
+                });
               }
             });
           });
@@ -222,13 +240,9 @@ describe('Service: VoteRetrievalService', () => {
         describe('case: the same address summary is requested multiple times', () => {
           let firstHandler: Spy;
           let secondHandler: Spy;
-          let phases$: Observable<string[]>;
+          let phases$: Observable<IDynamicValue<string>[]>;
 
           beforeEach(() => {
-            spyOn(anonymousVotingSvc, 'phaseAt$').and.callFake(addr => {
-              const idx: number = Mock.addresses.findIndex(el => el === addr);
-              return Observable.of(mockPhases[idx]);
-            });
             const svc = voteRetrievalSvc();
             firstHandler = jasmine.createSpy('firstHandler');
             secondHandler = jasmine.createSpy('secondHandler');
@@ -243,12 +257,8 @@ describe('Service: VoteRetrievalService', () => {
               tick();
             }));
 
-            it('should produce the same values on both observables', () => {
-              expect(firstHandler.calls.allArgs()).toEqual(secondHandler.calls.allArgs());
-            });
-
-            it('should only request the values from the AnonymousVotingService once per address', () => {
-              expect(anonymousVotingSvc.phaseAt$).toHaveBeenCalledTimes(Mock.addresses.length);
+            it('should produce the same final values on both observables', () => {
+              expect(firstHandler.calls.mostRecent().args).toEqual(secondHandler.calls.mostRecent().args);
             });
           });
 
@@ -265,10 +275,6 @@ describe('Service: VoteRetrievalService', () => {
             it('should produce the same final values on both observables', () => {
               expect(firstHandler.calls.mostRecent().args).toEqual(secondHandler.calls.mostRecent().args);
             });
-
-            it('should only request the values from the AnonymousVotingService once per address', () => {
-              expect(anonymousVotingSvc.phaseAt$).toHaveBeenCalledTimes(Mock.addresses.length);
-            });
           });
         });
       });
@@ -276,18 +282,27 @@ describe('Service: VoteRetrievalService', () => {
       describe('parameter: topic', () => {
 
         const topics: string[] = Mock.AnonymousVotingContractCollections.map(contract => contract.parameters.topic);
-        const mockHashes: string[] = Mock.AnonymousVotingContractCollections.map(contract => contract.params_hash);
+        const mockHashes: string[] = Mock.AnonymousVotingContractCollections.map(contract => contract.voteConstants.paramsHash);
         const mockParams: IVoteParameters[] = Mock.AnonymousVotingContractCollections
           .map(contract => contract.parameters);
 
         describe('case: before topic IPFS hashes are retrieved from the AnonymousVoting contracts', () => {
 
-          beforeEach(() => spyOn(anonymousVotingSvc, 'paramsHashAt$').and.returnValue(Observable.never()));
+          beforeEach(() => {
+            spyOn(anonymousVotingContractSvc, 'at').and.callFake(addr => {
+              const contractManager = new Mock.AnonymousVotingContractManager(addr);
+              spyOnProperty(contractManager, 'constants$').and.returnValue(Observable.never());
+              return contractManager;
+            });
+            init_individual_summaries_and_subscribe();
+          });
 
-          it('should be initialised to "RETRIEVING..."', () => {
+
+          it(`should be initialised to ${RetrievalStatus.retrieving}`, () => {
             init_individual_summaries_and_subscribe();
             individualNextHandler.map(handler => {
-              expect(handler.calls.mostRecent().args[0].topic).toEqual(RETRIEVAL_STATUS.RETRIEVING);
+              expect(handler.calls.mostRecent().args[0].topic)
+                .toEqual({status: RetrievalStatus.retrieving, value: null});
             });
           });
         });
@@ -298,10 +313,11 @@ describe('Service: VoteRetrievalService', () => {
 
           beforeEach(() => spyOn(ipfsSvc, 'catJSON').and.returnValue(unresolvedPromise));
 
-          it('should be initialised to "RETRIEVING..."', () => {
+          it(`should be initialised to ${RetrievalStatus.retrieving}`, () => {
             init_individual_summaries_and_subscribe();
             individualNextHandler.map(handler => {
-              expect(handler.calls.mostRecent().args[0].topic).toEqual(RETRIEVAL_STATUS.RETRIEVING);
+              expect(handler.calls.mostRecent().args[0].topic)
+                .toEqual({status: RetrievalStatus.retrieving, value: null});
             });
           });
         });
@@ -310,7 +326,8 @@ describe('Service: VoteRetrievalService', () => {
           it('should emit the topic', () => {
             init_individual_summaries_and_subscribe();
             individualNextHandler.map((handler, idx) => {
-              expect(handler.calls.mostRecent().args[0].topic).toEqual(topics[idx]);
+              expect(handler.calls.mostRecent().args[0].topic)
+                .toEqual({status: RetrievalStatus.available, value: topics[idx]});
             });
           });
         });
@@ -325,40 +342,45 @@ describe('Service: VoteRetrievalService', () => {
             init_individual_summaries_and_subscribe();
           });
 
-          xit('should set the topic to "UNAVAILABLE"', () => {
+          it(`should set the topic to ${RetrievalStatus.unavailable}`, () => {
             expect(individualNextHandler[nullAddressIdx].calls.mostRecent().args[0].topic)
-              .toEqual(RETRIEVAL_STATUS.UNAVAILABLE);
+              .toEqual({status: RetrievalStatus.unavailable, value: null});
           });
 
           it('should not affect the other topics', () => {
             individualNextHandler.map((handler, idx) => {
               if (idx !== nullAddressIdx) {
-                expect(handler.calls.mostRecent().args[0].topic).toEqual(topics[idx]);
+                expect(handler.calls.mostRecent().args[0].topic)
+                  .toEqual({status: RetrievalStatus.available, value: topics[idx]});
               }
             });
           });
         });
 
-
-        describe('case: AnonymousVotingService.paramsHashAt$ returns an empty observable for one address', () => {
+        describe('case: One of the AnonymousVotingContractManagers constants$ values is an empty observable', () => {
           const emptyIndex: number = 1;
 
           beforeEach(() => {
-            spyOn(anonymousVotingSvc, 'paramsHashAt$').and.callFake(addr => {
-              const idx: number = Mock.addresses.findIndex(el => el === addr);
-              return idx === emptyIndex ? Observable.empty() : Observable.of(mockHashes[idx]);
+            spyOn(anonymousVotingContractSvc, 'at').and.callFake(addr => {
+              const contractManager = new Mock.AnonymousVotingContractManager(addr);
+              if (addr === Mock.addresses[emptyIndex]) {
+                spyOnProperty(contractManager, 'constants$').and.returnValue(Observable.empty());
+              }
+              return contractManager;
             });
             init_individual_summaries_and_subscribe();
           });
 
-          it('should emit UNAVAILABLE', () => {
-            expect(individualNextHandler[emptyIndex].calls.mostRecent().args[0].topic).toEqual('UNAVAILABLE');
+          it(`should emit ${RetrievalStatus.unavailable}`, () => {
+            expect(individualNextHandler[emptyIndex].calls.mostRecent().args[0].topic)
+              .toEqual({status: RetrievalStatus.unavailable, value: null});
           });
 
           it('should not affect other contract topic values', () => {
             individualNextHandler.map((handler, idx) => {
               if (idx !== emptyIndex) {
-                expect(handler.calls.mostRecent().args[0].topic).toEqual(topics[idx]);
+                expect(handler.calls.mostRecent().args[0].topic)
+                  .toEqual({status: RetrievalStatus.available, value: topics[idx]});
               }
             });
           });
@@ -377,18 +399,19 @@ describe('Service: VoteRetrievalService', () => {
           });
 
           it('should notify the Error Service', () => {
-            const addr: address = Mock.addresses[failedIndex];
-            expect(errSvc.add).toHaveBeenCalledWith(VoteRetrievalServiceErrors.ipfs.getParametersHash(addr), error);
+            expect(errSvc.add).toHaveBeenCalledWith(VoteRetrievalErrors.ipfs.retrieval, error);
           });
 
-          it('should emit UNAVAILABLE', () => {
-            expect(individualNextHandler[failedIndex].calls.mostRecent().args[0].topic).toEqual('UNAVAILABLE');
+          it(`should emit ${RetrievalStatus.unavailable}`, () => {
+            expect(individualNextHandler[failedIndex].calls.mostRecent().args[0].topic)
+              .toEqual({status: RetrievalStatus.unavailable, value: null});
           });
 
           it('should not affect other contract topic values', () => {
             individualNextHandler.map((handler, idx) => {
               if (idx !== failedIndex) {
-                expect(handler.calls.mostRecent().args[0].topic).toEqual(topics[idx]);
+                expect(handler.calls.mostRecent().args[0].topic)
+                  .toEqual({status: RetrievalStatus.available, value: topics[idx]});
               }
             });
           });
@@ -410,18 +433,20 @@ describe('Service: VoteRetrievalService', () => {
 
           it('should notify the Error Service', () => {
             expect(errSvc.add).toHaveBeenCalledWith(
-              VoteRetrievalServiceErrors.format.parameters(invalid_params), null
+              VoteRetrievalErrors.format.parameters(invalid_params), null
             );
           });
 
-          it('should emit UNAVAILABLE', () => {
-            expect(individualNextHandler[invalidIndex].calls.mostRecent().args[0].topic).toEqual('UNAVAILABLE');
+          it(`should emit ${RetrievalStatus.unavailable}`, () => {
+            expect(individualNextHandler[invalidIndex].calls.mostRecent().args[0].topic)
+              .toEqual({status: RetrievalStatus.unavailable, value: null});
           });
 
           it('should not affect other contract topic values', () => {
             individualNextHandler.map((handler, idx) => {
               if (idx !== invalidIndex) {
-                expect(handler.calls.mostRecent().args[0].topic).toEqual(topics[idx]);
+                expect(handler.calls.mostRecent().args[0].topic)
+                  .toEqual({status: RetrievalStatus.available, value: topics[idx]});
               }
             });
           });
@@ -430,10 +455,9 @@ describe('Service: VoteRetrievalService', () => {
         describe('case: the same address summary is requested multiple times', () => {
           let firstHandler: Spy;
           let secondHandler: Spy;
-          let topics$: Observable<string[]>;
+          let topics$: Observable<IDynamicValue<string>[]>;
 
           beforeEach(() => {
-            spyOn(anonymousVotingSvc, 'paramsHashAt$').and.callThrough();
             spyOn(ipfsSvc, 'catJSON').and.callThrough();
             const svc = voteRetrievalSvc();
             firstHandler = jasmine.createSpy('firstHandler');
@@ -450,12 +474,8 @@ describe('Service: VoteRetrievalService', () => {
               tick();
             }));
 
-            it('should produce the same values on both observables', () => {
-              expect(firstHandler.calls.allArgs()).toEqual(secondHandler.calls.allArgs());
-            });
-
-            it('should only request the hash from the AnonymousVotingService once per address', () => {
-              expect(anonymousVotingSvc.paramsHashAt$).toHaveBeenCalledTimes(Mock.addresses.length);
+            it('should produce the same final values on both observables', () => {
+              expect(firstHandler.calls.mostRecent().args).toEqual(secondHandler.calls.mostRecent().args);
             });
 
             it('should only resolve the hash from IPFS once per address', () => {
@@ -477,10 +497,6 @@ describe('Service: VoteRetrievalService', () => {
               expect(firstHandler.calls.mostRecent().args).toEqual(secondHandler.calls.mostRecent().args);
             });
 
-            it('should only request the hash from the AnonymousVotingService once per address', () => {
-              expect(anonymousVotingSvc.paramsHashAt$).toHaveBeenCalledTimes(Mock.addresses.length);
-            });
-
             it('should only resolve the hash from IPFS once per address', () => {
               expect(ipfsSvc.catJSON).toHaveBeenCalledTimes(Mock.addresses.length);
             });
@@ -493,500 +509,309 @@ describe('Service: VoteRetrievalService', () => {
   });
 
   describe('method: detailsAtIndex$', () => {
-    const index: number = 2;
-    const voteCollection: IAnonymousVotingContractCollection = Mock.AnonymousVotingContractCollections[index];
+    let index: number;
+
     const init_detailsAtIndex$_and_subscribe = fakeAsync(() => {
       voteRetrievalSvc().detailsAtIndex$(index)
         .subscribe(onNext, onError, onCompleted);
       tick();
     });
+
     const lastEmitted: (() => IVotingContractDetails) = () => onNext.calls.mostRecent().args[0];
 
-    xit('NOTE: many of the cases have been tested in the summaries$ property. The following are the additions');
 
-    describe('parameter: index', () => {
-      it('the index should match the specified index', () => {
+    describe('case: idx is out of range', () => {
+      beforeEach(() => {
+        index = Mock.addresses.length;
         init_detailsAtIndex$_and_subscribe();
-        expect(lastEmitted().index).toEqual(index);
+      });
 
-        describe('case: the specified index corresponds to a null value in VoteListingService.deployedVotes$', () => {
+      it('should return a waiting observable', () => {
+        expect(onNext).not.toHaveBeenCalled();
+        expect(onCompleted).not.toHaveBeenCalled();
+      });
+    });
+
+    describe('case: idx is in range', () => {
+      let voteCollection: IAnonymousVotingContractCollection;
+
+      beforeEach(() => {
+        index = 0;
+        voteCollection = Mock.AnonymousVotingContractCollections[index];
+      });
+
+      xdescribe('it should repeat the "summary" tests', () => {
+      });
+
+      describe('parameter: numPendingRegistrations', () => {
+        xdescribe('case: before the registration hashes are returned', () => {
+        });
+
+        xdescribe('case: the registration hashes are unavailable', () => {
+        });
+
+        describe('case: the registration authority has completed 1 of 3 registrations', () => {
           beforeEach(() => {
-            const addresses: address[] = Mock.addresses.map(v => v); // make a shallow copy
-            addresses[index] = null;
-            spyOnProperty(voteListingSvc, 'deployedVotes$').and.returnValue(Observable.from(addresses));
+            const mockRegHashes = {};
+            [0, 1, 2].map(i => {
+              mockRegHashes[Mock.Voters[i].public_address] = {
+                blindedAddress: Mock.Voters[i].blinded_address_hash,
+                signature: null
+              };
+            });
+            mockRegHashes[Mock.Voters[1].public_address].signature = Mock.Voters[1].signed_blinded_address_hash;
+
+            spyOn(anonymousVotingContractSvc, 'at').and.callFake(addr => {
+              const contractManager = new Mock.AnonymousVotingContractManager(addr);
+              spyOnProperty(contractManager, 'registrationHashes$').and.returnValue(Observable.of(mockRegHashes));
+              return contractManager;
+            });
             init_detailsAtIndex$_and_subscribe();
           });
 
-          it('the topic should be "UNAVAILABLE"', () => {
-            expect(lastEmitted().parameters.topic).toEqual(RETRIEVAL_STATUS.UNAVAILABLE);
-          });
-
-          it('the candidates should be an empty list', () => {
-            expect(lastEmitted().parameters.candidates).toEqual([]);
-          });
-
-          it('the registration key modulus should be "UNAVAILABLE', () => {
-            expect(lastEmitted().parameters.registration_key.modulus).toEqual(RETRIEVAL_STATUS.UNAVAILABLE);
-          });
-
-          it('the registration key public exponent should be "UNAVAILABLE', () => {
-            expect(lastEmitted().parameters.registration_key.public_exp).toEqual(RETRIEVAL_STATUS.UNAVAILABLE);
-          });
-        });
-
-        describe('case: the specified index is negative', () => {
-
-          const newIndex: number = -1;
-
-          beforeEach(fakeAsync(() => {
-            voteRetrievalSvc().detailsAtIndex$(newIndex)
-              .subscribe(onNext, onError, onCompleted);
-            tick();
-          }));
-
-          it('the topic should be "UNAVAILABLE"', () => {
-            expect(lastEmitted().parameters.topic).toEqual(RETRIEVAL_STATUS.UNAVAILABLE);
-          });
-
-          it('the candidates should be an empty list', () => {
-            expect(lastEmitted().parameters.candidates).toEqual([]);
-          });
-
-          it('the registration key modulus should be "UNAVAILABLE', () => {
-            expect(lastEmitted().parameters.registration_key.modulus).toEqual(RETRIEVAL_STATUS.UNAVAILABLE);
-          });
-
-          it('the registration key public exponent should be "UNAVAILABLE', () => {
-            expect(lastEmitted().parameters.registration_key.public_exp).toEqual(RETRIEVAL_STATUS.UNAVAILABLE);
-          });
-        });
-
-        describe('case: the specified index exceeds the highest index in VoteListingService.deployedVotes$', () => {
-          const newIndex: number = Mock.addresses.length;
-
-          beforeEach(fakeAsync(() => {
-            voteRetrievalSvc().detailsAtIndex$(newIndex)
-              .subscribe(onNext, onError, onCompleted);
-            tick();
-          }));
-
-          it('the topic should be "UNAVAILABLE"', () => {
-            expect(lastEmitted().parameters.topic).toEqual(RETRIEVAL_STATUS.UNAVAILABLE);
-          });
-
-          it('the candidates should be an empty list', () => {
-            expect(lastEmitted().parameters.candidates).toEqual([]);
-          });
-
-          it('the registration key modulus should be "UNAVAILABLE', () => {
-            expect(lastEmitted().parameters.registration_key.modulus).toEqual(RETRIEVAL_STATUS.UNAVAILABLE);
-          });
-
-          it('the registration key public exponent should be "UNAVAILABLE', () => {
-            expect(lastEmitted().parameters.registration_key.public_exp).toEqual(RETRIEVAL_STATUS.UNAVAILABLE);
+          it('should return "2"', () => {
+            expect(lastEmitted().numPendingRegistrations.status).toEqual(RetrievalStatus.available);
+            expect(lastEmitted().numPendingRegistrations.value).toEqual(2);
           });
         });
       });
-    });
 
-    describe('parameter: address', () => {
-      it('the address should match the address of the corresponding contract', () => {
-        init_detailsAtIndex$_and_subscribe();
-        expect(lastEmitted().address).toEqual(voteCollection.address);
-      });
-    });
-
-    describe('parameter: parameters', () => {
-      describe('case: before the parameters hash is retrieved from the AnonymousVoting contract', () => {
-        beforeEach(() => {
-          spyOn(anonymousVotingSvc, 'paramsHashAt$').and.returnValue(Observable.never());
-          init_detailsAtIndex$_and_subscribe();
-        });
-
-        it('the candidates should be an empty list', () => {
-          expect(lastEmitted().parameters.candidates).toEqual([]);
-        });
-
-        it('the registration key modulus should be "RETRIEVING..."', () => {
-          expect(lastEmitted().parameters.registration_key.modulus).toEqual(RETRIEVAL_STATUS.RETRIEVING);
-        });
-
-        it('the registration key public exponent should be "RETRIEVING..."', () => {
-          expect(lastEmitted().parameters.registration_key.public_exp).toEqual(RETRIEVAL_STATUS.RETRIEVING);
-        });
+      xdescribe('parameter: key', () => {
       });
 
-      describe('case: before the parameters are retrieved from IPFS', () => {
-        const unresolvedPromise: Promise<IVoteParameters> = new Promise(resolve => null);
+      xdescribe('parameter: candidates', () => {
+      });
+
+      describe('parameter: registration', () => {
+        let completeRegHashes: IRegistrationHashes;
 
         beforeEach(() => {
-          spyOn(ipfsSvc, 'catJSON').and.returnValue(unresolvedPromise);
-          init_detailsAtIndex$_and_subscribe();
+          completeRegHashes = {};
+          Mock.Voters.map(voter => {
+            completeRegHashes[voter.public_address] = {
+              blindedAddress: voter.blinded_address_hash,
+              signature: voter.signed_blinded_address_hash
+            };
+          });
+
+          spyOn(anonymousVotingContractSvc, 'at').and.callFake(addr => {
+            const contractManager = new Mock.AnonymousVotingContractManager(addr);
+            spyOnProperty(contractManager, 'registrationHashes$').and.returnValue(Observable.of(completeRegHashes));
+            return contractManager;
+          });
         });
 
-        it('the candidates should be an empty list', () => {
-          expect(lastEmitted().parameters.candidates).toEqual([]);
+        xdescribe('case: before the registration hashes are retrieved', () => {
         });
 
-        it('the registration key modulus should be "RETRIEVING..."', () => {
-          expect(lastEmitted().parameters.registration_key.modulus).toEqual(RETRIEVAL_STATUS.RETRIEVING);
+        xdescribe('case: the registration hashes are unavailable', () => {
         });
 
-        it('the registration key public exponent should be "RETRIEVING..."', () => {
-          expect(lastEmitted().parameters.registration_key.public_exp).toEqual(RETRIEVAL_STATUS.RETRIEVING);
+        describe('case: there are no registration hashes', () => {
+          beforeEach(() => {
+            Object.keys(completeRegHashes).map(voter => {
+              delete completeRegHashes[voter];
+            });
+            init_detailsAtIndex$_and_subscribe();
+          });
+
+          it('should return an empty object', () => {
+            expect(lastEmitted().registration.status).toEqual(RetrievalStatus.available);
+            expect(lastEmitted().registration.value).toEqual({});
+          });
+        });
+
+        describe('case: one of the blind address hashes is null', () => {
+          beforeEach(() => {
+            completeRegHashes[Mock.Voters[1].public_address].blindedAddress = null;
+            init_detailsAtIndex$_and_subscribe();
+          });
+
+          it('should notify the error service', () => {
+            expect(errSvc.add).toHaveBeenCalledWith(VoteRetrievalErrors.ipfs.nullHash, null);
+          });
+
+          it('should be unavailable', () => {
+            expect(lastEmitted().registration.status).toEqual(RetrievalStatus.unavailable);
+            expect(lastEmitted().registration.value).toEqual(null);
+          });
+        });
+
+        describe('case: one of the blind signature hashes is null', () => {
+          beforeEach(() => {
+            completeRegHashes[Mock.Voters[1].public_address].signature = null;
+            init_detailsAtIndex$_and_subscribe();
+          });
+
+          it('should notify the error service', () => {
+            expect(errSvc.add).toHaveBeenCalledWith(VoteRetrievalErrors.ipfs.nullHash, null);
+          });
+
+          it('should be unavailable', () => {
+            expect(lastEmitted().registration.status).toEqual(RetrievalStatus.unavailable);
+            expect(lastEmitted().registration.value).toEqual(null);
+          });
+        });
+
+        xdescribe('case: one of the blind address hashes cannot be resolved', () => {
+        });
+
+        xdescribe('case: one of the blind signature hashes cannot be resolved', () => {
+        });
+
+        describe('case: one of the blind signatures does not match the blind address', () => {
+          beforeEach(() => {
+            completeRegHashes[Mock.Voters[1].public_address].signature = Mock.Voters[2].signed_blinded_address_hash;
+            init_detailsAtIndex$_and_subscribe();
+          });
+
+          it('should notify the error service', () => {
+            expect(errSvc.add).toHaveBeenCalledWith(VoteRetrievalErrors.registration, null);
+          });
+
+          it('should be unavailable', () => {
+            expect(lastEmitted().registration.status).toEqual(RetrievalStatus.unavailable);
+            expect(lastEmitted().registration.value).toEqual(null);
+          });
+        });
+
+        describe('case: valid registration', () => {
+          beforeEach(() => init_detailsAtIndex$_and_subscribe());
+
+          it('should return all blind signatures', () => {
+            const reg: IDynamicValue<IRegistration> = lastEmitted().registration;
+            expect(reg.status).toEqual(RetrievalStatus.available);
+            expect(Object.keys(reg.value).length).toEqual(Mock.Voters.length);
+            Mock.Voters.map(voter => {
+              expect(reg.value[voter.public_address]).toBeDefined();
+              expect(reg.value[voter.public_address].blindSignature).toEqual(voter.signed_blinded_address);
+            });
+          });
         });
       });
 
-      describe('case: after the parameters are retrieved from IPFS', () => {
-        beforeEach(() => {
-          init_detailsAtIndex$_and_subscribe();
-        });
+      describe('parameter: results', () => {
 
-        it('the candidates should match the candidates at the corresponding contract', () => {
-          expect(lastEmitted().parameters.candidates).toEqual(voteCollection.parameters.candidates);
-        });
-
-        it('the registration key should match the registration key of the corresponding contract', () => {
-          expect(lastEmitted().parameters.registration_key).toEqual(voteCollection.parameters.registration_key);
-        });
-      });
-
-      describe('case: AnonymousVotingService.paramsHashAt$ return an empty observable', () => {
-        beforeEach(() => {
-          spyOn(anonymousVotingSvc, 'paramsHashAt$').and.returnValue(Observable.empty());
-          init_detailsAtIndex$_and_subscribe();
-        });
-
-        it('the candidates should be an empty list', () => {
-          expect(lastEmitted().parameters.candidates).toEqual([]);
-        });
-
-        it('the registration key modulus should be "UNVAILABLE"', () => {
-          expect(lastEmitted().parameters.registration_key.modulus).toEqual(RETRIEVAL_STATUS.UNAVAILABLE);
-        });
-
-        it('the registration key public exponent should be "UNVAILABLE"', () => {
-          expect(lastEmitted().parameters.registration_key.public_exp).toEqual(RETRIEVAL_STATUS.UNAVAILABLE);
-        });
-      });
-
-      describe('case: IPFSService.catJSON fails', () => {
-        const error: Error = new Error('could not retrieve the parameters from the hash');
-
-        beforeEach(() => {
-          spyOn(ipfsSvc, 'catJSON').and.returnValue(Promise.reject(error));
-          init_detailsAtIndex$_and_subscribe();
-        });
-
-        it('the candidates should be an empty list', () => {
-          expect(lastEmitted().parameters.candidates).toEqual([]);
-        });
-
-        it('the registration key modulus should be "UNAVAILABLE"', () => {
-          expect(lastEmitted().parameters.registration_key.modulus).toEqual(RETRIEVAL_STATUS.UNAVAILABLE);
-        });
-
-        it('the registration key public exponent should be "UNAVAILABLE"', () => {
-          expect(lastEmitted().parameters.registration_key.public_exp).toEqual(RETRIEVAL_STATUS.UNAVAILABLE);
-        });
-      });
-
-      describe('case: the returns parameters have the wrong format', () => {
-        const invalid = {
-          invalid: 'This is not a valid IVoteParameters object'
+        const create_voteHash_spy = (voteHashes) => {
+          spyOn(anonymousVotingContractSvc, 'at').and.callFake(addr => {
+            const contractManager = new Mock.AnonymousVotingContractManager(addr);
+            spyOnProperty(contractManager, 'voteHashes$').and.returnValue(Observable.from(voteHashes));
+            return contractManager;
+          });
         };
 
-        beforeEach(() => {
-          spyOn(ipfsSvc, 'catJSON').and.returnValue(Promise.resolve(invalid));
-          init_detailsAtIndex$_and_subscribe();
+        xdescribe('case: before the vote hashes are retrieved', () => {
         });
 
-        it('the candidates should be an empty list', () => {
-          expect(lastEmitted().parameters.candidates).toEqual([]);
+        xdescribe('case: the vote hashes are unavailable', () => {
         });
 
-        it('the registration key modulus should be "UNAVAILABLE"', () => {
-          expect(lastEmitted().parameters.registration_key.modulus).toEqual(RETRIEVAL_STATUS.UNAVAILABLE);
-        });
+        describe('case: there are no vote hashes', () => {
+          beforeEach(() => {
+            create_voteHash_spy([]);
+            init_detailsAtIndex$_and_subscribe();
+          });
 
-        it('the registration key public exponent should be "UNAVAILABLE"', () => {
-          expect(lastEmitted().parameters.registration_key.public_exp).toEqual(RETRIEVAL_STATUS.UNAVAILABLE);
-        });
-      });
-    });
-
-    describe('parameter: registrationDeadline', () => {
-      describe('case: the contract cannot be retrieved from the index', () => {
-        beforeEach(() => {
-          spyOnProperty(voteListingSvc, 'deployedVotes$').and.returnValue(Observable.empty());
-          init_detailsAtIndex$_and_subscribe();
-        });
-
-        it('"status" should be "UNAVAILABLE"', () => {
-          expect(lastEmitted().registrationDeadline.status).toEqual(RETRIEVAL_STATUS.UNAVAILABLE);
-        });
-
-        it('"value" should be null', () => {
-          expect(lastEmitted().registrationDeadline.value).toEqual(null);
-        });
-      });
-
-      describe('case: before the registration deadline is retrieved', () => {
-        beforeEach(() => {
-          spyOn(anonymousVotingSvc, 'registrationDeadlineAt$').and.returnValue(Observable.never());
-          init_detailsAtIndex$_and_subscribe();
-        });
-
-        it('"status" should be "RETRIEVING...', () => {
-          expect(lastEmitted().registrationDeadline.status).toEqual(RETRIEVAL_STATUS.RETRIEVING);
-        });
-
-        it('"value" should be null', () => {
-          expect(lastEmitted().registrationDeadline.value).toEqual(null);
-        });
-      });
-
-      describe('case: after the registration deadline is retrieved', () => {
-        beforeEach(() => init_detailsAtIndex$_and_subscribe());
-
-        it('"status" should be "AVAILABLE', () => {
-          expect(lastEmitted().registrationDeadline.status).toEqual(RETRIEVAL_STATUS.AVAILABLE);
-        });
-
-        it('"value" should be set', () => {
-          const deadline = new Date(Mock.AnonymousVotingContractCollections[index].timeframes.registrationDeadline);
-          expect(lastEmitted().registrationDeadline.value).toEqual(deadline);
-        });
-      });
-
-      describe('case: registrationDeadlineAt$ returns an empty observable', () => {
-        beforeEach(() => {
-          spyOn(anonymousVotingSvc, 'registrationDeadlineAt$').and.returnValue(Observable.empty());
-          init_detailsAtIndex$_and_subscribe();
-        });
-
-        it('"status" should be "UNAVAILABLE', () => {
-          expect(lastEmitted().registrationDeadline.status).toEqual(RETRIEVAL_STATUS.UNAVAILABLE);
-        });
-
-        it('"value" should be null', () => {
-          expect(lastEmitted().registrationDeadline.value).toEqual(null);
-        });
-      });
-    });
-
-    describe('parameter: votingDeadline', () => {
-      describe('case: the contract cannot be retrieved from the index', () => {
-        beforeEach(() => {
-          spyOnProperty(voteListingSvc, 'deployedVotes$').and.returnValue(Observable.empty());
-          init_detailsAtIndex$_and_subscribe();
-        });
-
-        it('"status" should be "UNAVAILABLE"', () => {
-          expect(lastEmitted().votingDeadline.status).toEqual(RETRIEVAL_STATUS.UNAVAILABLE);
-        });
-
-        it('"value" should be null', () => {
-          expect(lastEmitted().votingDeadline.value).toEqual(null);
-        });
-      });
-
-      describe('case: before the voting deadline is retrieved', () => {
-        beforeEach(() => {
-          spyOn(anonymousVotingSvc, 'votingDeadlineAt$').and.returnValue(Observable.never());
-          init_detailsAtIndex$_and_subscribe();
-        });
-
-        it('"status" should be "RETRIEVING...', () => {
-          expect(lastEmitted().votingDeadline.status).toEqual(RETRIEVAL_STATUS.RETRIEVING);
-        });
-
-        it('"value" should be null', () => {
-          expect(lastEmitted().votingDeadline.value).toEqual(null);
-        });
-      });
-
-      describe('case: after the voting deadline is retrieved', () => {
-        beforeEach(() => init_detailsAtIndex$_and_subscribe());
-
-        it('"status" should be "AVAILABLE', () => {
-          expect(lastEmitted().votingDeadline.status).toEqual(RETRIEVAL_STATUS.AVAILABLE);
-        });
-
-        it('"value" should be set', () => {
-          const deadline = new Date(Mock.AnonymousVotingContractCollections[index].timeframes.votingDeadline);
-          expect(lastEmitted().votingDeadline.value).toEqual(deadline);
-        });
-      });
-
-      describe('case: votingDeadlineAt$ returns an empty observable', () => {
-        beforeEach(() => {
-          spyOn(anonymousVotingSvc, 'votingDeadlineAt$').and.returnValue(Observable.empty());
-          init_detailsAtIndex$_and_subscribe();
-        });
-
-        it('"status" should be "UNAVAILABLE', () => {
-          expect(lastEmitted().votingDeadline.status).toEqual(RETRIEVAL_STATUS.UNAVAILABLE);
-        });
-
-        it('"value" should be null', () => {
-          expect(lastEmitted().votingDeadline.value).toEqual(null);
-        });
-      });
-    });
-
-    describe('parameter: pendingRegistrations', () => {
-      describe('case: the contract cannot be retrieved from the index', () => {
-        beforeEach(() => {
-          spyOnProperty(voteListingSvc, 'deployedVotes$').and.returnValue(Observable.empty());
-          init_detailsAtIndex$_and_subscribe();
-        });
-
-        it('"status" should be "UNAVAILABLE"', () => {
-          expect(lastEmitted().pendingRegistrations.status).toEqual(RETRIEVAL_STATUS.UNAVAILABLE);
-        });
-
-        it('"value" should be null', () => {
-          expect(lastEmitted().pendingRegistrations.value).toEqual(null);
-        });
-      });
-
-      describe('case: before the number of pending registrations is retrieved', () => {
-        beforeEach(() => {
-          spyOn(anonymousVotingSvc, 'pendingRegistrationsAt$').and.returnValue(Observable.never());
-          init_detailsAtIndex$_and_subscribe();
-        });
-
-        it('"status" should be "RETRIEVING...', () => {
-          expect(lastEmitted().pendingRegistrations.status).toEqual(RETRIEVAL_STATUS.RETRIEVING);
-        });
-
-        it('"value" should be null', () => {
-          expect(lastEmitted().pendingRegistrations.value).toEqual(null);
-        });
-      });
-
-      describe('case: after the number of pending registrations is retrieved', () => {
-        beforeEach(() => init_detailsAtIndex$_and_subscribe());
-
-        it('"status" should be "AVAILABLE', () => {
-          expect(lastEmitted().pendingRegistrations.status).toEqual(RETRIEVAL_STATUS.AVAILABLE);
-        });
-
-        it('"value" should be set', () => {
-          const pendingRegistrations = Mock.AnonymousVotingContractCollections[index].pendingRegistrations;
-          expect(lastEmitted().pendingRegistrations.value).toEqual(pendingRegistrations);
-        });
-      });
-
-      describe('case: the number of pending registrations is updated', () => {
-        const mockPendingRegistrations = [3, 1, 5, 0, 2];
-        let pendingRegistrations$: Subject<number>;
-
-        beforeEach(() => {
-          pendingRegistrations$ = new Subject();
-          spyOn(anonymousVotingSvc, 'pendingRegistrationsAt$').and.returnValue(pendingRegistrations$);
-          init_detailsAtIndex$_and_subscribe();
-        });
-
-        it('"status" should stay as AVAILABLE', () => {
-          mockPendingRegistrations.forEach(val => {
-            pendingRegistrations$.next(val);
-            expect(lastEmitted().pendingRegistrations.status).toEqual(RETRIEVAL_STATUS.AVAILABLE);
+          it('should return a list of candidates with 0 votes ', () => {
+            expect(lastEmitted().results.status).toEqual(RetrievalStatus.available);
+            expect(lastEmitted().results.value)
+              .toEqual(voteCollection.parameters.candidates.map(candidate => ({candidate: candidate, count: 0})));
           });
         });
 
-        it('"value" should be updated accordingly', () => {
-          mockPendingRegistrations.forEach(val => {
-            pendingRegistrations$.next(val);
-            expect(lastEmitted().pendingRegistrations.value).toEqual(val);
+        describe('case: one of the vote hashes is null', () => {
+          beforeEach(() => {
+            const voteHashes = Mock.Voters.map(voter => ({
+              voter: voter.anonymous_address,
+              voteHash: voter.vote_hash
+            }));
+            voteHashes[1].voteHash = null;
+            create_voteHash_spy(voteHashes);
+            init_detailsAtIndex$_and_subscribe();
+          });
+
+          it('should notify the error service', () => {
+            expect(errSvc.add).toHaveBeenCalledWith(VoteRetrievalErrors.ipfs.nullHash, null);
+          });
+
+          it('should be unavailable', () => {
+            expect(lastEmitted().results.status).toEqual(RetrievalStatus.unavailable);
+            expect(lastEmitted().results.value).toEqual(null);
+          });
+        });
+
+        describe('case: one of the vote hashes does not resolve', () => {
+          beforeEach(() => {
+            const voteHashes = Mock.Voters.map(voter => ({
+              voter: voter.anonymous_address,
+              voteHash: voter.vote_hash
+            }));
+            voteHashes[1].voteHash = 'INVALID_HASH';
+            create_voteHash_spy(voteHashes);
+            init_detailsAtIndex$_and_subscribe();
+          });
+
+          it('should notify the error service', () => {
+            expect(errSvc.add).toHaveBeenCalledWith(VoteRetrievalErrors.ipfs.retrieval, jasmine.any(Error));
+          });
+
+          it('should be unavailable', () => {
+            expect(lastEmitted().results.status).toEqual(RetrievalStatus.unavailable);
+            expect(lastEmitted().results.value).toEqual(null);
+          });
+        });
+
+        describe('case: one of the vote hashes resolves to an incorrectly formatted value', () => {
+          const invalid = {
+            voter: Mock.Voters[1].anonymous_address,
+            voteHash: Mock.Voters[1].blinded_address_hash // an arbitrary hash that resolves to something else
+          };
+
+          beforeEach(() => {
+            const voteHashes = Mock.Voters.map(voter => ({
+              voter: voter.anonymous_address,
+              voteHash: voter.vote_hash
+            }));
+            voteHashes[1] = invalid;
+            create_voteHash_spy(voteHashes);
+            init_detailsAtIndex$_and_subscribe();
+          });
+
+          it('should notify the error service', () => {
+            expect(errSvc.add).toHaveBeenCalledWith(VoteRetrievalErrors.format.vote(invalid), null);
+          });
+
+          it('should be unavailable', () => {
+            expect(lastEmitted().results.status).toEqual(RetrievalStatus.unavailable);
+            expect(lastEmitted().results.value).toEqual(null);
+          });
+        });
+
+        xdescribe('case: one of the vote hashes resolves to an invalid candidate index', () => {
+        });
+
+        describe('case: valid vote hashes', () => {
+          beforeEach(() => {
+            const voteHashes = Mock.Voters.map(voter => ({
+              voter: voter.anonymous_address,
+              voteHash: voter.vote_hash
+            }));
+            create_voteHash_spy(voteHashes);
+            init_detailsAtIndex$_and_subscribe();
+          });
+
+          it('should return a histogram of the voter choices', () => {
+            expect(lastEmitted().results.status).toEqual(RetrievalStatus.available);
+            const results = lastEmitted().results.value;
+            voteCollection.parameters.candidates.map((candidate, idx) => {
+              const count = Mock.Voters.filter(voter => voter.vote.candidateIdx === idx).length;
+              expect(results[idx]).toEqual({candidate: candidate, count: count});
+            });
           });
         });
       });
-
-      describe('case: AnonymousVotingService.pendingRegistrations$ closes', () => {
-        beforeEach(() => {
-          spyOn(anonymousVotingSvc, 'pendingRegistrationsAt$').and.returnValue(Observable.empty());
-          init_detailsAtIndex$_and_subscribe();
-        });
-
-        it('"status" should be "UNAVAILABLE"', () => {
-          expect(lastEmitted().pendingRegistrations.status).toEqual(RETRIEVAL_STATUS.UNAVAILABLE);
-        });
-
-        it('"value" should be null', () => {
-          expect(lastEmitted().pendingRegistrations.value).toEqual(null);
-        });
-      });
     });
 
-  });
-
-  describe('method: blindSignatureAt$', () => {
-    const voteCollection: IAnonymousVotingContractCollection = Mock.AnonymousVotingContractCollections[0];
-    const voter: IVoter = Mock.Voters[0];
-
-    const init_blindSignatureAt$_and_subscribe = fakeAsync(() => {
-      voteRetrievalSvc().blindSignatureAt$(voteCollection.address, voter.public_address)
-        .subscribe(onNext, onError, onCompleted);
-      tick();
-    });
-
-    it('should emit the blind signature and complete', () => {
-      init_blindSignatureAt$_and_subscribe();
-      expect(onNext.calls.mostRecent().args[0]).toEqual(voter.signed_blinded_address);
-      expect(onCompleted).toHaveBeenCalled();
-    });
-
-    describe('case: the blind signature hash cannot be retrieved', () => {
-      beforeEach(() => {
-        spyOn(anonymousVotingSvc, 'blindSignatureHashAt$').and.returnValue(Observable.empty());
-        init_blindSignatureAt$_and_subscribe();
-      });
-
-      it('should return an empty observable', () => {
-        expect(onNext).not.toHaveBeenCalled();
-        expect(onCompleted).toHaveBeenCalled();
-      });
-    });
-
-    describe('case: the blind signature cannot be retrieved from the hash', () => {
-      const error: Error = new Error('Unable to retrieve the blind signature');
-
-      beforeEach(() => {
-        spyOn(ipfsSvc, 'catJSON').and.returnValue(Promise.reject(error));
-        init_blindSignatureAt$_and_subscribe();
-      });
-
-      it('should notify the Error service', () => {
-        expect(errSvc.add).toHaveBeenCalledWith(
-          VoteRetrievalServiceErrors.ipfs.getBlindSignature(voteCollection.address, voter.public_address), error
-        );
-      });
-
-      it('should return an empty observable', () => {
-        expect(onNext).not.toHaveBeenCalled();
-        expect(onCompleted).toHaveBeenCalled();
-      });
-    });
-
-    describe('case: the retrieved blinded signature has the wrong format', () => {
-      const invalid = {invalid: 'Not a valid blinded signature'};
-
-      beforeEach(() => {
-        spyOn(ipfsSvc, 'catJSON').and.returnValue(Promise.resolve(invalid));
-        init_blindSignatureAt$_and_subscribe();
-      });
-
-      it('should notify the Error service', () => {
-        expect(errSvc.add).toHaveBeenCalledWith(VoteRetrievalServiceErrors.format.blindSignature(invalid), null);
-      });
-
-      it('should return an empty observable', () => {
-        expect(onNext).not.toHaveBeenCalled();
-        expect(onCompleted).toHaveBeenCalled();
-      });
-    });
   });
 });
 

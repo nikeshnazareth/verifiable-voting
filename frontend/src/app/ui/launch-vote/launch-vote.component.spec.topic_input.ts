@@ -1,17 +1,17 @@
-import { AbstractControl } from '@angular/forms';
-import { ComponentFixture } from '@angular/core/testing';
 import { DebugElement } from '@angular/core';
+import { ComponentFixture } from '@angular/core/testing';
+import { AbstractControl } from '@angular/forms';
 import { By } from '@angular/platform-browser';
 
-import { TestLaunchVoteComponent } from './launch-vote.component.spec';
-import { Mock } from '../../mock/module';
 import { DOMInteractionUtility } from '../../mock/dom-interaction-utility';
+import { Mock } from '../../mock/module';
+import { LaunchVoteComponent } from './launch-vote.component';
 
 export function topic_input_tests(getFixture) {
 
   return () => {
     let input: DebugElement;
-    let fixture: ComponentFixture<TestLaunchVoteComponent>;
+    let fixture: ComponentFixture<LaunchVoteComponent>;
 
     beforeEach(() => {
       fixture = getFixture();
