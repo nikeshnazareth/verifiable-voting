@@ -1,4 +1,6 @@
 
+@import '../../../app.component.scss';
+
 mat-radio-group {
   display: inline-flex;
   flex-direction: column;
@@ -7,4 +9,8 @@ mat-radio-group {
 mat-divider {
   margin-top: 20px;
   margin-bottom: 10px;
+}
+
+.address {
+  width: $ethereum-address-width;
 }

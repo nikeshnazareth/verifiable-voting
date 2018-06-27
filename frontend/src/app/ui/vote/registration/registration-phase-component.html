@@ -1,6 +1,6 @@
 <form (ngSubmit)="submission$.next(form.value)" [formGroup]="form">
   <div>
-    <mat-form-field>
+    <mat-form-field class="address">
       <span matPrefix>0x&nbsp;</span>
       <input matInput formControlName="voterAddress" placeholder="Public Address">
     </mat-form-field>
@@ -16,7 +16,7 @@
   </div>
   <mat-divider></mat-divider>
   <div>
-    <mat-form-field>
+    <mat-form-field class="address">
       <span matPrefix>0x&nbsp;</span>
       <input matInput formControlName="anonymousAddress" placeholder="Anonymous Address">
     </mat-form-field>
@@ -34,7 +34,7 @@
   </div>
   <mat-divider></mat-divider>
   <div>
-    <mat-form-field>
+    <mat-form-field class="blindingFactor">
       <input matInput formControlName="blindingFactor" placeholder="Random Blinding Factor">
     </mat-form-field>
     <button mat-button color="primary" type="button" id="refreshBlindingFactor" (click)="refreshBlindingFactor()">
@@ -47,6 +47,7 @@
     If I cannot produce it during the Voting phase, I will be unable to vote.<br/>
     ( This requirement is an unfortunate inconvenience of this early version. It will be removed in future versions )
   </div>
+  <div class="spacer"></div>
   <div>
     <mat-checkbox formControlName="blindingFactorProtectAck"></mat-checkbox>
     <b>I ACKNOWLEDGE</b> that this value secures my anonymity and should be protected accordingly.<br/>

@@ -28,7 +28,8 @@ import { ErrorService } from './core/error-service/error.service';
         </mat-tab>
       </mat-tab-group>
     </div>
-  `
+  `,
+  styleUrls: ['./app.component.scss']
 })
 export class AppComponent {
   public voteSelected: number;

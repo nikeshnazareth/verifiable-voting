@@ -1,4 +1,20 @@
+@import '../../../app.component.scss';
+
 mat-divider {
   margin-top: 20px;
   margin-bottom: 10px;
+}
+
+
+
+.spacer {
+  margin-top: 20px;
+}
+
+.address {
+  width: $ethereum-address-width;
+}
+
+.blindingFactor {
+  width: $ethereum-address-width; // for visual consistency
 }

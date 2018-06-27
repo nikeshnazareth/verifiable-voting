@@ -1,3 +1,10 @@
+
+@import '../../app.component.scss';
+
 mat-form-field {
-  width: 300px;
+  width: $ethereum-address-width;
+}
+
+button[type=submit] {
+  margin-left: 20px;
 }
