@@ -19,27 +19,29 @@ import { address } from '../ethereum/type.mappings';
 import { VoteListingContractService } from '../ethereum/vote-listing-contract/contract.service';
 import { IVoteParameters } from '../ipfs/formats.interface';
 import { IPFSService } from '../ipfs/ipfs.service';
+import { TransactionService } from '../transaction-service/transaction.service';
 import { VoteManagerErrors } from './vote-manager-errors';
+import { VoteManagerMessages } from './vote-manager-messages';
 
 export interface IVoteManagerService {
   deployVote$(registrationDeadline: number,
               votingDeadline: number,
               params: IVoteParameters,
               eligibilityContract: address,
-              registrationAuthority: address): Observable<ITransactionReceipt>;
+              registrationAuthority: address): Observable<void>;
 
   registerAt$(contractAddr: address,
               registrationKey: IRSAKey,
               voterAddr: address,
               anonymousAddr: address,
-              blindingFactor: string): Observable<ITransactionReceipt>;
+              blindingFactor: string): Observable<void>;
 
   voteAt$(contractAddr: address,
           registrationKey: IRSAKey,
           anonymousAddr: address,
           blindedSignature: string,
           blindingFactor: string,
-          candidateIdx: number): Observable<ITransactionReceipt>;
+          candidateIdx: number): Observable<void>;
 }
 
 @Injectable()
@@ -48,6 +50,7 @@ export class VoteManagerService implements IVoteManagerService {
   constructor(private voteListingSvc: VoteListingContractService,
               private anonymousVotingContractSvc: AnonymousVotingContractService,
               private cryptoSvc: CryptographyService,
+              private txSvc: TransactionService,
               private ipfsSvc: IPFSService,
               private errSvc: ErrorService) {
   }
@@ -60,26 +63,30 @@ export class VoteManagerService implements IVoteManagerService {
    * @param {IVoteParameters} params the vote parameters to add to IPFS
    * @param {address} eligibilityContract the contract that determines if an address is eligible to vote
    * @param {address} registrationAuth the address that can publish the blinded signatures
-   * @returns {Observable<ITransactionReceipt>} an observable that emits the deployment transaction receipt</br>
-   * or an empty observable if there is an error
+   * @returns {Observable<void>} an observable that emits once and completes or an empty observable if there is an error
    */
   deployVote$(registrationDeadline: number,
               votingDeadline: number,
               params: IVoteParameters,
               eligibilityContract: address,
-              registrationAuth: address): Observable<ITransactionReceipt> {
+              registrationAuth: address): Observable<void> {
     return Observable.fromPromise(this.ipfsSvc.addJSON(params))
       .catch(err => {
         this.errSvc.add(VoteManagerErrors.ipfs.addParametersHash(params), err);
         return <Observable<string>> Observable.empty();
       })
-      .switchMap(hash => this.voteListingSvc.deployVote$({
-        paramsHash: hash,
-        eligibilityContract: eligibilityContract,
-        registrationAuthority: registrationAuth,
-        registrationDeadline: registrationDeadline,
-        votingDeadline: votingDeadline
-      }));
+      .do(hash => {
+        const tx: Observable<ITransactionReceipt> = this.voteListingSvc.deployVote$({
+          paramsHash: hash,
+          eligibilityContract: eligibilityContract,
+          registrationAuthority: registrationAuth,
+          registrationDeadline: registrationDeadline,
+          votingDeadline: votingDeadline
+        });
+        this.txSvc.add(tx, VoteManagerMessages.deploy(params.topic));
+      })
+      .map(() => {
+      });
   }
 
   /**
@@ -89,14 +96,13 @@ export class VoteManagerService implements IVoteManagerService {
    * @param {address} voterAddr the public address the voter will use to register
    * @param {address} anonymousAddr the anonymous address the voter will use to vote
    * @param {string} blindingFactor the RSA blinding factor used to protect anonymity of the anonymous address
-   * @returns {Observable<ITransactionReceipt>} an observable that emits the registration transaction receipt<br/>
-   * or an empty observable if there is an error
+   * @returns {Observable<void>} an observable that emits once and completes or an empty observable if there is an error
    */
   registerAt$(contractAddr: address,
               registrationKey: IRSAKey,
               voterAddr: address,
               anonymousAddr: address,
-              blindingFactor: string): Observable<ITransactionReceipt> {
+              blindingFactor: string): Observable<void> {
     return Observable.of(this.cryptoSvc.blind(anonymousAddr, blindingFactor, registrationKey))
       .filter(blindedAddr => blindedAddr !== null)
       .map(blindedAddr => ({blinded_address: blindedAddr}))
@@ -106,9 +112,13 @@ export class VoteManagerService implements IVoteManagerService {
         this.errSvc.add(VoteManagerErrors.ipfs.addBlindedAddress(), err);
         return <Observable<string>> Observable.empty();
       })
-      .switchMap(blindedAddrHash =>
-        this.anonymousVotingContractSvc.at(contractAddr).register$(voterAddr, blindedAddrHash)
-      );
+      .do(blindedAddrHash => {
+        const tx: Observable<ITransactionReceipt> =
+          this.anonymousVotingContractSvc.at(contractAddr).register$(voterAddr, blindedAddrHash);
+        this.txSvc.add(tx, VoteManagerMessages.register(voterAddr, contractAddr));
+      })
+      .map(() => {
+      });
   }
 
   /**
@@ -119,15 +129,14 @@ export class VoteManagerService implements IVoteManagerService {
    * @param {string} blindedSignature the blinded signature that the Vote Authority published
    * @param {string} blindingFactor the RSA blinding factor user to protect anonymity of the anonymous address
    * @param {number} candidateIdx the index of the selected candidate in the candidate list
-   * @returns {Observable<ITransactionReceipt>} an observable that emits the vote transaction receipt</br>
-   * or an empty observable if there is an error
+   * @returns {Observable<void>} an observable that emits once and completed or an empty observable if there is an error
    */
   voteAt$(contractAddr: address,
           registrationKey: IRSAKey,
           anonymousAddr: address,
           blindedSignature: string,
           blindingFactor: string,
-          candidateIdx: number): Observable<ITransactionReceipt> {
+          candidateIdx: number): Observable<void> {
     return Observable.of(this.cryptoSvc.unblind(blindedSignature, blindingFactor, registrationKey))
       .filter(signedAddress => signedAddress != null)
       .filter(signedAddress => this.confirmAuthorised(anonymousAddr, signedAddress, registrationKey))
@@ -141,9 +150,13 @@ export class VoteManagerService implements IVoteManagerService {
         this.errSvc.add(VoteManagerErrors.ipfs.addVote(), err);
         return <Observable<string>> Observable.empty();
       })
-      .switchMap(voteHash =>
-        this.anonymousVotingContractSvc.at(contractAddr).vote$(anonymousAddr, voteHash)
-      );
+      .do(voteHash => {
+        const tx: Observable<ITransactionReceipt> =
+          this.anonymousVotingContractSvc.at(contractAddr).vote$(anonymousAddr, voteHash);
+        this.txSvc.add(tx, VoteManagerMessages.vote(contractAddr));
+      })
+      .map(() => {
+      });
   }
 
   /**

@@ -8,24 +8,28 @@ import { ErrorService } from '../error-service/error.service';
 import { AnonymousVotingContractService } from '../ethereum/anonymous-voting-contract/contract.service';
 import { VoteListingContractService } from '../ethereum/vote-listing-contract/contract.service';
 import { IPFSService } from '../ipfs/ipfs.service';
+import { TransactionService } from '../transaction-service/transaction.service';
 import Spy = jasmine.Spy;
 import { VoteManagerErrors } from './vote-manager-errors';
-import { VoteManagerService} from './vote-manager.service';
+import { VoteManagerMessages } from './vote-manager-messages';
+import { VoteManagerService } from './vote-manager.service';
 
 describe('Service: VoteManagerService', () => {
   let voteListingSvc: VoteListingContractService;
   let anonymousVotingContractSvc: AnonymousVotingContractService;
   let cryptoSvc: CryptographyService;
+  let txSvc: TransactionService;
   let ipfsSvc: IPFSService;
   let errSvc: ErrorService;
 
-  const voteManagerSvc = () => new VoteManagerService(voteListingSvc, anonymousVotingContractSvc, cryptoSvc, ipfsSvc, errSvc);
+  const voteManagerSvc = () => new VoteManagerService(voteListingSvc, anonymousVotingContractSvc, cryptoSvc, txSvc, ipfsSvc, errSvc);
 
   beforeEach(() => {
     TestBed.configureTestingModule({
       providers: [
         VoteManagerService,
         ErrorService,
+        TransactionService,
         {provide: VoteListingContractService, useClass: Mock.VoteListingContractService},
         {provide: AnonymousVotingContractService, useClass: Mock.AnonymousVotingContractService},
         {provide: CryptographyService, useClass: Mock.CryptographyService},
@@ -36,6 +40,7 @@ describe('Service: VoteManagerService', () => {
     voteListingSvc = TestBed.get(VoteListingContractService);
     anonymousVotingContractSvc = TestBed.get(AnonymousVotingContractService);
     cryptoSvc = TestBed.get(CryptographyService);
+    txSvc = TestBed.get(TransactionService);
     ipfsSvc = TestBed.get(IPFSService);
     errSvc = TestBed.get(ErrorService);
   });
@@ -48,6 +53,7 @@ describe('Service: VoteManagerService', () => {
     onNext = jasmine.createSpy('onNext');
     onCompleted = jasmine.createSpy('onCompleted');
     spyOn(errSvc, 'add').and.stub();
+    spyOn(txSvc, 'add').and.callThrough();
   });
 
   const voteDetails: IAnonymousVotingContractCollection = Mock.AnonymousVotingContractCollections[0];
@@ -79,9 +85,17 @@ describe('Service: VoteManagerService', () => {
       expect(voteListingSvc.deployVote$).toHaveBeenCalledWith(voteDetails.voteConstants);
     }));
 
-    it('should return an observable that emits the transaction receipt and completes', fakeAsync(() => {
+    it('should pass the deploy message to the Transaction Service', fakeAsync(() => {
       init_and_call_deployVote$();
-      expect(onNext).toHaveBeenCalledWith(voteDetails.deploy_receipt);
+      expect(txSvc.add).toHaveBeenCalledWith(
+        jasmine.any(Observable), VoteManagerMessages.deploy(voteDetails.parameters.topic)
+      );
+    }));
+
+    it('should return an observable that emits nothing and completes', fakeAsync(() => {
+      init_and_call_deployVote$();
+      expect(onNext).toHaveBeenCalledTimes(1);
+      expect(onNext).toHaveBeenCalledWith(undefined);
       expect(onCompleted).toHaveBeenCalled();
     }));
 
@@ -96,17 +110,6 @@ describe('Service: VoteManagerService', () => {
         expect(errSvc.add)
           .toHaveBeenCalledWith(VoteManagerErrors.ipfs.addParametersHash(voteDetails.parameters), addError);
       }));
-
-      it('should return an empty observable', fakeAsync(() => {
-        init_and_call_deployVote$();
-        expect(onNext).not.toHaveBeenCalled();
-        expect(onCompleted).toHaveBeenCalled();
-      }));
-    });
-
-    describe('case: deployVote$ (on the VoteListingService) fails', () => {
-
-      beforeEach(() => spyOn(voteListingSvc, 'deployVote$').and.returnValue(Observable.empty()));
 
       it('should return an empty observable', fakeAsync(() => {
         init_and_call_deployVote$();
@@ -158,10 +161,17 @@ describe('Service: VoteManagerService', () => {
       expect(contractManager.register$).toHaveBeenCalledWith(voter.public_address, voter.blinded_address_hash);
     });
 
-    it('should return an observable that emits the transaction receipt and completed', () => {
+    it('should pass the register message to the Transaction Service', () => {
+      init_and_call_registerAt$();
+      expect(txSvc.add).toHaveBeenCalledWith(
+        jasmine.any(Observable), VoteManagerMessages.register(voter.public_address, voteDetails.address)
+      );
+    });
+
+    it('should return an observable that emits nothing and completed', () => {
       init_and_call_registerAt$();
       expect(onNext).toHaveBeenCalledTimes(1);
-      expect(onNext).toHaveBeenCalledWith(voter.register_receipt);
+      expect(onNext).toHaveBeenCalledWith(undefined);
       expect(onCompleted).toHaveBeenCalled();
     });
 
@@ -188,20 +198,6 @@ describe('Service: VoteManagerService', () => {
 
       it('should return an empty observable', () => {
         init_and_call_registerAt$();
-        expect(onNext).not.toHaveBeenCalled();
-        expect(onCompleted).toHaveBeenCalled();
-      });
-    });
-
-    describe('case: AnonymousVotingContractManager.register$ returns an empty observable', () => {
-      beforeEach(() => {
-        const contractManager = new AnonymousVotingContractManager(voteDetails.address);
-        spyOn(anonymousVotingContractSvc, 'at').and.returnValue(contractManager);
-        spyOn(contractManager, 'register$').and.returnValue(Observable.empty());
-        init_and_call_registerAt$();
-      });
-
-      it('should return an empty observable', () => {
         expect(onNext).not.toHaveBeenCalled();
         expect(onCompleted).toHaveBeenCalled();
       });
@@ -258,10 +254,17 @@ describe('Service: VoteManagerService', () => {
       expect(contractManager.vote$).toHaveBeenCalledWith(voter.anonymous_address, voter.vote_hash);
     });
 
-    it('should return an observable that emits the vote receipt and completes', () => {
+    it('should pass the vote message to the Transaction Service', () => {
+      init_and_call_voteAt$();
+      expect(txSvc.add).toHaveBeenCalledWith(
+        jasmine.any(Observable), VoteManagerMessages.vote(voteDetails.address)
+      );
+    });
+
+    it('should return an observable that emits nothing and completes', () => {
       init_and_call_voteAt$();
       expect(onNext).toHaveBeenCalledTimes(1);
-      expect(onNext).toHaveBeenCalledWith(voter.vote_receipt);
+      expect(onNext).toHaveBeenCalledWith(undefined);
       expect(onCompleted).toHaveBeenCalled();
     });
 
@@ -302,20 +305,6 @@ describe('Service: VoteManagerService', () => {
 
       it('should notify the Error Service', () => {
         expect(errSvc.add).toHaveBeenCalledWith(VoteManagerErrors.ipfs.addVote(), error);
-      });
-
-      it('should return an empty observable', () => {
-        expect(onNext).not.toHaveBeenCalled();
-        expect(onCompleted).toHaveBeenCalled();
-      });
-    });
-
-    describe('case: AnonymousVotingContractManager.vote$ returns an empty observable', () => {
-      beforeEach(() => {
-        const contractManager = new AnonymousVotingContractManager(voteDetails.address);
-        spyOn(anonymousVotingContractSvc, 'at').and.returnValue(contractManager);
-        spyOn(contractManager, 'vote$').and.returnValue(Observable.empty());
-        init_and_call_voteAt$();
       });
 
       it('should return an empty observable', () => {

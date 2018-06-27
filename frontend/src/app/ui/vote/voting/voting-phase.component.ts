@@ -73,7 +73,7 @@ export class VotingPhaseComponent implements OnInit, OnDestroy {
         form.blindingFactor,
         form.chosenCandidate
       ))
-      .map(receipt => this.form.reset());
+      .map(() => this.form.reset());
   }
 
   /**

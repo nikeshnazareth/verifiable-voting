@@ -69,7 +69,7 @@ export class LaunchVoteComponent implements OnInit {
     const registrationAuthority: address = '0x' + voteDetails.registration_key.registrationAuthority;
 
     this.voteManagerSvc.deployVote$(registrationDeadline, votingDeadline, params, eligibilityContract, registrationAuthority)
-      .map(receipt => this.form.reset())
+      .map(() => this.form.reset())
       .subscribe(); /// this finishes immediately so we don't need to unsubscribe
   }
 

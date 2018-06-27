@@ -75,7 +75,7 @@ export class RegistrationPhaseComponent implements OnInit, OnDestroy {
         form.anonymousAddress,
         form.blindingFactor
       ))
-      .map(receipt => this.form.reset());
+      .map(() => this.form.reset());
   }
 
   /**
