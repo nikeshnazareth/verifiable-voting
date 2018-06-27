@@ -1,7 +1,7 @@
 <form (ngSubmit)="submission$.next(form.value)" [formGroup]="form">
   <div>
-    0x
     <mat-form-field>
+      <span matPrefix>0x&nbsp;</span>
       <input matInput formControlName="voterAddress" placeholder="Public Address">
     </mat-form-field>
     <button mat-button color="primary" type="button" id="fillVoterAddress"
@@ -16,8 +16,8 @@
   </div>
   <mat-divider></mat-divider>
   <div>
-    0x
     <mat-form-field>
+      <span matPrefix>0x&nbsp;</span>
       <input matInput formControlName="anonymousAddress" placeholder="Anonymous Address">
     </mat-form-field>
     <button mat-button color="primary" type="button" id="fillAnonymousAddress"
