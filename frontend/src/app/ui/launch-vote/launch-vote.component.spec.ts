@@ -101,7 +101,7 @@ describe('Component: LaunchVoteComponent', () => {
 
     describe('Candidate list', candidate_list_tests(() => fixture));
 
-    describe('Eligibility input box', eligibility_tests(() => fixture));
+    xdescribe('Eligibility input box', eligibility_tests(() => fixture));
 
     describe('Registration key', registration_key_tests(() => fixture));
   });
