@@ -8,6 +8,7 @@ import { TruffleContractWrapperService } from './ethereum/truffle-contract-wrapp
 import { VoteListingContractService } from './ethereum/vote-listing-contract/contract.service';
 import { Web3Service } from './ethereum/web3.service';
 import { IPFSService } from './ipfs/ipfs.service';
+import { TransactionService } from './transaction-service/transaction.service';
 import { VoteManagerService } from './vote-manager/vote-manager.service';
 import { VoteRetrievalService } from './vote-retrieval/vote-retrieval.service';
 
@@ -22,7 +23,8 @@ import { VoteRetrievalService } from './vote-retrieval/vote-retrieval.service';
     AnonymousVotingContractService,
     VoteManagerService,
     NoRestrictionContractService,
-    CryptographyService
+    CryptographyService,
+    TransactionService
   ]
 })
 export class CoreModule {
