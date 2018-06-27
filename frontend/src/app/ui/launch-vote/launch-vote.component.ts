@@ -9,7 +9,8 @@ import { VoteManagerService } from '../../core/vote-manager/vote-manager.service
 
 @Component({
   selector: 'vv-launch-vote',
-  templateUrl: './launch-vote.component.html'
+  templateUrl: './launch-vote.component.html',
+  styleUrls: ['./launch-vote.component.scss']
 })
 export class LaunchVoteComponent implements OnInit {
   public form: FormGroup;
