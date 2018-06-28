@@ -1,6 +1,5 @@
 import { DebugElement } from '@angular/core';
 import { ComponentFixture } from '@angular/core/testing';
-import { AbstractControl, FormGroup } from '@angular/forms';
 import { By } from '@angular/platform-browser';
 import { LaunchVoteComponent } from './launch-vote.component';
 
@@ -9,14 +8,12 @@ export function timeframe_tests(getFixture) {
   return () => {
     let fixture: ComponentFixture<LaunchVoteComponent>;
     let timeframes: DebugElement[];
-    let formGroup: FormGroup;
 
     beforeEach(() => {
       fixture = getFixture();
       fixture.detectChanges();
       const step: DebugElement = fixture.debugElement.queryAll(By.css('.mat-step'))[1];
       timeframes = step.queryAll(By.css('vv-datetime-picker'));
-      formGroup = <FormGroup> fixture.componentInstance.form.get('timeframes');
     });
 
     it('should have three datetime pickers', () => {
@@ -41,12 +38,6 @@ export function timeframe_tests(getFixture) {
       });
 
       describe('form control validity', () => {
-        let control: AbstractControl;
-
-        beforeEach(() => {
-          control = formGroup.get(dtpicker.attributes.formControlName);
-        });
-
         xit('should be invalid when set to null');
 
         xit('should be valid when populated');
@@ -71,12 +62,6 @@ export function timeframe_tests(getFixture) {
       });
 
       describe('form control validity', () => {
-        let ctrl: AbstractControl;
-
-        beforeEach(() => {
-          ctrl = formGroup.get(dtpicker.attributes.formControlName);
-        });
-
         xit('should be invalid when set to null');
 
         xit('should be invalid when set to before the minimum value');
@@ -111,12 +96,6 @@ export function timeframe_tests(getFixture) {
       });
 
       describe('form control validity', () => {
-        let ctrl: AbstractControl;
-
-        beforeEach(() => {
-          ctrl = formGroup.get(dtpicker.attributes.formControlName);
-        });
-
         xit('should be invalid when set to null');
 
         xit('should be invalid when set to before the minimum value');

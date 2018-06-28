@@ -1,5 +1,6 @@
 import 'rxjs/add/observable/from';
 import 'rxjs/add/observable/timer';
+import 'rxjs/add/operator/map';
 import 'rxjs/add/operator/reduce';
 import { BehaviorSubject } from 'rxjs/BehaviorSubject';
 import { Observable } from 'rxjs/Observable';
@@ -31,7 +32,7 @@ export class AnonymousVotingContractManager implements IAnonymousVotingContractM
   private registrationHashes: IRegistrationHashes;
   private updatedRegistrationHashes$: BehaviorSubject<boolean>;
 
-  constructor(private _contract$: Observable<AnonymousVotingAPI>, private errSvc: ErrorService) {
+  constructor(private contract$: Observable<AnonymousVotingAPI>, private errSvc: ErrorService) {
     this.events$ = new ReplaySubject<IContractLog>();
     this.voteConstants$ = new ReplaySubject<IVoteConstants>();
     this.updatedRegistrationHashes$ = new BehaviorSubject<boolean>(true);
@@ -93,7 +94,7 @@ export class AnonymousVotingContractManager implements IAnonymousVotingContractM
    * request is published or an empty observable if there was an error
    */
   register$(voterAddr: address, blindAddressHash: string): Observable<ITransactionReceipt> {
-    return this._contract$
+    return this.contract$
       .map(contract => contract.register(blindAddressHash, {from: voterAddr}))
       .switchMap(registerPromise => Observable.fromPromise(registerPromise))
       .catch(err => {
@@ -110,7 +111,7 @@ export class AnonymousVotingContractManager implements IAnonymousVotingContractM
    * or an empty observable if there was an error
    */
   vote$(anonymousAddr: address, voteHash: string): Observable<ITransactionReceipt> {
-    return this._contract$
+    return this.contract$
       .map(contract => contract.vote(voteHash, {from: anonymousAddr}))
       .switchMap(votePromise => Observable.fromPromise(votePromise))
       .catch(err => {
@@ -125,7 +126,7 @@ export class AnonymousVotingContractManager implements IAnonymousVotingContractM
    * @returns {Observable<IContractLog>} the stream of contract events. Closes when there is an error
    */
   private initEvents$(): Observable<IContractLog> {
-    return this._contract$
+    return this.contract$
       .map(contract => contract.allEvents({fromBlock: 0, toBlock: 'latest'}))
       .switchMap(events => <Observable<IContractLog>> Observable.create(observer => {
         events.watch((err, log) => err ?
@@ -143,7 +144,7 @@ export class AnonymousVotingContractManager implements IAnonymousVotingContractM
    * @private
    */
   private initVoteConstants$(): Observable<IVoteConstants> {
-    return this._contract$
+    return this.contract$
       .map(contract => Promise.all([
         contract.parametersHash.call(),
         contract.eligibilityContract.call(),
@@ -154,7 +155,7 @@ export class AnonymousVotingContractManager implements IAnonymousVotingContractM
       .switchMap(promise => Observable.fromPromise(promise))
       .catch(err => {
         this.errSvc.add(AnonymousVotingContractErrors.constants, err);
-        return <Observable<IVoteConstants>> Observable.empty();
+        return Observable.empty();
       })
       .map(arr => ({
         paramsHash: arr[0],

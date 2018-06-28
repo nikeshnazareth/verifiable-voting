@@ -1,5 +1,4 @@
 import { fakeAsync, TestBed, tick } from '@angular/core/testing';
-import { Observable } from 'rxjs/Observable';
 
 import { AnonymousVotingContractManager } from '../../mock/anonymous-voting-contract/contract-manager';
 import { IAnonymousVotingContractCollection, IVoter, Mock } from '../../mock/module';
@@ -88,7 +87,7 @@ describe('Service: VoteManagerService', () => {
     it('should pass the deploy message to the Transaction Service', fakeAsync(() => {
       init_and_call_deployVote$();
       expect(txSvc.add).toHaveBeenCalledWith(
-        jasmine.any(Observable), VoteManagerMessages.deploy(voteDetails.parameters.topic)
+        jasmine.anything(), VoteManagerMessages.deploy(voteDetails.parameters.topic)
       );
     }));
 
@@ -164,7 +163,7 @@ describe('Service: VoteManagerService', () => {
     it('should pass the register message to the Transaction Service', () => {
       init_and_call_registerAt$();
       expect(txSvc.add).toHaveBeenCalledWith(
-        jasmine.any(Observable), VoteManagerMessages.register(voter.public_address, voteDetails.address)
+        jasmine.anything(), VoteManagerMessages.register()
       );
     });
 
@@ -257,7 +256,7 @@ describe('Service: VoteManagerService', () => {
     it('should pass the vote message to the Transaction Service', () => {
       init_and_call_voteAt$();
       expect(txSvc.add).toHaveBeenCalledWith(
-        jasmine.any(Observable), VoteManagerMessages.vote(voteDetails.address)
+        jasmine.anything(), VoteManagerMessages.vote()
       );
     });
 

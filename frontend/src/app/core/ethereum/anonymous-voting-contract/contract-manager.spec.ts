@@ -6,10 +6,11 @@ import { ErrorService } from '../../error-service/error.service';
 import { AnonymousVotingContractErrors } from './contract-errors';
 import Spy = jasmine.Spy;
 import { RegistrationComplete, VoterInitiatedRegistration, VoteSubmitted } from './contract-events.interface';
-import { AnonymousVotingContractManager} from './contract-manager';
-import { AnonymousVotingAPI} from './contract.api';
+import { AnonymousVotingContractManager } from './contract-manager';
+import { AnonymousVotingAPI } from './contract.api';
 
 describe('class: AnonymousVotingContractManager', () => {
+
   const contractManager = () => new AnonymousVotingContractManager(contract$, errSvc);
   let voteCollection: IAnonymousVotingContractCollection;
   let contract$: Observable<AnonymousVotingAPI>;
@@ -106,8 +107,10 @@ describe('class: AnonymousVotingContractManager', () => {
   });
 
   describe('property: phase$', () => {
+    let now: Date;
 
     const init_phase$_and_subscribe = () => {
+      jasmine.clock().mockDate(now);
       contractManager().phase$.subscribe(onNext, onError, onCompleted);
       tick();
     };
@@ -127,9 +130,9 @@ describe('class: AnonymousVotingContractManager', () => {
 
 
     describe('case: before the registration deadline', () => {
-      beforeEach(() => jasmine.clock().mockDate(
-        new Date(voteCollection.voteConstants.registrationDeadline - msPerDay)
-      ));
+      beforeEach(() => {
+        now = new Date(voteCollection.voteConstants.registrationDeadline - msPerDay);
+      });
 
       it('should start at phase 0', fakeAsync(() => {
         init_phase$_and_subscribe();
@@ -172,9 +175,9 @@ describe('class: AnonymousVotingContractManager', () => {
     });
 
     describe('case: during the voting phase', () => {
-      beforeEach(() => jasmine.clock().mockDate(
-        new Date(voteCollection.voteConstants.registrationDeadline + msPerDay)
-      ));
+      beforeEach(() => {
+        now = new Date(voteCollection.voteConstants.registrationDeadline + msPerDay);
+      });
 
       it('should immediately emit phases "0" and "1"', fakeAsync(() => {
         init_phase$_and_subscribe();
@@ -204,7 +207,9 @@ describe('class: AnonymousVotingContractManager', () => {
     });
 
     describe('case: after the voting phase', () => {
-      beforeEach(() => jasmine.clock().mockDate(new Date(voteCollection.voteConstants.votingDeadline + msPerDay)));
+      beforeEach(() => {
+        now = new Date(voteCollection.voteConstants.votingDeadline + msPerDay);
+      });
 
       beforeEach(fakeAsync(() => init_phase$_and_subscribe()));
 

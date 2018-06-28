@@ -10,7 +10,6 @@ import { AnonymousVotingContractErrors } from './contract-errors';
 import { AnonymousVotingContractManager, IAnonymousVotingContractManager } from './contract-manager';
 import { AnonymousVotingAPI } from './contract.api';
 
-
 export interface IAnonymousVotingContractService {
   at(addr: address): IAnonymousVotingContractManager;
 }
@@ -43,8 +42,8 @@ export class AnonymousVotingContractService implements IAnonymousVotingContractS
   /**
    * Uses the truffle build object to create a truffle abstraction of the AnonymousVoting contract
    * It notifies the Error Service if web3 is not injected
-   * @returns {Observable<ITruffleContractAbstraction>} (an Observable of) the truffle abstraction</br>
-   * of the AnonymousVoting contract or Observable.empty() if web3 is not injected
+   * @returns {Observable<ITruffleContractAbstraction>} (an Observable of) the truffle abstraction
+   * of the AnonymousVoting contract or an empty observable if web3 is not injected
    * @private
    */
   private initContractAbstraction(): Observable<ITruffleContractAbstraction> {
@@ -54,7 +53,7 @@ export class AnonymousVotingContractService implements IAnonymousVotingContractS
       return Observable.of(abstraction);
     } else {
       this.errSvc.add(APP_CONFIG.errors.web3, null);
-      return Observable.empty();
+      return <Observable<ITruffleContractAbstraction>> Observable.empty();
     }
   }
 
@@ -62,8 +61,8 @@ export class AnonymousVotingContractService implements IAnonymousVotingContractS
    * Finds the AnonymousVoting contract and returns an AnonymousVotingContract object to interact with it
    * It notifies the Error Service if there is no AnonymousVoting contract at the specified address
    * @param {address} addr the address of the contract
-   * @returns {Observable<AnonymousVotingContract>} An observable of the contract object<br/>
-   * or the equivalent of Observable.empty() if the contract cannot be found
+   * @returns {Observable<AnonymousVotingContract>} An observable of the contract object
+   * or an empty observable if the contract cannot be found
    */
   private contractAt(addr: address): Observable<AnonymousVotingAPI> {
     return this.abstraction$

@@ -35,7 +35,7 @@ import { Web3Service } from './web3.service';
 
 
 const msPerDay: number = 1000 * 60 * 60 * 24;
-const today = new Date(2018, 6, 28, 12); // Noon Tau Day
+const today = new Date(2018, 5, 28, 12); // Noon Tau Day
 
 export class Mock {
   // constants

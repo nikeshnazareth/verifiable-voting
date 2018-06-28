@@ -61,11 +61,8 @@ describe('Service: VoteRetrievalService', () => {
 
   describe('property: summaries$', () => {
 
-    let subscription: Subscription;
-
     const init_summaries$_and_subscribe = fakeAsync(() => {
-      subscription = voteRetrievalSvc().summaries$
-        .subscribe(onNext, onError, onCompleted);
+      voteRetrievalSvc().summaries$.subscribe(onNext, onError, onCompleted);
       tick();
     });
 
