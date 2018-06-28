@@ -1,11 +1,13 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { MatSnackBar } from '@angular/material';
 import 'rxjs/add/operator/concatMap';
 import 'rxjs/add/operator/distinctUntilChanged';
 import 'rxjs/add/operator/do';
 import 'rxjs/add/operator/filter';
 
+import { Observable } from 'rxjs/Observable';
 import { ErrorService } from './core/error-service/error.service';
+import { TransactionService } from './core/transaction-service/transaction.service';
 
 @Component({
   selector: 'vv-root',
@@ -23,6 +25,12 @@ import { ErrorService } from './core/error-service/error.service';
         <mat-tab label="Create new vote">
           <vv-launch-vote></vv-launch-vote>
         </mat-tab>
+        <mat-tab [disabled]="!(numTransactions$ | async)">
+          <ng-template mat-tab-label>
+            <span [matBadge]="numTransactions$ | async" matBadgeOverlap="false">Transactions</span>
+          </ng-template>
+          <vv-list-transactions></vv-list-transactions>
+        </mat-tab>
         <mat-tab label="How it works">
           <vv-explanation></vv-explanation>
         </mat-tab>
@@ -31,11 +39,13 @@ import { ErrorService } from './core/error-service/error.service';
   `,
   styleUrls: ['./app.component.scss']
 })
-export class AppComponent {
+export class AppComponent implements OnInit {
   public voteSelected: number;
+  public numTransactions$: Observable<number>;
 
   constructor(private errSvc: ErrorService,
-              private snackBar: MatSnackBar) {
+              private snackBar: MatSnackBar,
+              private txSvc: TransactionService) {
 
     this.errSvc.error$
       .filter(err => err.friendly != null)
@@ -44,5 +54,9 @@ export class AppComponent {
       .distinctUntilChanged()
       .concatMap(msg => this.snackBar.open(msg, 'CLOSE').onAction())
       .subscribe();
+  }
+
+  ngOnInit() {
+    this.numTransactions$ = this.txSvc.transactionStates$.map(states => states.length);
   }
 }

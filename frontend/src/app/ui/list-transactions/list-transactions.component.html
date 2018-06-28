@@ -1,0 +1,15 @@
+<mat-table [dataSource]="txSvc.transactionStates$ | async">
+  <!-- Description column -->
+  <ng-container matColumnDef="description">
+    <mat-cell *matCellDef="let state" [class]="state.status">
+      <mat-spinner *ngIf="state.status===txStatus.pending" [diameter]="30"></mat-spinner>
+      <mat-icon *ngIf="state.status===txStatus.success">done</mat-icon>
+      <mat-icon *ngIf="state.status===txStatus.failure">error</mat-icon>
+      {{ state.description }}
+    </mat-cell>
+  </ng-container>
+
+  <mat-row *matRowDef="let row; columns: displayedColumns"></mat-row>
+</mat-table>
+
+

@@ -115,7 +115,7 @@ export class VoteManagerService implements IVoteManagerService {
       .do(blindedAddrHash => {
         const tx: Observable<ITransactionReceipt> =
           this.anonymousVotingContractSvc.at(contractAddr).register$(voterAddr, blindedAddrHash);
-        this.txSvc.add(tx, VoteManagerMessages.register(voterAddr, contractAddr));
+        this.txSvc.add(tx, VoteManagerMessages.register());
       })
       .map(() => {
       });
@@ -153,7 +153,7 @@ export class VoteManagerService implements IVoteManagerService {
       .do(voteHash => {
         const tx: Observable<ITransactionReceipt> =
           this.anonymousVotingContractSvc.at(contractAddr).vote$(anonymousAddr, voteHash);
-        this.txSvc.add(tx, VoteManagerMessages.vote(contractAddr));
+        this.txSvc.add(tx, VoteManagerMessages.vote());
       })
       .map(() => {
       });
