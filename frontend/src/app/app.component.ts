@@ -34,6 +34,9 @@ import { TransactionService } from './core/transaction-service/transaction.servi
         <mat-tab label="How it works">
           <vv-explanation></vv-explanation>
         </mat-tab>
+        <mat-tab label="[ Registration Authority only ]">
+          <vv-complete-registration></vv-complete-registration>
+        </mat-tab>
       </mat-tab-group>
     </div>
   `,

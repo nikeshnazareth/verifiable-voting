@@ -3,6 +3,7 @@ import { NgModule } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 
 import { MaterialModule } from '../material/material.module';
+import { CompleteRegistrationComponent } from './complete-registration/complete-registration.component';
 import { DatetimePickerComponent } from './datetime-picker/datetime-picker.component';
 import { ExplanationComponent } from './explanation/explanation.component';
 import { LaunchVoteComponent } from './launch-vote/launch-vote.component';
@@ -15,6 +16,7 @@ import { VotingPhaseComponent } from './vote/voting/voting-phase.component';
 
 @NgModule({
   declarations: [
+    CompleteRegistrationComponent,
     DatetimePickerComponent,
     ExplanationComponent,
     LaunchVoteComponent,
@@ -23,7 +25,7 @@ import { VotingPhaseComponent } from './vote/voting/voting-phase.component';
     RegistrationPhaseComponent,
     ResultsComponent,
     VoteComponent,
-    VotingPhaseComponent
+    VotingPhaseComponent,
   ],
   imports: [
     FormsModule,
@@ -32,6 +34,7 @@ import { VotingPhaseComponent } from './vote/voting/voting-phase.component';
     CommonModule
   ],
   exports: [
+    CompleteRegistrationComponent,
     DatetimePickerComponent,
     ExplanationComponent,
     LaunchVoteComponent,
