@@ -80,7 +80,6 @@ describe('Component: VoteComponent', () => {
       topic: {status: RetrievalStatus.available, value: collection.parameters.topic},
       phase: {status: RetrievalStatus.available, value: VotePhases[collection.currentPhase]},
       pendingRegistrations: {status: RetrievalStatus.available, value: []},
-      numPendingRegistrations: {status: RetrievalStatus.available, value: 0},
       key: {status: RetrievalStatus.available, value: collection.parameters.registration_key},
       candidates: {status: RetrievalStatus.available, value: collection.parameters.candidates},
       registration: {status: RetrievalStatus.available, value: {}},
@@ -242,8 +241,8 @@ describe('Component: VoteComponent', () => {
         fixture.componentInstance.index = idx;
       });
 
-      const availabilityTests = (name, property) => {
-        describe(`case: the ${name} is being retrieved`, () => {
+      const requiredTests = (propertyName, property, requiredPanelIndices) => {
+        describe(`case: the ${propertyName} is being retrieved`, () => {
           beforeEach(() => {
             const details = completeDetails(idx);
             details[property] = {status: RetrievalStatus.retrieving, value: null};
@@ -251,18 +250,18 @@ describe('Component: VoteComponent', () => {
             fixture.detectChanges();
           });
 
-          it(`should state "${VoteComponentMessages.retrieving}" on all expansion panel descriptions`, () => {
-            page.panelDescriptions.map(description => {
-              expect(description).toEqual(VoteComponentMessages.retrieving);
+          requiredPanelIndices.forEach(panelIdx => {
+            it(`should state "${VoteComponentMessages.retrieving}" on panel ${panelIdx}`, () => {
+              expect(page.panelDescriptions[panelIdx]).toEqual(VoteComponentMessages.retrieving);
             });
-          });
 
-          it('should disable all expansion panels', () => {
-            page.expansionPanels.map(panel => expect(panel.componentInstance.disabled).toEqual(true));
+            it(`should disable panel ${panelIdx}`, () => {
+              expect(page.expansionPanels[panelIdx].componentInstance.disabled).toEqual(true);
+            });
           });
         });
 
-        describe(`case: the ${name} is unavailable`, () => {
+        describe(`case: the ${propertyName} is unavailable`, () => {
           beforeEach(() => {
             const details = completeDetails(idx);
             details[property] = {status: RetrievalStatus.unavailable, value: null};
@@ -270,28 +269,27 @@ describe('Component: VoteComponent', () => {
             fixture.detectChanges();
           });
 
-          it(`should state "${VoteComponentMessages.unavailable}" on all expansion panel descriptions`, () => {
-            page.panelDescriptions.map(description => {
-              expect(description).toEqual(VoteComponentMessages.unavailable);
+          requiredPanelIndices.forEach(panelIdx => {
+            it(`should state "${VoteComponentMessages.unavailable}" on panel ${panelIdx}`, () => {
+              expect(page.panelDescriptions[panelIdx]).toEqual(VoteComponentMessages.unavailable);
             });
-          });
 
-          it('should disable all expansion panels', () => {
-            page.expansionPanels.map(panel => expect(panel.componentInstance.disabled).toEqual(true));
+            it(`should disable panel ${panelIdx}`, () => {
+              expect(page.expansionPanels[panelIdx].componentInstance.disabled).toEqual(true);
+            });
           });
         });
       };
 
-      availabilityTests('phase', 'phase');
-      availabilityTests('number of pending registrations', 'numPendingRegistrations');
-      availabilityTests('contract address', 'address');
-      availabilityTests('registration key', 'key');
-      availabilityTests('candidates list', 'candidates');
-      availabilityTests('registration', 'registration');
-      availabilityTests('results', 'results');
+      requiredTests('phase', 'phase', [0, 1, 2]);
+      requiredTests('address', 'address', [0, 1]);
+      requiredTests('registration key', 'key', [0, 1]);
+      requiredTests('candidates list', 'candidates', [1]);
+      requiredTests('list of pending registrations', 'pendingRegistrations', [1]);
+      requiredTests('list of completed registrations', 'registration', [1]);
+      requiredTests('histogram of results', 'results', [2]);
 
       describe('case: all parameters are available', () => {
-
         describe('parameter: phase', () => {
           describe(`case: it is "${VotePhases[0]}"`, () => {
             let details: IVotingContractDetails;
@@ -336,7 +334,8 @@ describe('Component: VoteComponent', () => {
                 const numPending = 3;
 
                 beforeEach(() => {
-                  details.numPendingRegistrations.value = numPending;
+                  details.pendingRegistrations.value = Mock.Voters.filter((_, i) => i < numPending)
+                    .map(voter => ({voter: voter.public_address, blindedAddress: voter.blinded_address}));
                   spyOn(page.voteRetrievalSvc, 'detailsAtIndex$').and.returnValue(Observable.of(details));
                   fixture.detectChanges();
                 });
@@ -410,7 +409,8 @@ describe('Component: VoteComponent', () => {
                 const numPending = 3;
 
                 beforeEach(() => {
-                  details.numPendingRegistrations.value = numPending;
+                  details.pendingRegistrations.value = Mock.Voters.filter((_, i) => i < numPending)
+                    .map(voter => ({voter: voter.public_address, blindedAddress: voter.blinded_address}));
                   spyOn(page.voteRetrievalSvc, 'detailsAtIndex$').and.returnValue(Observable.of(details));
                   fixture.detectChanges();
                 });
@@ -484,7 +484,8 @@ describe('Component: VoteComponent', () => {
                 const numPending = 3;
 
                 beforeEach(() => {
-                  details.numPendingRegistrations.value = numPending;
+                  details.pendingRegistrations.value = Mock.Voters.filter((_, i) => i < numPending)
+                    .map(voter => ({voter: voter.public_address, blindedAddress: voter.blinded_address}));
                   spyOn(page.voteRetrievalSvc, 'detailsAtIndex$').and.returnValue(Observable.of(details));
                   fixture.detectChanges();
                 });

@@ -8,7 +8,6 @@ export interface IVotingContractDetails {
   topic: IDynamicValue<string>;
   phase: IDynamicValue<string>;
   pendingRegistrations: IDynamicValue<ISinglePendingRegistration[]>;
-  numPendingRegistrations: IDynamicValue<number>;
   key: IDynamicValue<IRSAKey>;
   candidates: IDynamicValue<string[]>;
   registration: IDynamicValue<IRegistration>;

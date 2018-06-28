@@ -541,39 +541,6 @@ describe('Service: VoteRetrievalService', () => {
       xdescribe('it should repeat the "summary" tests', () => {
       });
 
-      describe('parameter: numPendingRegistrations', () => {
-        xdescribe('case: before the registration hashes are returned', () => {
-        });
-
-        xdescribe('case: the registration hashes are unavailable', () => {
-        });
-
-        describe('case: the registration authority has completed 1 of 3 registrations', () => {
-          beforeEach(() => {
-            const mockRegHashes = {};
-            [0, 1, 2].map(i => {
-              mockRegHashes[Mock.Voters[i].public_address] = {
-                blindedAddress: Mock.Voters[i].blinded_address_hash,
-                signature: null
-              };
-            });
-            mockRegHashes[Mock.Voters[1].public_address].signature = Mock.Voters[1].signed_blinded_address_hash;
-
-            spyOn(anonymousVotingContractSvc, 'at').and.callFake(addr => {
-              const contractManager = new Mock.AnonymousVotingContractManager(addr);
-              spyOnProperty(contractManager, 'registrationHashes$').and.returnValue(Observable.of(mockRegHashes));
-              return contractManager;
-            });
-            init_detailsAtIndex$_and_subscribe();
-          });
-
-          it('should return "2"', () => {
-            expect(lastEmitted().numPendingRegistrations.status).toEqual(RetrievalStatus.available);
-            expect(lastEmitted().numPendingRegistrations.value).toEqual(2);
-          });
-        });
-      });
-
       xdescribe('parameter: key', () => {
       });
 
@@ -650,7 +617,6 @@ describe('Service: VoteRetrievalService', () => {
         xdescribe('case: one of the blind address hashes cannot be resolved', () => {
         });
       });
-
 
       describe('parameter: registration', () => {
         let completeRegHashes: IRegistrationHashes;
@@ -778,7 +744,7 @@ describe('Service: VoteRetrievalService', () => {
             init_detailsAtIndex$_and_subscribe();
           });
 
-          it('should return a list of candidates with 0 votes ', () => {
+          it('should return a histogram of candidates with 0 votes ', () => {
             expect(lastEmitted().results.status).toEqual(RetrievalStatus.available);
             expect(lastEmitted().results.value)
               .toEqual(voteCollection.parameters.candidates.map(candidate => ({candidate: candidate, count: 0})));

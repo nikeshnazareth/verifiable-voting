@@ -111,10 +111,6 @@ export class VoteRetrievalService implements IVoteRetrievalService {
           this.pendingRegistrations$(cm)
         );
 
-        const numPendingRegistrations$ = this.wrapRetrieval(
-          this.numPendingRegistrations$(cm)
-        );
-
         const key$ = this.wrapRetrieval(
           this.params$(cm).map(params => params.registration_key)
         );
@@ -127,14 +123,13 @@ export class VoteRetrievalService implements IVoteRetrievalService {
 
         const tally$ = this.wrapRetrieval(this.tally(cm));
 
-        return pendingRegistrations$.combineLatest(numPendingRegistrations$, key$, candidates$, registration$, tally$,
-          (pendingRegistrations, numPending, key, candidates, registration, tally) => ({
+        return pendingRegistrations$.combineLatest(key$, candidates$, registration$, tally$,
+          (pendingRegistrations, key, candidates, registration, tally) => ({
             index: idx,
             address: summary.address,
             topic: summary.topic,
             phase: summary.phase,
             pendingRegistrations: pendingRegistrations,
-            numPendingRegistrations: numPending,
             key: key,
             candidates: candidates,
             registration: registration,
@@ -201,19 +196,6 @@ export class VoteRetrievalService implements IVoteRetrievalService {
   }
 
   /**
-   * The number of registrations that are awaiting a blind signature from the Registration Authority
-   * @param {IAnonymousVotingContractManager} cm the contract manager for the AnonymousVoting contract
-   * @returns {Observable<number>} an observable of the number of registrations waiting for the Registration Authority
-   * @private
-   */
-  private numPendingRegistrations$(cm: IAnonymousVotingContractManager): Observable<number> {
-    return cm.registrationHashes$
-      .map(regHashes => Object.keys(regHashes).map(voter => regHashes[voter]))
-      .map(hashPairs => hashPairs.filter(hashPair => hashPair.signature === null))
-      .map(pending => pending.length);
-  }
-
-  /**
    * Retrieves the blinded addresses for each pending registration
    * @param {IAnonymousVotingContractManager} cm the contract manager for the AnonymousVoting contract
    * @returns {Observable<ISinglePendingRegistration[]>} an observable that emits the list of pending registrations
@@ -236,7 +218,6 @@ export class VoteRetrievalService implements IVoteRetrievalService {
       .catch(err => Observable.of(null));
   }
 
-
   /**
    * Retrieves and validates the registration mapping (voters to blind signatures)
    * @param {IAnonymousVotingContractManager} cm the contract manager for the AnonymousVoting contract
@@ -245,25 +226,26 @@ export class VoteRetrievalService implements IVoteRetrievalService {
    * @private
    */
   private registration$(cm: IAnonymousVotingContractManager): Observable<IRegistration> {
-    return this.numPendingRegistrations$(cm)
-      .filter(numPending => numPending === 0)
-      .switchMap(() => cm.registrationHashes$)
-      .switchMap(regHashes =>
-        Observable.from(Object.keys(regHashes))
-          .mergeMap(voter => this.params$(cm)
-            .map(p => p.registration_key)
-            .switchMap(key => this.throwIfEmpty(
-              this.validateRegistration(regHashes, voter, key))
-            ))
-          .scan((L, el) => L.concat(el), [])
-          .defaultIfEmpty([])
-          .map(L => {
-            const registration: IRegistration = {};
-            L.map(reg => {
-              registration[reg.voter] = {blindSignature: reg.blindSignature};
-            });
-            return registration;
-          })
+    return this.pendingRegistrations$(cm)
+      .switchMap(pending => pending.length > 0 ? Observable.of(null) : // the registration is invalid while there are pending registrations
+        cm.registrationHashes$
+          .switchMap(regHashes =>
+            Observable.from(Object.keys(regHashes))
+              .mergeMap(voter => this.params$(cm)
+                .map(p => p.registration_key)
+                .switchMap(key => this.throwIfEmpty(
+                  this.validateRegistration(regHashes, voter, key))
+                ))
+              .scan((L, el) => L.concat(el), [])
+              .defaultIfEmpty([])
+              .map(L => {
+                const registration: IRegistration = {};
+                L.map(reg => {
+                  registration[reg.voter] = {blindSignature: reg.blindSignature};
+                });
+                return registration;
+              })
+          )
       )
       .catch(err => Observable.of(null));
   }
@@ -303,22 +285,25 @@ export class VoteRetrievalService implements IVoteRetrievalService {
    * @private
    */
   private tally(cm: IAnonymousVotingContractManager): Observable<ICandidateTotal[]> {
-    return this.params$(cm)
-      .map(params => params.candidates)
-      .switchMap(candidates =>
-        cm.voteHashes$
-          .mergeMap(voteEvent => this.throwIfEmpty(
-            this.retrieveIPFSHash(voteEvent.voteHash, FormatValidator.voteFormatError)
-          ))
-          .map(vote => <IVote> vote)
-          .map(vote => vote.candidateIdx)
-          // create a histogram of the selected candidate indices
-          .scan((tally, candidateIdx) => {
-              tally[candidateIdx].count = tally[candidateIdx].count + 1;
-              return tally;
-            }, candidates.map(candidate => ({candidate: candidate, count: 0}))
+    return this.registration$(cm)
+      .switchMap(reg => !reg ? Observable.of(null) :
+        this.params$(cm)
+          .map(params => params.candidates)
+          .switchMap(candidates =>
+            cm.voteHashes$
+              .mergeMap(voteEvent => this.throwIfEmpty(
+                this.retrieveIPFSHash(voteEvent.voteHash, FormatValidator.voteFormatError)
+              ))
+              .map(vote => <IVote> vote)
+              .map(vote => vote.candidateIdx)
+              // create a histogram of the selected candidate indices
+              .scan((tally, candidateIdx) => {
+                  tally[candidateIdx].count = tally[candidateIdx].count + 1;
+                  return tally;
+                }, candidates.map(candidate => ({candidate: candidate, count: 0}))
+              )
+              .startWith(candidates.map(candidate => ({candidate: candidate, count: 0})))
           )
-          .startWith(candidates.map(candidate => ({candidate: candidate, count: 0})))
       )
       .catch(err => Observable.of(null));
   }
