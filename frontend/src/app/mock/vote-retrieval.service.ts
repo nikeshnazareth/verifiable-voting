@@ -30,6 +30,7 @@ export class VoteRetrievalService implements IVoteRetrievalService {
         address: {status: RetrievalStatus.unavailable, value: null},
         topic: {status: RetrievalStatus.unavailable, value: null},
         phase: {status: RetrievalStatus.unavailable, value: null},
+        pendingRegistrations: {status: RetrievalStatus.unavailable, value: null},
         numPendingRegistrations: {status: RetrievalStatus.unavailable, value: null},
         key: {status: RetrievalStatus.unavailable, value: null},
         candidates: {status: RetrievalStatus.unavailable, value: null},
@@ -47,6 +48,7 @@ export class VoteRetrievalService implements IVoteRetrievalService {
           status: RetrievalStatus.available,
           value: VotePhases[Mock.AnonymousVotingContractCollections[index].currentPhase]
         },
+        pendingRegistrations: {status: RetrievalStatus.available, value: []},
         numPendingRegistrations: {status: RetrievalStatus.available, value: 0},
         key: {
           status: RetrievalStatus.available,

@@ -38,7 +38,7 @@ import { FormatValidator } from './format-validator';
 import { VoteRetrievalErrors } from './vote-retreival-errors';
 import {
   IDynamicValue,
-  IRegistration, ISingleVoterRegistration,
+  IRegistration, ISinglePendingRegistration, ISingleVoterRegistration,
   IVotingContractDetails,
   IVotingContractSummary,
   RetrievalStatus
@@ -107,6 +107,10 @@ export class VoteRetrievalService implements IVoteRetrievalService {
       .switchMap(summary => {
         const cm = this.anonymousVotingContractSvc.at(summary.address.value);
 
+        const pendingRegistrations$ = this.wrapRetrieval(
+          this.pendingRegistrations$(cm)
+        );
+
         const numPendingRegistrations$ = this.wrapRetrieval(
           this.numPendingRegistrations$(cm)
         );
@@ -123,12 +127,13 @@ export class VoteRetrievalService implements IVoteRetrievalService {
 
         const tally$ = this.wrapRetrieval(this.tally(cm));
 
-        return numPendingRegistrations$.combineLatest(key$, candidates$, registration$, tally$,
-          (numPending, key, candidates, registration, tally) => ({
+        return pendingRegistrations$.combineLatest(numPendingRegistrations$, key$, candidates$, registration$, tally$,
+          (pendingRegistrations, numPending, key, candidates, registration, tally) => ({
             index: idx,
             address: summary.address,
             topic: summary.topic,
             phase: summary.phase,
+            pendingRegistrations: pendingRegistrations,
             numPendingRegistrations: numPending,
             key: key,
             candidates: candidates,
@@ -207,6 +212,30 @@ export class VoteRetrievalService implements IVoteRetrievalService {
       .map(hashPairs => hashPairs.filter(hashPair => hashPair.signature === null))
       .map(pending => pending.length);
   }
+
+  /**
+   * Retrieves the blinded addresses for each pending registration
+   * @param {IAnonymousVotingContractManager} cm the contract manager for the AnonymousVoting contract
+   * @returns {Observable<ISinglePendingRegistration[]>} an observable that emits the list of pending registrations
+   * or null if there is an error
+   */
+  private pendingRegistrations$(cm: IAnonymousVotingContractManager): Observable<ISinglePendingRegistration[]> {
+    return cm.registrationHashes$
+      .map(regHashes => Object.keys(regHashes).map(voter => (
+        {voter: voter, hashPair: regHashes[voter]}
+      )))
+      .switchMap(voterHashes => Observable.from(voterHashes))
+      .filter(voterHash => voterHash.hashPair.signature === null)
+      .mergeMap(voterHash => this.throwIfEmpty(
+        this.retrieveIPFSHash(voterHash.hashPair.blindedAddress, FormatValidator.blindAddressFormatError)
+          .map(obj => obj.blinded_address)
+          .map(blindedAddress => ({voter: voterHash.voter, blindedAddress: blindedAddress}))
+      ))
+      .scan((arr, el) => arr.concat(el), [])
+      .defaultIfEmpty([])
+      .catch(err => Observable.of(null));
+  }
+
 
   /**
    * Retrieves and validates the registration mapping (voters to blind signatures)

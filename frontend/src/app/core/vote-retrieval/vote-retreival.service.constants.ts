@@ -7,6 +7,7 @@ export interface IVotingContractDetails {
   address: IDynamicValue<address>;
   topic: IDynamicValue<string>;
   phase: IDynamicValue<string>;
+  pendingRegistrations: IDynamicValue<ISinglePendingRegistration[]>;
   numPendingRegistrations: IDynamicValue<number>;
   key: IDynamicValue<IRSAKey>;
   candidates: IDynamicValue<string[]>;
@@ -25,6 +26,11 @@ export interface IRegistration {
   [voter: string]: {
     blindSignature: string
   };
+}
+
+export interface ISinglePendingRegistration {
+  voter: address;
+  blindedAddress: string;
 }
 
 export interface ISingleVoterRegistration {

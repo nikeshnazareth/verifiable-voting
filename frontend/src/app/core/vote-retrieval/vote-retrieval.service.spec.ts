@@ -16,13 +16,13 @@ import Spy = jasmine.Spy;
 import { VoteRetrievalErrors } from './vote-retreival-errors';
 import {
   IDynamicValue,
-  IRegistration,
+  IRegistration, ISinglePendingRegistration,
   IVotingContractDetails,
   RetrievalStatus,
 } from './vote-retreival.service.constants';
 import { VoteRetrievalService } from './vote-retrieval.service';
 
-fdescribe('Service: VoteRetrievalService', () => {
+describe('Service: VoteRetrievalService', () => {
 
   let voteListingSvc: VoteListingContractService;
   let anonymousVotingContractSvc: AnonymousVotingContractService;
@@ -579,6 +579,78 @@ fdescribe('Service: VoteRetrievalService', () => {
 
       xdescribe('parameter: candidates', () => {
       });
+
+      describe('parameter: pendingRegistrations', () => {
+        let incompleteRegHashes: IRegistrationHashes;
+
+        beforeEach(() => {
+          incompleteRegHashes = {};
+          Mock.Voters.map((voter, idx) => {
+            incompleteRegHashes[voter.public_address] = {
+              blindedAddress: voter.blinded_address_hash,
+              signature: idx % 2 ? null : voter.signed_blinded_address_hash
+            };
+          });
+
+          spyOn(anonymousVotingContractSvc, 'at').and.callFake(addr => {
+            const contractManager = new Mock.AnonymousVotingContractManager(addr);
+            spyOnProperty(contractManager, 'registrationHashes$').and.returnValue(Observable.of(incompleteRegHashes));
+            return contractManager;
+          });
+        });
+
+        it('should return all pending blind addresses', () => {
+          init_detailsAtIndex$_and_subscribe();
+          const pendingRegistration: IDynamicValue<ISinglePendingRegistration[]> = lastEmitted().pendingRegistrations;
+          expect(pendingRegistration.status).toEqual(RetrievalStatus.available);
+          expect(pendingRegistration.value.length).toEqual(Mock.Voters.length / 2);
+          Mock.Voters.filter((_, idx) => idx % 2).map(voter => {
+            const matching = pendingRegistration.value.filter(pending => pending.voter === voter.public_address);
+            expect(matching.length).toEqual(1);
+            expect(matching[0].blindedAddress).toEqual(voter.blinded_address);
+          });
+        });
+
+        xdescribe('case: before the registration hashes are retrieved', () => {
+        });
+
+        xdescribe('case: the registration hashes are unavailable', () => {
+        });
+
+        describe('case: there are no registration hashes', () => {
+          beforeEach(() => {
+            Object.keys(incompleteRegHashes).map(voter => {
+              delete incompleteRegHashes[voter];
+            });
+            init_detailsAtIndex$_and_subscribe();
+          });
+
+          it('should return an empty list', () => {
+            expect(lastEmitted().pendingRegistrations.status).toEqual(RetrievalStatus.available);
+            expect(lastEmitted().pendingRegistrations.value).toEqual([]);
+          });
+        });
+
+        describe('case: one of the blind address hashes is null', () => {
+          beforeEach(() => {
+            incompleteRegHashes[Mock.Voters[1].public_address].blindedAddress = null;
+            init_detailsAtIndex$_and_subscribe();
+          });
+
+          it('should notify the error service', () => {
+            expect(errSvc.add).toHaveBeenCalledWith(VoteRetrievalErrors.ipfs.nullHash, null);
+          });
+
+          it('should be unavailable', () => {
+            expect(lastEmitted().pendingRegistrations.status).toEqual(RetrievalStatus.unavailable);
+            expect(lastEmitted().pendingRegistrations.value).toEqual(null);
+          });
+        });
+
+        xdescribe('case: one of the blind address hashes cannot be resolved', () => {
+        });
+      });
+
 
       describe('parameter: registration', () => {
         let completeRegHashes: IRegistrationHashes;
