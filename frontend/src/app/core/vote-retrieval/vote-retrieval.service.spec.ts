@@ -22,7 +22,7 @@ import {
 } from './vote-retreival.service.constants';
 import { VoteRetrievalService } from './vote-retrieval.service';
 
-describe('Service: VoteRetrievalService', () => {
+fdescribe('Service: VoteRetrievalService', () => {
 
   let voteListingSvc: VoteListingContractService;
   let anonymousVotingContractSvc: AnonymousVotingContractService;
@@ -62,7 +62,8 @@ describe('Service: VoteRetrievalService', () => {
   describe('property: summaries$', () => {
 
     const init_summaries$_and_subscribe = fakeAsync(() => {
-      voteRetrievalSvc().summaries$.subscribe(onNext, onError, onCompleted);
+      voteRetrievalSvc().summaries$
+        .subscribe(onNext, onError, onCompleted);
       tick();
     });
 
@@ -638,10 +639,6 @@ describe('Service: VoteRetrievalService', () => {
           beforeEach(() => {
             completeRegHashes[Mock.Voters[1].public_address].signature = null;
             init_detailsAtIndex$_and_subscribe();
-          });
-
-          it('should notify the error service', () => {
-            expect(errSvc.add).toHaveBeenCalledWith(VoteRetrievalErrors.ipfs.nullHash, null);
           });
 
           it('should be unavailable', () => {

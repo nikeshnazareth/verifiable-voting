@@ -216,7 +216,9 @@ export class VoteRetrievalService implements IVoteRetrievalService {
    * @private
    */
   private registration$(cm: IAnonymousVotingContractManager): Observable<IRegistration> {
-    return cm.registrationHashes$
+    return this.numPendingRegistrations$(cm)
+      .filter(numPending => numPending === 0)
+      .switchMap(() => cm.registrationHashes$)
       .switchMap(regHashes =>
         Observable.from(Object.keys(regHashes))
           .mergeMap(voter => this.params$(cm)
