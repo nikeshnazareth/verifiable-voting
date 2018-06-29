@@ -19,6 +19,8 @@ export interface ICryptographyService {
   verify(message: string, signature: string, key: IRSAKey): boolean;
 
   sign(rawMessage: string, modulus: string, privateExponent: string): string;
+
+  isPrivateExponent(key: IRSAKey, privateExponent: string): boolean;
 }
 
 @Injectable()
@@ -193,6 +195,23 @@ export class CryptographyService implements ICryptographyService {
     const signature = sig_modN.fromRed().toString(16);
 
     return `0x${signature}`;
+  }
+
+  isPrivateExponent(key: IRSAKey, privateExponent: string): boolean {
+    if (!CryptographyService.validKey(key)) {
+      this.errSvc.add(CryptographyErrors.key(key), null);
+      return false;
+    }
+
+    if (!CryptographyService.isHexString(privateExponent)) {
+      this.errSvc.add(CryptographyErrors.privateExponent(privateExponent), null);
+      return null;
+    }
+
+    // TODO: this is a hack. It should be implemented by finding phi and checking that e and d are inverse mod phi
+    const messageHash: string = this.web3Svc.sha3('ARBITRARY MESSAGE');
+    const sig: string = this.sign(messageHash, key.modulus, privateExponent);
+    return this.verify(messageHash, sig, key);
   }
 
   private static isHexString(val: string) {

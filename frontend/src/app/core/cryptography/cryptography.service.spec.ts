@@ -136,13 +136,17 @@ describe('Service: CryptographyService', () => {
     xdescribe('case: the raw message is null', () => {
     });
 
-    xdescribe('case: the raw message is not a valid hex value', () => {});
+    xdescribe('case: the raw message is not a valid hex value', () => {
+    });
 
-    xdescribe('case: signature is null', () => {});
+    xdescribe('case: signature is null', () => {
+    });
 
-    xdescribe('case: the signature is not a valid hex value', () => {});
+    xdescribe('case: the signature is not a valid hex value', () => {
+    });
 
-    xdescribe('case: the key is null', () => {});
+    xdescribe('case: the key is null', () => {
+    });
 
     xdescribe('case: the modulus is not a valid hex value', () => {
     });
@@ -162,11 +166,37 @@ describe('Service: CryptographyService', () => {
       expect(sig).toEqual(Mock.blinding.signed_unblinded_message);
     });
 
-    xdescribe('case: the raw message is null', () => {});
-    xdescribe('case: the raw message is not a valid hex value', () => {});
-    xdescribe('case: the signature is null', () => {});
-    xdescribe('case: the signature is not a valid hex value', () => {});
-    xdescribe('case: the private exponent is null', () => {});
-    xdescribe('case: the private exponent is not a valid hex value', () => {});
+    xdescribe('case: the raw message is null', () => {
+    });
+    xdescribe('case: the raw message is not a valid hex value', () => {
+    });
+    xdescribe('case: the signature is null', () => {
+    });
+    xdescribe('case: the signature is not a valid hex value', () => {
+    });
+    xdescribe('case: the private exponent is null', () => {
+    });
+    xdescribe('case: the private exponent is not a valid hex value', () => {
+    });
   });
+
+  describe('method: isPrivateExponent', () => {
+    it('should return true when comparing matching exponents', () => {
+      expect(cryptoSvc.isPrivateExponent(Mock.blinding.public_key, Mock.blinding.private_exp));
+    });
+  });
+
+  xit('should return false in other cases');
+
+  xdescribe('case: the key is null', () => {
+  });
+  xdescribe('case: the modulus is not a valid hex value', () => {
+  });
+  xdescribe('case: the public exponent is not a valid hex value', () => {
+  });
+  xdescribe('case: the private exponent is null', () => {
+  });
+  xdescribe('case: the private exponent is not a valid hex value', () => {
+  });
+
 });
