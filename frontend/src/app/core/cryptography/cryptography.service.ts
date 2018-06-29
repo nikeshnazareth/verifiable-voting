@@ -17,6 +17,8 @@ export interface ICryptographyService {
   unblind(blinded_signature: string, factor: string, key: IRSAKey): string;
 
   verify(message: string, signature: string, key: IRSAKey): boolean;
+
+  sign(rawMessage: string, modulus: string, privateExponent: string): string;
 }
 
 @Injectable()
@@ -69,7 +71,7 @@ export class CryptographyService implements ICryptographyService {
       const blinded_modN = f2e_modN.redMul(m_modN);
       const blinded = blinded_modN.fromRed();
 
-      return '0x' + blinded.toString(16);
+      return `0x${blinded.toString(16)}`;
     } else {
       return null;
     }
@@ -111,7 +113,7 @@ export class CryptographyService implements ICryptographyService {
       const sig_modN = fInv_modN.redMul(blind_sig_modN);
       const sig = sig_modN.fromRed();
 
-      return '0x' + sig.toString(16);
+      return `0x${sig.toString(16)}`;
     } else {
       return null;
     }
@@ -152,7 +154,45 @@ export class CryptographyService implements ICryptographyService {
     const m_modN = sig_modN.redPow(e);
     const calculated_message = m_modN.fromRed().toString(16);
 
-    return ('0x' + calculated_message) === rawMessage;
+    return `0x${calculated_message}` === rawMessage;
+  }
+
+  /**
+   * @param {string} rawMessage the message to be signed directly (ignoring hashing)
+   * @param {string} modulus the modulus of the RSA key
+   * @param {string} privateExponent the private signing key exponent
+   * @returns {string} the signature of the message or null if there is an error
+   */
+  sign(rawMessage: string, modulus: string, privateExponent: string): string {
+    if (!CryptographyService.isHexString(rawMessage)) {
+      this.errSvc.add(CryptographyErrors.rawMessage(rawMessage), null);
+      return null;
+    }
+
+    if (!CryptographyService.isHexString(modulus)) {
+      this.errSvc.add(CryptographyErrors.modulus(modulus), null);
+      return null;
+    }
+
+    if (!CryptographyService.isHexString(privateExponent)) {
+      this.errSvc.add(CryptographyErrors.privateExponent(privateExponent), null);
+      return null;
+    }
+
+    // convert the hex strings to BN values
+    const m = new BN(rawMessage.slice(2), 16);
+    const N = new BN(modulus.slice(2), 16);
+    const d = new BN(privateExponent.slice(2), 16);
+
+    // initialise the modular reduction values
+    const modN = BN.mont(N);
+    const m_modN = m.toRed(modN);
+
+    // the signature is m^d mod N
+    const sig_modN = m_modN.redPow(d);
+    const signature = sig_modN.fromRed().toString(16);
+
+    return `0x${signature}`;
   }
 
   private static isHexString(val: string) {

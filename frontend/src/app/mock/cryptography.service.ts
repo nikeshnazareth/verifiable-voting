@@ -33,4 +33,13 @@ export class CryptographyService implements ICryptographyService {
 
     return false;
   }
+
+  sign(rawMessage: string, modulus: string, privateExponent: string): string {
+    // we might be trying to get the get the blind signature from the blind address
+    const collectionsMatchingBlindAddress = Mock.Voters.filter(voter => voter.blinded_address === rawMessage);
+    if (collectionsMatchingBlindAddress.length > 0) {
+      return collectionsMatchingBlindAddress[0].signed_blinded_address;
+    }
+    return null;
+  }
 }
