@@ -219,7 +219,7 @@ export class VoteRetrievalService implements IVoteRetrievalService {
           .map(blindedAddress => ({voter: voterHash.voter, blindedAddress: blindedAddress}))
       ))
       .scan((arr, el) => arr.concat(el), [])
-      .defaultIfEmpty([])
+      .startWith([])
       .catch(err => Observable.of(null));
   }
 
@@ -242,7 +242,7 @@ export class VoteRetrievalService implements IVoteRetrievalService {
                   this.validateRegistration(regHashes, voter, key))
                 ))
               .scan((L, el) => L.concat(el), [])
-              .defaultIfEmpty([])
+              .startWith([])
               .map(L => {
                 const registration: IRegistration = {};
                 L.map(reg => {
