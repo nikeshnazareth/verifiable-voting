@@ -41,10 +41,10 @@ export class DatetimePickerComponent implements OnInit, ControlValueAccessor {
   writeValue(val: any) {
     if (val) {
       const newDate: Date = <Date> val;
-      this._date = new Date(Date.UTC(newDate.getFullYear(), newDate.getMonth(), newDate.getDate()));
-      this._hours = newDate.getHours();
-      this._minutes = newDate.getMinutes();
-      this._offsetHours = this.getOffsetHours(newDate);
+      this._date = new Date(Date.UTC(newDate.getUTCFullYear(), newDate.getUTCMonth(), newDate.getUTCDate()));
+      this._hours = newDate.getUTCHours();
+      this._minutes = newDate.getUTCMinutes();
+      this._offsetHours = 0;
     }
   }
 
@@ -112,7 +112,7 @@ export class DatetimePickerComponent implements OnInit, ControlValueAccessor {
   // setters for the individual date components that call propagateChange on update (to notify external forms)
 
   set date(d: Date) {
-    this._date = d;
+    this._date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
     this.propagateChange(this.value);
   }
 
