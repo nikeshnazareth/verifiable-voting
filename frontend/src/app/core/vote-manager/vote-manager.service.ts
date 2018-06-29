@@ -36,6 +36,13 @@ export interface IVoteManagerService {
               anonymousAddr: address,
               blindingFactor: string): Observable<void>;
 
+  completeRegistrationAt$(contractAddr: address,
+                          voterAddr: address,
+                          registrationAuthority: address,
+                          registrationKey: IRSAKey,
+                          privateExponent: string,
+                          blindedAddress: string): Observable<void>;
+
   voteAt$(contractAddr: address,
           registrationKey: IRSAKey,
           anonymousAddr: address,
@@ -116,6 +123,40 @@ export class VoteManagerService implements IVoteManagerService {
         const tx: Observable<ITransactionReceipt> =
           this.anonymousVotingContractSvc.at(contractAddr).register$(voterAddr, blindedAddrHash);
         this.txSvc.add(tx, VoteManagerMessages.register());
+      })
+      .map(() => {
+      });
+  }
+
+  /**
+   * Calculates the blind signature, adds it to IPFS and completes the voter registration with the resulting hash
+   * @param {address} contractAddr the AnonymousVoting contract address
+   * @param {address} voterAddr the public address the voter used to register
+   * @param {address} registrationAuthority the address of the registration authority (the only one allowed to complete registrations)
+   * @param {IRSAKey} registrationKey the RSA key of the registration authority
+   * @param {string} privateExponent the private RSA exponent used to sign the blinded address
+   * @param {string} blindedAddress the blinded anonymous address the voter will use to vote
+   * @returns {Observable<void>}
+   */
+  completeRegistrationAt$(contractAddr: address,
+                          voterAddr: address,
+                          registrationAuthority: address,
+                          registrationKey: IRSAKey,
+                          privateExponent: string,
+                          blindedAddress: string): Observable<void> {
+    return Observable.of(this.cryptoSvc.sign(blindedAddress, registrationKey.modulus, privateExponent))
+      .filter(blindSignature => blindSignature !== null)
+      .map(blindSignature => ({blinded_signature: blindSignature}))
+      .map(wrappedBlindSig => this.ipfsSvc.addJSON(wrappedBlindSig))
+      .switchMap(blindSigHashPromise => Observable.fromPromise(blindSigHashPromise))
+      .catch(err => {
+        this.errSvc.add(VoteManagerErrors.ipfs.addBlindSignature(), err);
+        return <Observable<string>> Observable.empty();
+      })
+      .do(blindSigHash => {
+        const tx: Observable<ITransactionReceipt> =
+          this.anonymousVotingContractSvc.at(contractAddr).completeRegistration$(voterAddr, blindSigHash, registrationAuthority);
+        this.txSvc.add(tx, VoteManagerMessages.completeRegistration());
       })
       .map(() => {
       });
