@@ -23,6 +23,9 @@ export interface IAnonymousVotingContractManager {
   voteHashes$: Observable<IVoteHash>;
 
   register$(voterAddr: address, blindAddressHash: string): Observable<ITransactionReceipt>;
+
+  completeRegistration$(voterAddr: address, blindSignatureHash: string, registrationAuthority: address): Observable<ITransactionReceipt>;
+
   vote$(anonymousAddr: address, voteHash: string): Observable<ITransactionReceipt>;
 }
 
@@ -102,6 +105,25 @@ export class AnonymousVotingContractManager implements IAnonymousVotingContractM
         return <Observable<ITransactionReceipt>> Observable.empty();
       });
   }
+
+  /**
+   * Uses the AnonymousVoting contract to complete the registration for the specified voter
+   * @param {address} voterAddr the public address of the voter
+   * @param {string} blindSignatureHash the IPFS hash of the signed blinded anonymous address (created by the Registration Authority)
+   * @param {address} registrationAuthority an observable that emits the receipt when the blind signature is published
+   * or an empty observable if there was an error
+   * @returns {Observable<ITransactionReceipt>}
+   */
+  completeRegistration$(voterAddr: address, blindSignatureHash: string, registrationAuthority: address): Observable<ITransactionReceipt> {
+    return this.contract$
+      .map(contract => contract.completeRegistration(voterAddr, blindSignatureHash, {from: registrationAuthority}))
+      .switchMap(completeRegPromise => Observable.fromPromise(completeRegPromise))
+      .catch(err => {
+        this.errSvc.add(AnonymousVotingContractErrors.completeRegistration, err);
+        return <Observable<ITransactionReceipt>> Observable.empty();
+      });
+  }
+
 
   /**
    * Uses the AnonymousVoting contract to vote from the specified address

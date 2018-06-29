@@ -19,6 +19,10 @@ export class AnonymousVotingContractErrors {
     return new Error('Unable to register the voter');
   }
 
+  static get completeRegistration() {
+    return new Error('Unable to complete the voter registration');
+  }
+
   static get vote() {
     return new Error('Unable to complete vote');
   }

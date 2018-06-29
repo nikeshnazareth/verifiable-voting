@@ -51,6 +51,12 @@ export class AnonymousVotingContractManager implements IAnonymousVotingContractM
       .map(voter => voter.register_receipt);
   }
 
+  completeRegistration$(voterAddr: address, blindSignatureHash: string, registrationAuthority: address) {
+    return this.collection$
+      .map(() => Mock.Voters.filter(voter => voter.public_address === voterAddr)[0])
+      .map(voter => voter.complete_registration_receipt);
+  }
+
   vote$(anonymousAddr: address, voteHash: string): Observable<ITransactionReceipt> {
     return this.collection$
       .map(() => Mock.Voters.filter(voter => voter.anonymous_address === anonymousAddr)[0])

@@ -101,6 +101,13 @@ export class AnonymousVotingContract implements AnonymousVotingAPI {
     );
   }
 
+  completeRegistration(_voter: address, _signatureHash: string): Promise<ITransactionReceipt> {
+    return Promise.resolve(
+      Mock.Voters.filter(voter => voter.public_address === _voter)[0]
+        .complete_registration_receipt
+    );
+  }
+
   vote(_voteHash: string): Promise<ITransactionReceipt> {
     return Promise.resolve(
       Mock.Voters.filter(voter => voter.vote_hash === _voteHash)[0]

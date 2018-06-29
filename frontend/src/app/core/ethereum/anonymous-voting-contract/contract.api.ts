@@ -35,7 +35,8 @@ export interface AnonymousVotingAPI extends VotePhasesAPI {
   };
   // function register(string _blindedAddressHash) public
   register(_blindedAddressHash: string, props?: ITransactionProperties): Promise<ITransactionReceipt>;
-
+  // function completeRegistration(address _voter, string _signatureHash) public
+  completeRegistration(_voter: address, _signatureHash: string, props?: ITransactionProperties): Promise<ITransactionReceipt>;
   // function vote(string _voteHash) public
   vote(_voteHash: string, props?: ITransactionProperties): Promise<ITransactionReceipt>;
 }
