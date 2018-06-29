@@ -1,8 +1,9 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { AbstractControl, FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { Subject, Subscription } from 'rxjs/index';
+import { BehaviorSubject } from 'rxjs/BehaviorSubject';
+import { Subscription } from 'rxjs/index';
 import { Observable } from 'rxjs/Observable';
-import { ReplaySubject } from 'rxjs/ReplaySubject';
+import { Subject } from 'rxjs/Subject';
 
 import 'rxjs/add/operator/map';
 import { CryptographyService } from '../../core/cryptography/cryptography.service';
@@ -27,7 +28,7 @@ export class CompleteRegistrationComponent implements OnInit, OnDestroy {
   public numCompletableRegistrations$: Observable<number>;
 
   private subscription: Subscription;
-  private completableRegistrations$: ReplaySubject<IPendingRegistrationContext[]>;
+  private completableRegistrations$: BehaviorSubject<IPendingRegistrationContext[]>;
 
   constructor(private fb: FormBuilder,
               private voteRetrievalSvc: VoteRetrievalService,
@@ -36,7 +37,7 @@ export class CompleteRegistrationComponent implements OnInit, OnDestroy {
               private web3Svc: Web3Service,
               private errSvc: ErrorService) {
     this.submission$ = new Subject<ICompleteRegistrationForm>();
-    this.completableRegistrations$ = new ReplaySubject<IPendingRegistrationContext[]>();
+    this.completableRegistrations$ = new BehaviorSubject<IPendingRegistrationContext[]>([]);
   }
 
   ngOnInit() {
@@ -106,8 +107,7 @@ export class CompleteRegistrationComponent implements OnInit, OnDestroy {
       pendingList.filter(pending => pending.registrationAuthority === formValues.registrationAuthority)
         .filter(pending => pending.registrationKey.modulus === formValues.modulus)
         .filter(pending => this.cryptoSvc.isPrivateExponent(pending.registrationKey, formValues.privateExponent))
-    )
-      .startWith([]);
+    );
   }
 
   private initPendingRegistrations(): Observable<IPendingRegistrationContext[]> {
