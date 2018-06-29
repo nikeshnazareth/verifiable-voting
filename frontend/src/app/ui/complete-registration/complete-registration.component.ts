@@ -15,8 +15,6 @@ import { RetrievalStatus } from '../../core/vote-retrieval/vote-retreival.servic
 import { VoteRetrievalService } from '../../core/vote-retrieval/vote-retrieval.service';
 
 
-
-
 @Component({
   selector: 'vv-complete-registration',
   templateUrl: './complete-registration.component.html',
@@ -104,12 +102,13 @@ export class CompleteRegistrationComponent implements OnInit, OnDestroy {
             details.pendingRegistrations.status === RetrievalStatus.available
           )
           .switchMap(details =>
-            Observable.from(details.pendingRegistrations.value.map(pendingReg => pendingReg.blindedAddress))
-              .map(blindedAddress => ({
+            Observable.from(details.pendingRegistrations.value)
+              .map(pending => ({
                   contract: details.address.value,
                   registrationAuthority: details.registrationAuthority.value,
                   registrationKey: details.key.value,
-                  blindedAddress: blindedAddress
+                  voter: pending.voter,
+                  blindedAddress: pending.blindedAddress
                 })
               )
           )
@@ -129,5 +128,6 @@ interface IPendingRegistrationContext {
   contract: address;
   registrationAuthority: address;
   registrationKey: IRSAKey;
+  voter: address;
   blindedAddress: string;
 }
