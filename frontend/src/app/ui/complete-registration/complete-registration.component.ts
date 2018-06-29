@@ -11,6 +11,7 @@ import { ErrorService } from '../../core/error-service/error.service';
 import { address } from '../../core/ethereum/type.mappings';
 import { Web3Errors } from '../../core/ethereum/web3-errors';
 import { Web3Service } from '../../core/ethereum/web3.service';
+import { VoteManagerService } from '../../core/vote-manager/vote-manager.service';
 import { RetrievalStatus } from '../../core/vote-retrieval/vote-retreival.service.constants';
 import { VoteRetrievalService } from '../../core/vote-retrieval/vote-retrieval.service';
 
@@ -30,6 +31,7 @@ export class CompleteRegistrationComponent implements OnInit, OnDestroy {
 
   constructor(private fb: FormBuilder,
               private voteRetrievalSvc: VoteRetrievalService,
+              private voteManagerSvc: VoteManagerService,
               private cryptoSvc: CryptographyService,
               private web3Svc: Web3Service,
               private errSvc: ErrorService) {
@@ -63,8 +65,26 @@ export class CompleteRegistrationComponent implements OnInit, OnDestroy {
     });
   }
 
+  /**
+   * Pass the form values and with the completable pending registrations to the VoteManager service to complete the registrations
+   * Reset the form
+   * @returns {Observable<void>}
+   */
   handleSubmissions(): Observable<void> {
-    return Observable.empty();
+    return this.submission$
+      .do(() => this.form.reset())
+      .withLatestFrom(this.completableRegistrations$, (form, pendingRegContexts) =>
+        Observable.from(pendingRegContexts)
+          .switchMap(pendingRegCtx => this.voteManagerSvc.completeRegistrationAt$(
+            pendingRegCtx.contract,
+            pendingRegCtx.voter,
+            pendingRegCtx.registrationAuthority,
+            pendingRegCtx.registrationKey,
+            form.privateExponent,
+            pendingRegCtx.blindedAddress
+          ))
+      )
+      .switch();
   }
 
   /**
@@ -120,7 +140,7 @@ export class CompleteRegistrationComponent implements OnInit, OnDestroy {
 interface ICompleteRegistrationForm {
   regAuthAddress: address;
   modulus: string;
-  private_exponent: string;
+  privateExponent: string;
   existsCompletable: boolean;
 }
 
