@@ -107,6 +107,10 @@ export class VoteRetrievalService implements IVoteRetrievalService {
       .switchMap(summary => {
         const cm = this.anonymousVotingContractSvc.at(summary.address.value);
 
+        const regAuth$ = this.wrapRetrieval(
+          cm.constants$.map(constants => constants.registrationAuthority)
+        );
+
         const pendingRegistrations$ = this.wrapRetrieval(
           this.pendingRegistrations$(cm)
         );
@@ -123,12 +127,13 @@ export class VoteRetrievalService implements IVoteRetrievalService {
 
         const tally$ = this.wrapRetrieval(this.tally(cm));
 
-        return pendingRegistrations$.combineLatest(key$, candidates$, registration$, tally$,
-          (pendingRegistrations, key, candidates, registration, tally) => ({
+        return regAuth$.combineLatest(pendingRegistrations$, key$, candidates$, registration$, tally$,
+          (regAuth, pendingRegistrations, key, candidates, registration, tally) => ({
             index: idx,
             address: summary.address,
             topic: summary.topic,
             phase: summary.phase,
+            registrationAuthority: regAuth,
             pendingRegistrations: pendingRegistrations,
             key: key,
             candidates: candidates,

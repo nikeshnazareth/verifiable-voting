@@ -547,6 +547,9 @@ describe('Service: VoteRetrievalService', () => {
       xdescribe('parameter: candidates', () => {
       });
 
+      xdescribe('parameter: registrationAuthority', () => {
+      });
+
       describe('parameter: pendingRegistrations', () => {
         let incompleteRegHashes: IRegistrationHashes;
 

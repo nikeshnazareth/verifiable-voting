@@ -79,6 +79,7 @@ describe('Component: VoteComponent', () => {
       address: {status: RetrievalStatus.available, value: collection.address},
       topic: {status: RetrievalStatus.available, value: collection.parameters.topic},
       phase: {status: RetrievalStatus.available, value: VotePhases[collection.currentPhase]},
+      registrationAuthority: {status: RetrievalStatus.available, value: collection.voteConstants.registrationAuthority},
       pendingRegistrations: {status: RetrievalStatus.available, value: []},
       key: {status: RetrievalStatus.available, value: collection.parameters.registration_key},
       candidates: {status: RetrievalStatus.available, value: collection.parameters.candidates},
