@@ -1,6 +1,5 @@
 import { Component, OnInit } from '@angular/core';
 import { AbstractControl, FormArray, FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { Observable } from 'rxjs/Observable';
 
 import { NoRestrictionContractService } from '../../core/ethereum/no-restriction-contract/contract.service';
 import { address } from '../../core/ethereum/type.mappings';
@@ -14,8 +13,6 @@ import { VoteManagerService } from '../../core/vote-manager/vote-manager.service
 })
 export class LaunchVoteComponent implements OnInit {
   public form: FormGroup;
-  public minRegistrationClosesDate: Date;
-  public minVotingClosesDate$: Observable<Date>;
 
   public constructor(private fb: FormBuilder,
                      private noRestrictionSvc: NoRestrictionContractService,
