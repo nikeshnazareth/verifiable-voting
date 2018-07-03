@@ -6,17 +6,17 @@ This repository is (yet another) electronic voting system based on Ethereum.
 
 The main contribution is the use of RSA blinding to ensure voter anonymity.
 
-A video series describing the process and security properties ( aimed at the intelligent layperson ) 
-is available [here](https://www.youtube.com/watch?v=SPY0pmmnJV8&list=PL_STfNejVVU0UvPo7EdmRDdmCgZR22qVn)
+A video series describing the process and security properties ( aimed at the intelligent layperson ),
+as well as the current (incomplete) version of the system is available
+[here](https://verifiable-voting.nikeshnazareth.com)
 
-The videos will eventually by copied to **verifiable-voting.nikeshnazareth.com/videos** and 
-[d.tube](https://d.tube/) once the system is operational
+The videos will be uploaded to [d.tube](https://d.tube/) once the system is operational
 
 ## Properties of the system
 
 The advantage of using Ethereum and RSA blinding for voting include:
 * All the efficiency, convenience and precision gains of electronic voting
-* Complete transparency and auditing of voting procedure. In particular, voters can verify:
+* Complete transparency and auditing of the voting procedure. In particular, voters can verify:
    * their own vote was counted
    * they remained anonymous throughout the procedure
    * all legitimate (defined on a case-by-case basis) voters were registered
@@ -35,9 +35,3 @@ The disadvantages include:
    * protect their own cryptographic keys to prevent other people from registering illegitimate voters
 * There is no coercion resistance: voters can prove who they voted for 
 (and can therefore be coerced or bribed into voting a particular way)
-
-## Current status
-
-I am still building the minimum viable product based on this description.
-
-It will eventually be deployed to **verifiable-voting.nikeshnazareth.com**
