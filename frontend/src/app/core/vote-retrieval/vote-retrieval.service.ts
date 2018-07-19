@@ -111,9 +111,7 @@ export class VoteRetrievalService implements IVoteRetrievalService {
           cm.constants$.map(constants => constants.registrationAuthority)
         );
 
-        const pendingRegistrations$ = this.wrapRetrieval(
-          this.pendingRegistrations$(cm)
-        );
+        const pendingRegistrations$ = this.wrapRetrieval(this.pendingRegistrations$(cm));
 
         const key$ = this.wrapRetrieval(
           this.params$(cm).map(params => params.registration_key)
@@ -237,6 +235,9 @@ export class VoteRetrievalService implements IVoteRetrievalService {
           .switchMap(regHashes =>
             Observable.from(Object.keys(regHashes))
               .mergeMap(voter => this.params$(cm)
+              // TODO: this seems like a redundant check (because of the pending.length check) but there is something about the timing
+              // and the fact that values are getting replayed that causes this branch to be executed with null signatures
+                .filter(p => regHashes[voter].signature !== null)
                 .map(p => p.registration_key)
                 .switchMap(key => this.throwIfEmpty(
                   this.validateRegistration(regHashes, voter, key))

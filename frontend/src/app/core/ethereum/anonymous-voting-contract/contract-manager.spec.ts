@@ -35,14 +35,6 @@ describe('class: AnonymousVotingContractManager', () => {
     onCompleted = jasmine.createSpy('onCompleted');
   });
 
-  beforeEach(() => {
-    jasmine.clock().install();
-  });
-
-  afterEach(fakeAsync(() => {
-    jasmine.clock().uninstall();
-  }));
-
   describe('property: constants$', () => {
     const retrievalError = new Error('Value cannot be retrieved');
     const failedRetrievalObj = {

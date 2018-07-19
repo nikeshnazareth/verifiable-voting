@@ -11,10 +11,11 @@ const paramHashes = [
     '612945',
     '222511'
 ];
+
 const registrationAuth = '0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef';
 
-module.exports = async function(deployer, network) {
-    if(['develop', 'ganache'].includes(network)) {
+module.exports = async function (deployer, network) {
+    if (['develop', 'ganache'].includes(network)) {
         const eligibilityContract = (await NoRestriction.deployed()).address;
         const listing = await VoteListing.deployed();
         // the first contract is in the registration phase for a week
