@@ -73,9 +73,9 @@ export class VoteRetrievalService implements IVoteRetrievalService {
     return this.voteListingSvc.deployedVotes$
       .map((addr, idx) => {
         const cm: IAnonymousVotingContractManager = this.anonymousVotingContractSvc.at(addr);
-        const phase$ = this.wrapRetrieval(this.phase$(cm));
-        const topic$ = this.wrapRetrieval(this.params$(cm).map(params => params.topic));
-        const address$ = this.wrapRetrieval(addr ? Observable.of(addr) : Observable.empty());
+        const phase$ = this.phase$(cm).pipe(this.wrapRetrieval);
+        const topic$ = this.params$(cm).map(params => params.topic).pipe(this.wrapRetrieval);
+        const address$ = Observable.of(addr).pipe(this.wrapRetrieval);
 
         return phase$.combineLatest(topic$, address$, (phase, topic, contractAddr) => ({
           index: idx,
@@ -107,23 +107,12 @@ export class VoteRetrievalService implements IVoteRetrievalService {
       .switchMap(summary => {
         const cm = this.anonymousVotingContractSvc.at(summary.address.value);
 
-        const regAuth$ = this.wrapRetrieval(
-          cm.constants$.map(constants => constants.registrationAuthority)
-        );
-
-        const pendingRegistrations$ = this.wrapRetrieval(this.pendingRegistrations$(cm));
-
-        const key$ = this.wrapRetrieval(
-          this.params$(cm).map(params => params.registration_key)
-        );
-
-        const candidates$ = this.wrapRetrieval(
-          this.params$(cm).map(params => params.candidates)
-        );
-
-        const registration$ = this.wrapRetrieval(this.registration$(cm));
-
-        const tally$ = this.wrapRetrieval(this.tally(cm));
+        const regAuth$ = cm.constants$.map(constants => constants.registrationAuthority).pipe(this.wrapRetrieval);
+        const pendingRegistrations$ = this.pendingRegistrations$(cm).pipe(this.wrapRetrieval);
+        const key$ = this.params$(cm).map(params => params.registration_key).pipe(this.wrapRetrieval);
+        const candidates$ = this.params$(cm).map(params => params.candidates).pipe(this.wrapRetrieval);
+        const registration$ = this.registration$(cm).pipe(this.wrapRetrieval);
+        const tally$ = this.tally(cm).pipe(this.wrapRetrieval);
 
         return regAuth$.combineLatest(pendingRegistrations$, key$, candidates$, registration$, tally$,
           (regAuth, pendingRegistrations, key, candidates, registration, tally) => ({
@@ -337,11 +326,11 @@ export class VoteRetrievalService implements IVoteRetrievalService {
    */
   private wrapRetrieval<T>(obs: Observable<T>): Observable<IDynamicValue<T>> {
     return obs
+      .defaultIfEmpty(null)
       .map(val => val === null ?
         {status: RetrievalStatus.unavailable, value: null} :
         {status: RetrievalStatus.available, value: val}
       )
-      .defaultIfEmpty({status: RetrievalStatus.unavailable, value: null})
       .startWith({status: RetrievalStatus.retrieving, value: null});
   }
 }

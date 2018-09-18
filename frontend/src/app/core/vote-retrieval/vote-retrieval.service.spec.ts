@@ -22,7 +22,7 @@ import {
 } from './vote-retreival.service.constants';
 import { VoteRetrievalService } from './vote-retrieval.service';
 
-describe('Service: VoteRetrievalService', () => {
+fdescribe('Service: VoteRetrievalService', () => {
 
   let voteListingSvc: VoteListingContractService;
   let anonymousVotingContractSvc: AnonymousVotingContractService;
