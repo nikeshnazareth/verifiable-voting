@@ -88,8 +88,7 @@ export class VoteRetrievalService implements IVoteRetrievalService {
         (acc, summary$) => acc.combineLatest(summary$, (L, el) => L.concat(el)),
         Observable.of([])
       )
-      .switch()
-      .share();
+      .switch();
   }
 
   /**
@@ -127,8 +126,7 @@ export class VoteRetrievalService implements IVoteRetrievalService {
             registration: registration,
             results: tally
           }));
-      })
-      .share();
+      });
   }
 
   /**
