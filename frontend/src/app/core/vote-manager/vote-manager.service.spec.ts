@@ -1,4 +1,5 @@
 import { fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { Observable } from 'rxjs/Observable';
 
 import { AnonymousVotingContractManager } from '../../mock/anonymous-voting-contract/contract-manager';
 import { IAnonymousVotingContractCollection, IVoter, Mock } from '../../mock/module';
@@ -102,7 +103,7 @@ describe('Service: VoteManagerService', () => {
 
       const addError: Error = new Error('IPFS addJSON failed');
 
-      beforeEach(() => spyOn(ipfsSvc, 'addJSON').and.returnValue(Promise.reject(addError)));
+      beforeEach(() => spyOn(ipfsSvc, 'addJSON').and.returnValue(Observable.throwError(addError)));
 
       it('should notify the error service', fakeAsync(() => {
         init_and_call_deployVote$();
@@ -187,7 +188,7 @@ describe('Service: VoteManagerService', () => {
     describe('case: the IPFS call fails', () => {
       const addError: Error = new Error('IPFS addJSON failed');
 
-      beforeEach(() => spyOn(ipfsSvc, 'addJSON').and.returnValue(Promise.reject(addError)));
+      beforeEach(() => spyOn(ipfsSvc, 'addJSON').and.returnValue(Observable.throwError(addError)));
 
       it('should notify the error service', () => {
         init_and_call_registerAt$();
@@ -298,7 +299,7 @@ describe('Service: VoteManagerService', () => {
     describe('case: adding the vote to IPFS fails', () => {
       const error: Error = new Error('Unable to add vote to IPFS');
       beforeEach(() => {
-        spyOn(ipfsSvc, 'addJSON').and.returnValue(Promise.reject(error));
+        spyOn(ipfsSvc, 'addJSON').and.returnValue(Observable.throwError(error));
         init_and_call_voteAt$();
       });
 

@@ -21,6 +21,7 @@ import 'rxjs/add/operator/share';
 import 'rxjs/add/operator/startWith';
 import 'rxjs/add/operator/switch';
 import 'rxjs/add/operator/switchMap';
+import { AsyncSubject } from 'rxjs/index';
 import { Observable } from 'rxjs/Observable';
 
 import { ICandidateTotal } from '../../ui/vote/results/results-component';
@@ -105,7 +106,6 @@ export class VoteRetrievalService implements IVoteRetrievalService {
       .filter(summary => summary.address.status === RetrievalStatus.available)
       .switchMap(summary => {
         const cm = this.anonymousVotingContractSvc.at(summary.address.value);
-
         const regAuth$ = cm.constants$.map(constants => constants.registrationAuthority).pipe(this.wrapRetrieval);
         const pendingRegistrations$ = this.pendingRegistrations$(cm).pipe(this.wrapRetrieval);
         const key$ = this.params$(cm).map(params => params.registration_key).pipe(this.wrapRetrieval);
@@ -145,23 +145,24 @@ export class VoteRetrievalService implements IVoteRetrievalService {
       return Observable.empty();
     }
 
-    return Observable.of(this.ipfsCache[hash] ? this.ipfsCache[hash] : this.ipfsSvc.catJSON(hash))
-      .do(promise => {
-        this.ipfsCache[hash] = promise;
-      })
-      .switchMap(promise => Observable.fromPromise(promise))
-      .catch(err => {
-        this.errSvc.add(VoteRetrievalErrors.ipfs.retrieval, err);
-        return Observable.empty();
-      })
-      .switchMap(obj => {
-        const err = formatError(obj);
-        if (err) {
-          this.errSvc.add(err, null);
+    if (!this.ipfsCache[hash]) {
+      this.ipfsCache[hash] = new AsyncSubject<any>();
+      this.ipfsSvc.catJSON(hash)
+        .catch(err => {
+          this.errSvc.add(VoteRetrievalErrors.ipfs.retrieval, err);
           return Observable.empty();
-        }
-        return Observable.of(obj);
-      });
+        })
+        .switchMap(obj => {
+          const err = formatError(obj);
+          if (err) {
+            this.errSvc.add(err, null);
+            return Observable.empty();
+          }
+          return Observable.of(obj);
+        }).subscribe(this.ipfsCache[hash]);
+    }
+
+    return Observable.from(this.ipfsCache[hash]);
   }
 
   /**
@@ -340,6 +341,6 @@ export class VoteRetrievalService implements IVoteRetrievalService {
 }
 
 interface IIPFSCache {
-  [addr: string]: Promise<any>;
+  [hash: string]: AsyncSubject<any>;
 }
 

@@ -1,5 +1,7 @@
 import { Injectable } from '@angular/core';
 import * as IPFS from 'ipfs-mini';
+import { Observable } from 'rxjs/Observable';
+
 import { APP_CONFIG } from '../../config';
 import { IIPFSService } from './ipfs.service';
 
@@ -17,12 +19,12 @@ export class IPFSService implements IIPFSService {
   /**
    * Adds the data to this._node
    * @param data any json object to be published to IPFS
-   * @returns {Promise<string>} the IPFS address (hash) of the data
+   * @returns {Observable<string>} the IPFS address (hash) of the data
    */
-  addJSON(data: object): Promise<string> {
-    return new Promise((resolve, reject) => {
+  addJSON(data: object): Observable<string> {
+    return Observable.fromPromise(new Promise((resolve, reject) => {
       this.node.addJSON(data, (error, hash) => error ? reject(error) : resolve(hash));
-    });
+    }));
   }
 
   /**
@@ -30,10 +32,10 @@ export class IPFSService implements IIPFSService {
    * @param hash the hash address of the data to be retrieved
    * @returns {Promise<object>} the json data stored at the given hash
    */
-  catJSON(hash: string): Promise<object> {
-    return new Promise((resolve, reject) => {
+  catJSON(hash: string): Observable<object> {
+    return Observable.fromPromise(new Promise((resolve, reject) => {
       this.node.catJSON(hash, (error, data) => error ? reject(error) : resolve(data));
-    });
+    }));
   }
 
 }

@@ -8,7 +8,7 @@
     "build": "ng build --prod",
     "test": "ng test",
     "lint-unused-exports": "./node_modules/.bin/ts-unused-exports tsconfig.json $(find src -name '*.ts' -not -path 'src/environments/*')",
-    "lint": "ng lint --type-check true && npm run lint-unused-exports",
+    "lint": "ng lint && npm run lint-unused-exports",
     "e2e": "ng e2e",
     "upload": "npm run build && scp dist/* nnazareth_voting@ssh.phx.nearlyfreespeech.net:/home/public/",
     "compodoc": "./node_modules/.bin/compodoc -p src/tsconfig.app.json -s"

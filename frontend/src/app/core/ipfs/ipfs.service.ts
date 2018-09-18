@@ -1,14 +1,16 @@
 
 import { Injectable } from '@angular/core';
+import { Observable } from 'rxjs/Observable';
+
 import { environment } from '../../../environments/environment';
 import { IPFSService as DevelopmentSvc } from './local-ipfs.service';
 import { IPFSService as ProductionSvc} from './production-ipfs.service';
 
 
 export interface IIPFSService {
-  addJSON(data: object): Promise<string>;
+  addJSON(data: object): Observable<string>;
 
-  catJSON(hash: string): Promise<object>;
+  catJSON(hash: string): Observable<object>;
 }
 
 /**
@@ -26,11 +28,11 @@ export class IPFSService implements IIPFSService {
     this.svc = environment.production ? new ProductionSvc() : new DevelopmentSvc();
   }
 
-  addJSON(data: object): Promise<string> {
+  addJSON(data: object): Observable<string> {
     return this.svc.addJSON(data);
   }
 
-  catJSON(hash: string): Promise<object> {
+  catJSON(hash: string): Observable<object> {
     return this.svc.catJSON(hash);
   }
 }

@@ -22,7 +22,7 @@ import {
 } from './vote-retreival.service.constants';
 import { VoteRetrievalService } from './vote-retrieval.service';
 
-fdescribe('Service: VoteRetrievalService', () => {
+describe('Service: VoteRetrievalService', () => {
 
   let voteListingSvc: VoteListingContractService;
   let anonymousVotingContractSvc: AnonymousVotingContractService;
@@ -307,9 +307,7 @@ fdescribe('Service: VoteRetrievalService', () => {
 
         describe('case: before parameters are retrieved from IPFS', () => {
 
-          const unresolvedPromise: Promise<IVoteParameters> = new Promise(resolve => null);
-
-          beforeEach(() => spyOn(ipfsSvc, 'catJSON').and.returnValue(unresolvedPromise));
+          beforeEach(() => spyOn(ipfsSvc, 'catJSON').and.returnValue(Observable.never()));
 
           it(`should be initialised to ${RetrievalStatus.retrieving}`, () => {
             init_individual_summaries_and_subscribe();
@@ -391,7 +389,7 @@ fdescribe('Service: VoteRetrievalService', () => {
           beforeEach(() => {
             spyOn(ipfsSvc, 'catJSON').and.callFake(hash => {
               const idx: number = mockHashes.findIndex(el => el === hash);
-              return idx === failedIndex ? Promise.reject(error) : Promise.resolve(mockParams[idx]);
+              return idx === failedIndex ? Observable.throwError(error) : Observable.of(mockParams[idx]);
             });
             init_individual_summaries_and_subscribe();
           });
@@ -424,7 +422,7 @@ fdescribe('Service: VoteRetrievalService', () => {
           beforeEach(() => {
             spyOn(ipfsSvc, 'catJSON').and.callFake(hash => {
               const idx: number = mockHashes.findIndex(el => el === hash);
-              return idx === invalidIndex ? Promise.resolve(invalid_params) : Promise.resolve(mockParams[idx]);
+              return idx === invalidIndex ? Observable.of(invalid_params) : Observable.of(mockParams[idx]);
             });
             init_individual_summaries_and_subscribe();
           });

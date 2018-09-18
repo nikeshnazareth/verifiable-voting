@@ -4,24 +4,26 @@
  */
 
 import { Injectable } from '@angular/core';
+import { Observable } from 'rxjs/Observable';
+
 import { IIPFSService } from './ipfs.service';
 
 @Injectable()
 export class IPFSService implements IIPFSService {
   private hashSpaceSize: number = 10 ** 6;
 
-  addJSON(data: object): Promise<string> {
+  addJSON(data: object): Observable<string> {
     const hash: string = String(Math.floor(Math.random() * this.hashSpaceSize));
     localStorage.setItem(hash, JSON.stringify(data));
-    return Promise.resolve(hash);
+    return Observable.of(hash);
   }
 
-  catJSON(hash: string): Promise<object> {
+  catJSON(hash: string): Observable<object> {
     try {
       const data: object = JSON.parse(localStorage.getItem(hash));
-      return Promise.resolve(data);
+      return Observable.of(data);
     } catch {
-      return Promise.reject(`Hash ${hash} does not exist at this node`);
+      return Observable.throwError(new Error(`Hash ${hash} does not exist at this node`));
     }
   }
 }

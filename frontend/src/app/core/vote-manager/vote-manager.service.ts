@@ -77,7 +77,7 @@ export class VoteManagerService implements IVoteManagerService {
               params: IVoteParameters,
               eligibilityContract: address,
               registrationAuth: address): Observable<void> {
-    return Observable.fromPromise(this.ipfsSvc.addJSON(params))
+    return this.ipfsSvc.addJSON(params)
       .catch(err => {
         this.errSvc.add(VoteManagerErrors.ipfs.addParametersHash(params), err);
         return <Observable<string>> Observable.empty();
@@ -113,8 +113,7 @@ export class VoteManagerService implements IVoteManagerService {
     return Observable.of(this.cryptoSvc.blind(anonymousAddr, blindingFactor, registrationKey))
       .filter(blindedAddr => blindedAddr !== null)
       .map(blindedAddr => ({blinded_address: blindedAddr}))
-      .map(wrappedBlindedAddr => this.ipfsSvc.addJSON(wrappedBlindedAddr))
-      .switchMap(blindedAddrHashPromise => Observable.fromPromise(blindedAddrHashPromise))
+      .switchMap(wrappedBlindedAddr => this.ipfsSvc.addJSON(wrappedBlindedAddr))
       .catch(err => {
         this.errSvc.add(VoteManagerErrors.ipfs.addBlindedAddress(), err);
         return <Observable<string>> Observable.empty();
@@ -147,8 +146,7 @@ export class VoteManagerService implements IVoteManagerService {
     return Observable.of(this.cryptoSvc.sign(blindedAddress, registrationKey.modulus, privateExponent))
       .filter(blindSignature => blindSignature !== null)
       .map(blindSignature => ({blinded_signature: blindSignature}))
-      .map(wrappedBlindSig => this.ipfsSvc.addJSON(wrappedBlindSig))
-      .switchMap(blindSigHashPromise => Observable.fromPromise(blindSigHashPromise))
+      .switchMap(wrappedBlindSig => this.ipfsSvc.addJSON(wrappedBlindSig))
       .catch(err => {
         this.errSvc.add(VoteManagerErrors.ipfs.addBlindSignature(), err);
         return <Observable<string>> Observable.empty();
@@ -185,8 +183,7 @@ export class VoteManagerService implements IVoteManagerService {
         signed_address: signedAddress,
         candidateIdx: candidateIdx
       }))
-      .map(vote => this.ipfsSvc.addJSON(vote))
-      .switchMap(voteHashPromise => Observable.fromPromise(voteHashPromise))
+      .switchMap(vote => this.ipfsSvc.addJSON(vote))
       .catch(err => {
         this.errSvc.add(VoteManagerErrors.ipfs.addVote(), err);
         return <Observable<string>> Observable.empty();
