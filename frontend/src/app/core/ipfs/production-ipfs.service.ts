@@ -1,19 +1,21 @@
+import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import * as IPFS from 'ipfs-mini';
 import { Observable } from 'rxjs/Observable';
 
-import { APP_CONFIG } from '../../config';
+import { APP_CONFIG, HttpEndpoint } from '../../config';
 import { IIPFSService } from './ipfs.service';
 
 @Injectable()
 export class IPFSService implements IIPFSService {
-  private node: IIPFSNode;
+  private getCfg: HttpEndpoint;
+  private postCfg: HttpEndpoint;
 
   /**
    * Configure the service to use the IPFS node defined in APP_CONFIG
    */
-  constructor() {
-    this.node = new IPFS(APP_CONFIG.ipfs);
+  constructor(private http: HttpClient) {
+    this.getCfg = APP_CONFIG.ipfs.get;
+    this.postCfg = APP_CONFIG.ipfs.post;
   }
 
   /**
@@ -22,31 +24,22 @@ export class IPFSService implements IIPFSService {
    * @returns {Observable<string>} the IPFS address (hash) of the data
    */
   addJSON(data: object): Observable<string> {
-    return Observable.fromPromise(new Promise((resolve, reject) => {
-      this.node.addJSON(data, (error, hash) => error ? reject(error) : resolve(hash));
-    }));
+    return this.http.post(this.url(this.postCfg), data, this.postCfg.headers ? {headers: this.postCfg.headers} : null)
+      .map(response => <string> response['data']);
   }
 
   /**
    * Retrieves the data at the given IPFS address from this._node
    * @param hash the hash address of the data to be retrieved
-   * @returns {Promise<object>} the json data stored at the given hash
+   * @returns {Observable<object>} the json data stored at the given hash
    */
   catJSON(hash: string): Observable<object> {
-    return Observable.fromPromise(new Promise((resolve, reject) => {
-      this.node.catJSON(hash, (error, data) => error ? reject(error) : resolve(data));
-    }));
+    return this.http.get(`${this.url(this.getCfg)}/${hash}`);
+  }
+
+  private url(cfg: HttpEndpoint) {
+    return `${cfg.protocol}://${cfg.host}${cfg.port ? `:${cfg.port}` : ''}/${cfg.endpoint}`;
   }
 
 }
 
-
-interface IIPFSNode {
-  add(data: string, cb: (error: string, hash: string) => void);
-
-  cat(hash: string, cb: (error: string, data: string) => void);
-
-  addJSON(data: object, cb: (error: string, hash: string) => void);
-
-  catJSON(hash: string, cb: (error: string, data: object) => void);
-}

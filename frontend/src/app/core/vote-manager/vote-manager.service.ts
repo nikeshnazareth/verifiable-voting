@@ -7,6 +7,7 @@
 import { Injectable } from '@angular/core';
 import 'rxjs/add/observable/fromPromise';
 import 'rxjs/add/observable/of';
+import 'rxjs/add/operator/do';
 import 'rxjs/add/operator/switchMap';
 import { Observable } from 'rxjs/Observable';
 

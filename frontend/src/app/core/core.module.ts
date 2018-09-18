@@ -1,3 +1,4 @@
+import { HttpClientModule } from '@angular/common/http';
 import { NgModule } from '@angular/core';
 
 import { CryptographyService } from './cryptography/cryptography.service';
@@ -25,6 +26,9 @@ import { VoteRetrievalService } from './vote-retrieval/vote-retrieval.service';
     NoRestrictionContractService,
     CryptographyService,
     TransactionService
+  ],
+  imports: [
+    HttpClientModule
   ]
 })
 export class CoreModule {

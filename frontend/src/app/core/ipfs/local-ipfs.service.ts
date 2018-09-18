@@ -1,6 +1,6 @@
 /**
  * This is a local IPFS service to be used during development
- * (so we don't poll ipfs.infuro.io every time the app is reloaded)
+ * (so we don't poll the external gateway every time the app is reloaded)
  */
 
 import { Injectable } from '@angular/core';

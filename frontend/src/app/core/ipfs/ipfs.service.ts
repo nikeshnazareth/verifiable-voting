@@ -1,4 +1,4 @@
-
+import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs/Observable';
 
@@ -24,8 +24,8 @@ export interface IIPFSService {
 export class IPFSService implements IIPFSService {
   private svc: IIPFSService;
 
-  constructor() {
-    this.svc = environment.production ? new ProductionSvc() : new DevelopmentSvc();
+  constructor(private http: HttpClient) {
+    this.svc = environment.production ? new ProductionSvc(this.http) : new DevelopmentSvc();
   }
 
   addJSON(data: object): Observable<string> {
