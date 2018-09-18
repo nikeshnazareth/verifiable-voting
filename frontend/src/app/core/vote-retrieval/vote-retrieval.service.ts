@@ -200,11 +200,11 @@ export class VoteRetrievalService implements IVoteRetrievalService {
       )))
       .switchMap(voterHashes => Observable.from(voterHashes))
       .filter(voterHash => voterHash.hashPair.signature === null)
-      .mergeMap(voterHash => this.throwIfEmpty(
-        this.retrieveIPFSHash(voterHash.hashPair.blindedAddress, FormatValidator.blindAddressFormatError)
-          .map(obj => obj.blinded_address)
-          .map(blindedAddress => ({voter: voterHash.voter, blindedAddress: blindedAddress}))
-      ))
+      .mergeMap(voterHash => this.retrieveIPFSHash(voterHash.hashPair.blindedAddress, FormatValidator.blindAddressFormatError)
+        .map(obj => obj.blinded_address)
+        .map(blindedAddress => ({voter: voterHash.voter, blindedAddress: blindedAddress}))
+        .pipe(this.throwIfEmpty)
+      )
       .scan((arr, el) => arr.concat(el), [])
       .startWith([])
       .catch(err => Observable.of(null));
@@ -224,13 +224,12 @@ export class VoteRetrievalService implements IVoteRetrievalService {
           .switchMap(regHashes =>
             Observable.from(Object.keys(regHashes))
               .mergeMap(voter => this.params$(cm)
-              // TODO: this seems like a redundant check (because of the pending.length check) but there is something about the timing
-              // and the fact that values are getting replayed that causes this branch to be executed with null signatures
-                .filter(p => regHashes[voter].signature !== null)
-                .map(p => p.registration_key)
-                .switchMap(key => this.throwIfEmpty(
-                  this.validateRegistration(regHashes, voter, key))
-                ))
+                // TODO: this seems like a redundant check (because of the pending.length check) but there is something about the timing
+                // and the fact that values are getting replayed that causes this branch to be executed with null signatures
+                  .filter(p => regHashes[voter].signature !== null)
+                  .map(p => p.registration_key)
+                  .switchMap(key => this.validateRegistration(regHashes, voter, key).pipe(this.throwIfEmpty))
+              )
               .scan((L, el) => L.concat(el), [])
               .startWith([])
               .map(L => {
@@ -286,9 +285,7 @@ export class VoteRetrievalService implements IVoteRetrievalService {
           .map(params => params.candidates)
           .switchMap(candidates =>
             cm.voteHashes$
-              .mergeMap(voteEvent => this.throwIfEmpty(
-                this.retrieveIPFSHash(voteEvent.voteHash, FormatValidator.voteFormatError)
-              ))
+              .mergeMap(voteEvent => this.retrieveIPFSHash(voteEvent.voteHash, FormatValidator.voteFormatError).pipe(this.throwIfEmpty))
               .map(vote => <IVote> vote)
               .map(vote => vote.candidateIdx)
               // create a histogram of the selected candidate indices
@@ -305,16 +302,25 @@ export class VoteRetrievalService implements IVoteRetrievalService {
 
   /**
    * @param {Observable<T>} obs any observable
-   * @returns {Observable<T>} the input observable or throws an error if the input observable is null or empty
+   * @returns {Observable<T>} the input observable or throws an error if the input observable is empty
    * @private
    */
   private throwIfEmpty<T>(obs: Observable<T>): Observable<T> {
-    return obs.defaultIfEmpty(null)
-      .do(val => {
-        if (val === null) {
-          throw new Error(null);
+    let isEmpty: boolean = true;
+    return new Observable(observer => obs.subscribe(
+      (val) => {
+        isEmpty = false;
+        observer.next(val);
+      },
+      (err) => observer.error(err),
+      () => {
+        if (isEmpty) {
+          observer.error('Observable is empty');
+        } else {
+          observer.complete();
         }
-      });
+      }
+    ));
   }
 
   /**
