@@ -48,7 +48,10 @@ export class CompleteRegistrationComponent implements OnInit, OnDestroy {
 
     this.subscription = this.handleSubmissions().subscribe();
     this.subscription.add(this.numCompletableRegistrations$.subscribe(count => {
-      this.form.get('existsCompletable').setValue(count > 0);
+      const ctrl = this.form.get('existsCompletable');
+      if (ctrl.value !== (count > 0)) {
+        ctrl.setValue(count > 0);
+      }
     }));
   }
 
