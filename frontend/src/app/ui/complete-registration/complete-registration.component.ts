@@ -6,6 +6,7 @@ import { Observable } from 'rxjs/Observable';
 import { Subject } from 'rxjs/Subject';
 
 import 'rxjs/add/operator/map';
+import 'rxjs/add/operator/take';
 import { CryptographyService } from '../../core/cryptography/cryptography.service';
 import { IRSAKey } from '../../core/cryptography/rsa-key.interface';
 import { ErrorService } from '../../core/error-service/error.service';
@@ -44,6 +45,7 @@ export class CompleteRegistrationComponent implements OnInit, OnDestroy {
     this.createForm();
     this.initCompletableRegistrations().subscribe(this.completableRegistrations$);
     this.numCompletableRegistrations$ = this.completableRegistrations$.map(L => L.length);
+
     this.subscription = this.handleSubmissions().subscribe();
     this.subscription.add(this.numCompletableRegistrations$.subscribe(count => {
       this.form.get('existsCompletable').setValue(count > 0);
@@ -103,6 +105,7 @@ export class CompleteRegistrationComponent implements OnInit, OnDestroy {
 
   private initCompletableRegistrations(): Observable<IPendingRegistrationContext[]> {
     const pendingRegistrations$ = this.initPendingRegistrations();
+
     return pendingRegistrations$.combineLatest(this.form.valueChanges, (pendingList, formValues) =>
       pendingList.filter(pending => pending.registrationAuthority === formValues.registrationAuthority)
         .filter(pending => pending.registrationKey.modulus === formValues.modulus)
@@ -112,7 +115,7 @@ export class CompleteRegistrationComponent implements OnInit, OnDestroy {
 
   private initPendingRegistrations(): Observable<IPendingRegistrationContext[]> {
     return this.voteRetrievalSvc.summaries$
-      .switchMap(summaries => Observable.range(0, summaries.length))
+      .pipe(this.maxRange)
       .mergeMap(idx =>
         this.voteRetrievalSvc.detailsAtIndex$(idx)
           .filter(details =>
@@ -121,6 +124,7 @@ export class CompleteRegistrationComponent implements OnInit, OnDestroy {
             details.key.status === RetrievalStatus.available &&
             details.pendingRegistrations.status === RetrievalStatus.available
           )
+          .take(1)
           .switchMap(details =>
             Observable.from(details.pendingRegistrations.value)
               .map(pending => ({
@@ -134,6 +138,26 @@ export class CompleteRegistrationComponent implements OnInit, OnDestroy {
           )
       )
       .scan((arr, el) => arr.concat(el), []);
+  }
+
+  /**
+   * Each time the source is observed, count from the previous value (initially starting at 0) until we reach the new maximum length
+   * This operator ignores elements emitted by the source that are shorter than the lengths emitted already
+   * @param {Observable<T[]>} source an observable of arrays
+   * @returns {Observable<number>} the range from 0 to N-1 where N is the length of the largest array emitted by "source" so far
+   */
+  private maxRange<T>(source: Observable<T[]>): Observable<number> {
+    let max: number = 0;
+    return new Observable(observer => source.subscribe(
+      (val) => {
+        for (let i = max; i < val.length; i++) {
+          observer.next(i);
+        }
+        max = Math.max(max, val.length);
+      },
+      (err) => observer.error(err),
+      () => observer.complete()
+    ));
   }
 }
 
