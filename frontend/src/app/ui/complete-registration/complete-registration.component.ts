@@ -78,7 +78,6 @@ export class CompleteRegistrationComponent implements OnInit, OnDestroy {
    */
   handleSubmissions(): Observable<void> {
     return this.submission$
-      .do(() => this.form.reset())
       .withLatestFrom(this.completableRegistrations$, (form, pendingRegContexts) =>
         Observable.from(pendingRegContexts)
           .switchMap(pendingRegCtx => this.voteManagerSvc.completeRegistrationAt$(
@@ -90,7 +89,8 @@ export class CompleteRegistrationComponent implements OnInit, OnDestroy {
             pendingRegCtx.blindedAddress
           ))
       )
-      .switch();
+      .switch()
+      .do(() => this.form.reset());
   }
 
   /**
@@ -108,9 +108,18 @@ export class CompleteRegistrationComponent implements OnInit, OnDestroy {
 
   private initCompletableRegistrations(): Observable<IPendingRegistrationContext[]> {
     const pendingRegistrations$ = this.initPendingRegistrations();
+    const normalisedForm = this.form.valueChanges.map(values => {
+      for (const param in values) {
+        if (values.hasOwnProperty(param) && param !== 'existsCompletable') {
+          values[param] = values[param] ? values[param] : '';
+          values[param] = '0x' + values[param].toLowerCase();
+        }
+      }
+      return values;
+    });
 
-    return pendingRegistrations$.combineLatest(this.form.valueChanges, (pendingList, formValues) =>
-      pendingList.filter(pending => pending.registrationAuthority === formValues.registrationAuthority)
+    return pendingRegistrations$.combineLatest(normalisedForm, (pendingList, formValues) =>
+      pendingList.filter(pending => pending.registrationAuthority === formValues.regAuthAddress)
         .filter(pending => pending.registrationKey.modulus === formValues.modulus)
         .filter(pending => this.cryptoSvc.isPrivateExponent(pending.registrationKey, formValues.privateExponent))
     );
