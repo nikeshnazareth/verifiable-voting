@@ -22,8 +22,12 @@
         <input matInput placeholder="Private Exponent" formControlName="privateExponent">
       </mat-form-field>
     </div>
-    <p>There are {{numCompletableRegistrations$ | async}} pending registrations that can be completed with these
-      details</p>
+    <p *ngIf="(numCompletableRegistrations$ | async) === 1; else plural">There is 1 pending registration that can be
+      completed with these details</p>
+    <ng-template #plural>
+      <p>There are {{numCompletableRegistrations$ | async}} pending registrations that can be completed with these
+        details</p>
+    </ng-template>
     <button type="submit" [disabled]="!form.valid" mat-raised-button color="primary">COMPLETE REGISTRATIONS</button>
   </form>
   <mat-divider></mat-divider>
