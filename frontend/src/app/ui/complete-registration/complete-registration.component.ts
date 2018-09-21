@@ -16,6 +16,8 @@ import { Web3Service } from '../../core/ethereum/web3.service';
 import { VoteManagerService } from '../../core/vote-manager/vote-manager.service';
 import { RetrievalStatus } from '../../core/vote-retrieval/vote-retreival.service.constants';
 import { VoteRetrievalService } from '../../core/vote-retrieval/vote-retrieval.service';
+import { EthereumAddressValidator } from '../../validators/ethereum-address.validator';
+import { LowercaseHexValidator } from '../../validators/lowercase-hex.validator';
 
 
 @Component({
@@ -64,9 +66,9 @@ export class CompleteRegistrationComponent implements OnInit, OnDestroy {
    */
   createForm() {
     this.form = this.fb.group({
-      regAuthAddress: ['', [Validators.required, Validators.pattern('^[0-9a-fA-F]{40}$')]],
-      modulus: ['', [Validators.required, Validators.pattern('^[0-9a-f]+$')]],
-      privateExponent: ['', [Validators.required, Validators.pattern('^[0-9a-f]+$')]],
+      regAuthAddress: ['', [Validators.required, EthereumAddressValidator.validate]],
+      modulus: ['', [Validators.required, LowercaseHexValidator.validate]],
+      privateExponent: ['', [Validators.required, LowercaseHexValidator.validate]],
       existsCompletable: [false, Validators.requiredTrue]
     });
   }

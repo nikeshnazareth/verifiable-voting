@@ -5,7 +5,8 @@
         <span matPrefix>0x&nbsp;</span>
         <input matInput formControlName="regAuthAddress" placeholder="Registration Authority Address">
       </mat-form-field>
-      <button mat-button color="primary" type="button" (click)="fillAddress(form.controls.regAuthAddress)">
+      <button mat-button color="primary" type="button" id="fillRegAuthAddress"
+              (click)="fillAddress(form.controls.regAuthAddress)">
         Use Active Account
       </button>
     </div>
