@@ -13,6 +13,7 @@ import { Web3Errors } from '../../../core/ethereum/web3-errors';
 import { Web3Service} from '../../../core/ethereum/web3.service';
 import { VoteManagerService } from '../../../core/vote-manager/vote-manager.service';
 import { IRegistration } from '../../../core/vote-retrieval/vote-retreival.service.constants';
+import { EthereumAddressValidator } from '../../../validators/ethereum-address.validator';
 
 @Component({
   selector: 'vv-voting-phase',
@@ -52,8 +53,8 @@ export class VotingPhaseComponent implements OnInit, OnDestroy {
    */
   createForm() {
     this.form = this.fb.group({
-      voterAddress: ['', [Validators.required, Validators.pattern('^[0-9a-fA-F]{40}$')]],
-      anonymousAddress: ['', [Validators.required, Validators.pattern('^[0-9a-fA-F]{40}$')]],
+      voterAddress: ['', [Validators.required, EthereumAddressValidator.validate]],
+      anonymousAddress: ['', [Validators.required, EthereumAddressValidator.validate]],
       blindingFactor: ['', Validators.required],
       chosenCandidate: ['', Validators.required]
     });
