@@ -7,13 +7,13 @@ import { Observable } from 'rxjs/Observable';
 
 import { CryptographyService } from '../../../core/cryptography/cryptography.service';
 import { ErrorService } from '../../../core/error-service/error.service';
-import { address } from '../../../core/ethereum/type.mappings';
 import { Web3Errors } from '../../../core/ethereum/web3-errors';
 import { Web3Service} from '../../../core/ethereum/web3.service';
 import { VoteManagerService } from '../../../core/vote-manager/vote-manager.service';
 import { MaterialModule } from '../../../material/material.module';
 import { DOMInteractionUtility } from '../../../mock/dom-interaction-utility';
 import { IAnonymousVotingContractCollection, IVoter, Mock } from '../../../mock/module';
+import { EthereumAddressValidatorTester } from '../../../validators/ethereum-address.validator.tests';
 import { RegistrationPhaseComponent } from './registration-phase.component';
 
 describe('Component: RegistrationPhaseComponent', () => {
@@ -140,26 +140,16 @@ describe('Component: RegistrationPhaseComponent', () => {
 
         describe('form control validity', () => {
           let ctrl: AbstractControl;
-          const valid_address: address = '1234567890aabbccddee1234567890aabbccddee';
+          const setValue = (value) => {
+            DOMInteractionUtility.setValueOn(Page.voterAddressInput, value);
+            fixture.detectChanges();
+          };
 
           beforeEach(() => {
             ctrl = Page.form.get(Page.voterAddressInput.attributes.formControlName);
           });
 
-          it('should be invalid when null', () => {
-            DOMInteractionUtility.setValueOn(Page.voterAddressInput, '');
-            fixture.detectChanges();
-            expect(Page.voterAddressInput.nativeElement.value).toBeFalsy();
-            expect(ctrl.valid).toEqual(false);
-          });
-
-          it('should be valid when containing exactly 40 hex characters', () => {
-            DOMInteractionUtility.setValueOn(Page.voterAddressInput, valid_address);
-            fixture.detectChanges();
-            expect(ctrl.valid).toEqual(true);
-          });
-
-          xit('should reuse the validator (and tests) from the LaunchVoteComponent -> registration authority address');
+          EthereumAddressValidatorTester.test(() => ctrl, setValue);
         });
       });
 
@@ -245,27 +235,16 @@ describe('Component: RegistrationPhaseComponent', () => {
 
         describe('form control validity', () => {
           let ctrl: AbstractControl;
-          const valid_address: address = '1234567890aabbccddee1234567890aabbccddee';
+          const setValue = (value) => {
+            DOMInteractionUtility.setValueOn(Page.anonymousAddressInput, value);
+            fixture.detectChanges();
+          };
 
           beforeEach(() => {
             ctrl = Page.form.get(Page.anonymousAddressInput.attributes.formControlName);
           });
 
-          it('should be invalid when null', () => {
-            DOMInteractionUtility.setValueOn(Page.anonymousAddressInput, '');
-            fixture.detectChanges();
-            expect(Page.anonymousAddressInput.nativeElement.value).toBeFalsy();
-            expect(ctrl.valid).toEqual(false);
-          });
-
-          it('should be valid when containing exactly 40 hex characters', () => {
-            DOMInteractionUtility.setValueOn(Page.anonymousAddressInput, valid_address);
-            DOMInteractionUtility.setValueOn(Page.anonymousAddressInput, valid_address);
-            fixture.detectChanges();
-            expect(ctrl.valid).toEqual(true);
-          });
-
-          xit('should reuse the validator (and tests) from the LaunchVoteComponent -> registration authority address');
+          EthereumAddressValidatorTester.test(() => ctrl, setValue);
         });
       });
 
