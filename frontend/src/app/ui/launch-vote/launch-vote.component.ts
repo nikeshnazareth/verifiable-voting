@@ -6,6 +6,7 @@ import { address } from '../../core/ethereum/type.mappings';
 import { IVoteParameters } from '../../core/ipfs/formats.interface';
 import { VoteManagerService } from '../../core/vote-manager/vote-manager.service';
 import { EthereumAddressValidator } from '../../validators/ethereum-address.validator';
+import { LowercaseHexValidator } from '../../validators/lowercase-hex.validator';
 
 @Component({
   selector: 'vv-launch-vote',
@@ -36,8 +37,8 @@ export class LaunchVoteComponent implements OnInit {
       newCandidate: [''],
       eligibility: ['', Validators.required],
       registration_key: this.fb.group({
-        modulus: ['', [Validators.required, Validators.pattern('^[0-9a-f]+$')]],
-        exponent: ['10001', [Validators.required, Validators.pattern('^[0-9a-f]+$')]],
+        modulus: ['', [Validators.required, LowercaseHexValidator.validate]],
+        exponent: ['10001', [Validators.required, LowercaseHexValidator.validate]],
         registrationAuthority: ['', [Validators.required, EthereumAddressValidator.validate]]
       })
     });
