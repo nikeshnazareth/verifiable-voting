@@ -5,6 +5,7 @@ import { NoRestrictionContractService } from '../../core/ethereum/no-restriction
 import { address } from '../../core/ethereum/type.mappings';
 import { IVoteParameters } from '../../core/ipfs/formats.interface';
 import { VoteManagerService } from '../../core/vote-manager/vote-manager.service';
+import { EthereumAddressValidator } from '../../validators/ethereum-address.validator';
 
 @Component({
   selector: 'vv-launch-vote',
@@ -37,7 +38,7 @@ export class LaunchVoteComponent implements OnInit {
       registration_key: this.fb.group({
         modulus: ['', [Validators.required, Validators.pattern('^[0-9a-f]+$')]],
         exponent: ['10001', [Validators.required, Validators.pattern('^[0-9a-f]+$')]],
-        registrationAuthority: ['', [Validators.required, Validators.pattern('^[0-9a-fA-F]{40}$')]]
+        registrationAuthority: ['', [Validators.required, EthereumAddressValidator.validate]]
       })
     });
 

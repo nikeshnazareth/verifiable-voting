@@ -3,8 +3,8 @@ import { ComponentFixture } from '@angular/core/testing';
 import { AbstractControl, FormGroup } from '@angular/forms';
 import { By } from '@angular/platform-browser';
 
-import { address } from '../../core/ethereum/type.mappings';
 import { DOMInteractionUtility } from '../../mock/dom-interaction-utility';
+import { EthereumAddressValidatorTester } from '../../validators/ethereum-address.validator.tests';
 import { LaunchVoteComponent } from './launch-vote.component';
 
 export function registration_key_tests(getFixture) {
@@ -171,60 +171,16 @@ export function registration_key_tests(getFixture) {
 
       describe('form control validity', () => {
         let control: AbstractControl;
-        const addr: address = '1234567890aabbccddee1234567890aabbccddee';
+        const setValue = (value) => {
+          DOMInteractionUtility.setValueOn(regAuthAddress, value);
+          fixture.detectChanges();
+        };
 
         beforeEach(() => {
           control = group.get(regAuthAddress.attributes.formControlName);
         });
 
-        it('should be invalid when set to null', () => {
-          DOMInteractionUtility.setValueOn(regAuthAddress, '');
-          fixture.detectChanges();
-          expect(regAuthAddress.nativeElement.value).toBeFalsy();
-          expect(control.valid).toEqual(false);
-        });
-
-        it('should be valid when containing exactly 40 hex characters', () => {
-          DOMInteractionUtility.setValueOn(regAuthAddress, addr);
-          fixture.detectChanges();
-          expect(control.valid).toEqual(true);
-        });
-
-        it('should be invalid when containing 38 or 39 hex characters', () => {
-          DOMInteractionUtility.setValueOn(regAuthAddress, addr.slice(1));
-          fixture.detectChanges();
-          expect(control.valid).toEqual(false);
-
-          DOMInteractionUtility.setValueOn(regAuthAddress, addr.slice(2));
-          fixture.detectChanges();
-          expect(control.valid).toEqual(false);
-        });
-
-        it('should be invalid when containing 41 or 42 hex characters', () => {
-          DOMInteractionUtility.setValueOn(regAuthAddress, addr + 'f');
-          fixture.detectChanges();
-          expect(control.valid).toEqual(false);
-
-          DOMInteractionUtility.setValueOn(regAuthAddress, addr + 'ff');
-          fixture.detectChanges();
-          expect(control.valid).toEqual(false);
-        });
-
-        it('should be invalid when containing non-hex characters', () => {
-          nonHexValues.map(val => {
-            DOMInteractionUtility.setValueOn(regAuthAddress, val + addr.slice(val.length));
-            fixture.detectChanges();
-            expect(control.valid).toEqual(false);
-          });
-        });
-
-        it('should be VALID when containing upper-case hex characters', () => {
-          uppercaseHexValues.map(val => {
-            DOMInteractionUtility.setValueOn(regAuthAddress, val + addr.slice(val.length));
-            fixture.detectChanges();
-            expect(control.valid).toEqual(true);
-          });
-        });
+        EthereumAddressValidatorTester.test(() => control, setValue);
       });
     });
   };
