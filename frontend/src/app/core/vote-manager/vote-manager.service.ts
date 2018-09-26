@@ -136,7 +136,7 @@ export class VoteManagerService implements IVoteManagerService {
    * @param {IRSAKey} registrationKey the RSA key of the registration authority
    * @param {string} privateExponent the private RSA exponent used to sign the blinded address
    * @param {string} blindedAddress the blinded anonymous address the voter will use to vote
-   * @returns {Observable<void>}
+   * @returns {Observable<void>} an observable that emits once and completes or an empty observable if there is an error
    */
   completeRegistrationAt$(contractAddr: address,
                           voterAddr: address,
@@ -169,7 +169,7 @@ export class VoteManagerService implements IVoteManagerService {
    * @param {string} blindedSignature the blinded signature that the Vote Authority published
    * @param {string} blindingFactor the RSA blinding factor user to protect anonymity of the anonymous address
    * @param {number} candidateIdx the index of the selected candidate in the candidate list
-   * @returns {Observable<void>} an observable that emits once and completed or an empty observable if there is an error
+   * @returns {Observable<void>} an observable that emits once and completes or an empty observable if there is an error
    */
   voteAt$(contractAddr: address,
           registrationKey: IRSAKey,
