@@ -77,3 +77,6 @@ import 'zone.js/dist/zone';  // Included with Angular CLI.
 /***************************************************************************************************
  * APPLICATION IMPORTS
  */
+import * as buffer from 'buffer';
+// @ts-ignore
+window.Buffer = buffer.Buffer;
