@@ -381,7 +381,7 @@ describe('Component: VotingPhaseComponent', () => {
           fixture.componentInstance.candidates = voteCollection.parameters.candidates;
           fixture.componentInstance.registration = {};
           Mock.Voters.map(v => {
-            fixture.componentInstance.registration[v.public_address] = {
+            fixture.componentInstance.registration[`0x${v.public_address}`] = {
               blindSignature: v.signed_blinded_address
             };
           });
@@ -394,7 +394,7 @@ describe('Component: VotingPhaseComponent', () => {
           expect(page.voteManagerSvc.voteAt$).toHaveBeenCalledWith(
             voteCollection.address,
             voteCollection.parameters.registration_key,
-            voter.anonymous_address,
+            `0x${voter.anonymous_address}`,
             voter.signed_blinded_address,
             voter.blinding_factor,
             voter.vote.candidateIdx

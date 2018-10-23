@@ -69,8 +69,8 @@ export class VotingPhaseComponent implements OnInit, OnDestroy {
       .switchMap(form => this.voteManagerSvc.voteAt$(
         this.contract,
         this.key,
-        form.anonymousAddress,
-        this.registration[form.voterAddress].blindSignature,
+        `0x${form.anonymousAddress}`,
+        this.registration[`0x${form.voterAddress}`].blindSignature,
         form.blindingFactor,
         form.chosenCandidate
       ))
