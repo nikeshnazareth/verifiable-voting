@@ -207,7 +207,7 @@ export class VoteManagerService implements IVoteManagerService {
    * @private
    */
   private confirmAuthorised(anonymousAddr: address, signedAddr: string, registrationKey: IRSAKey): boolean {
-    if (!this.cryptoSvc.rawVerify(anonymousAddr, signedAddr, registrationKey)) {
+    if (!this.cryptoSvc.verify(anonymousAddr, signedAddr, registrationKey)) {
       this.errSvc.add(VoteManagerErrors.unauthorised(), null);
       return false;
     }
