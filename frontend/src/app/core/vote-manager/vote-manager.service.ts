@@ -144,7 +144,7 @@ export class VoteManagerService implements IVoteManagerService {
                           registrationKey: IRSAKey,
                           privateExponent: string,
                           blindedAddress: string): Observable<void> {
-    return Observable.of(this.cryptoSvc.sign(blindedAddress, registrationKey.modulus, privateExponent))
+    return Observable.of(this.cryptoSvc.rawSign(blindedAddress, registrationKey.modulus, privateExponent))
       .filter(blindSignature => blindSignature !== null)
       .map(blindSignature => ({blinded_signature: blindSignature}))
       .switchMap(wrappedBlindSig => this.ipfsSvc.addJSON(wrappedBlindSig))
@@ -207,7 +207,7 @@ export class VoteManagerService implements IVoteManagerService {
    * @private
    */
   private confirmAuthorised(anonymousAddr: address, signedAddr: string, registrationKey: IRSAKey): boolean {
-    if (!this.cryptoSvc.verify(anonymousAddr, signedAddr, registrationKey)) {
+    if (!this.cryptoSvc.rawVerify(anonymousAddr, signedAddr, registrationKey)) {
       this.errSvc.add(VoteManagerErrors.unauthorised(), null);
       return false;
     }

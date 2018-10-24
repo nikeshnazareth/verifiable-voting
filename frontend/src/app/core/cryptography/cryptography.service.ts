@@ -16,9 +16,9 @@ export interface ICryptographyService {
 
   unblind(blinded_signature: string, factor: string, key: IRSAKey): string;
 
-  verify(message: string, signature: string, key: IRSAKey): boolean;
+  rawVerify(rawMessage: string, signature: string, key: IRSAKey): boolean;
 
-  sign(rawMessage: string, modulus: string, privateExponent: string): string;
+  rawSign(rawMessage: string, modulus: string, privateExponent: string): string;
 
   isPrivateExponent(key: IRSAKey, privateExponent: string): boolean;
 }
@@ -127,7 +127,7 @@ export class CryptographyService implements ICryptographyService {
    * @param {IRSAKey} key the public component of the RSA key that signed the raw message
    * @returns {boolean} whether the signature matches the raw message and key
    */
-  verify(rawMessage: string, signature: string, key: IRSAKey): boolean {
+  rawVerify(rawMessage: string, signature: string, key: IRSAKey): boolean {
     if (!CryptographyService.validKey(key)) {
       this.errSvc.add(CryptographyErrors.key(key), null);
       return false;
@@ -165,7 +165,7 @@ export class CryptographyService implements ICryptographyService {
    * @param {string} privateExponent the private signing key exponent
    * @returns {string} the signature of the message or null if there is an error
    */
-  sign(rawMessage: string, modulus: string, privateExponent: string): string {
+  rawSign(rawMessage: string, modulus: string, privateExponent: string): string {
     if (!CryptographyService.isHexString(rawMessage)) {
       this.errSvc.add(CryptographyErrors.rawMessage(rawMessage), null);
       return null;
@@ -210,8 +210,8 @@ export class CryptographyService implements ICryptographyService {
 
     // TODO: this is a hack. It should be implemented by finding phi and checking that e and d are inverse mod phi
     const messageHash: string = this.web3Svc.sha3('ARBITRARY MESSAGE');
-    const sig: string = this.sign(messageHash, key.modulus, privateExponent);
-    return this.verify(messageHash, sig, key);
+    const sig: string = this.rawSign(messageHash, key.modulus, privateExponent);
+    return this.rawVerify(messageHash, sig, key);
   }
 
   private static isHexString(val: string) {

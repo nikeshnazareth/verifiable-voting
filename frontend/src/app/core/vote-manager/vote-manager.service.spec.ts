@@ -227,9 +227,9 @@ describe('Service: VoteManagerService', () => {
     });
 
     it('should use the Cryptography service to confirm the anonymous address matches the unblinded address', () => {
-      spyOn(cryptoSvc, 'verify').and.callThrough();
+      spyOn(cryptoSvc, 'rawVerify').and.callThrough();
       init_and_call_voteAt$();
-      expect(cryptoSvc.verify).toHaveBeenCalledWith(
+      expect(cryptoSvc.rawVerify).toHaveBeenCalledWith(
         voter.anonymous_address, voter.vote.signed_address, voteDetails.parameters.registration_key
       );
     });
@@ -282,7 +282,7 @@ describe('Service: VoteManagerService', () => {
 
     describe('case: the anonymous address does not match the unblinded address', () => {
       beforeEach(() => {
-        spyOn(cryptoSvc, 'verify').and.returnValue(false);
+        spyOn(cryptoSvc, 'rawVerify').and.returnValue(false);
         init_and_call_voteAt$();
       });
 

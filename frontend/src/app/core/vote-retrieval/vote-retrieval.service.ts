@@ -263,7 +263,7 @@ export class VoteRetrievalService implements IVoteRetrievalService {
       voter: voter, blindedAddress: addr, blindSignature: sig
     }))
       .do(reg => {
-        if (!this.cryptoSvc.verify(reg.blindedAddress, reg.blindSignature, key)) {
+        if (!this.cryptoSvc.rawVerify(reg.blindedAddress, reg.blindSignature, key)) {
           this.errSvc.add(VoteRetrievalErrors.registration, null);
           throw new Error(null);
         }

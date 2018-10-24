@@ -118,14 +118,14 @@ describe('Service: CryptographyService', () => {
 
   describe('method: verify', () => {
     it('should return true when comparing the blinded message to the unblinded message', () => {
-      const verify: boolean = cryptoSvc.verify(
+      const verify: boolean = cryptoSvc.rawVerify(
         Mock.blinding.blinded_message, Mock.blinding.signed_blinded_message, Mock.blinding.public_key
       );
       expect(verify).toEqual(true);
     });
 
     it('should return true when comparing the hashed message to the signed unblinded message', () => {
-      const verify: boolean = cryptoSvc.verify(
+      const verify: boolean = cryptoSvc.rawVerify(
         Mock.blinding.message.hash, Mock.blinding.signed_unblinded_message, Mock.blinding.public_key
       );
       expect(verify).toEqual(true);
@@ -157,12 +157,12 @@ describe('Service: CryptographyService', () => {
 
   describe('method: sign', () => {
     it('should produce the signed blinded message from the blinded message', () => {
-      const sig: string = cryptoSvc.sign(Mock.blinding.blinded_message, Mock.blinding.public_key.modulus, Mock.blinding.private_exp);
+      const sig: string = cryptoSvc.rawSign(Mock.blinding.blinded_message, Mock.blinding.public_key.modulus, Mock.blinding.private_exp);
       expect(sig).toEqual(Mock.blinding.signed_blinded_message);
     });
 
     it('should produce the signed unblinded message from the message hash', () => {
-      const sig: string = cryptoSvc.sign(Mock.blinding.message.hash, Mock.blinding.public_key.modulus, Mock.blinding.private_exp);
+      const sig: string = cryptoSvc.rawSign(Mock.blinding.message.hash, Mock.blinding.public_key.modulus, Mock.blinding.private_exp);
       expect(sig).toEqual(Mock.blinding.signed_unblinded_message);
     });
 

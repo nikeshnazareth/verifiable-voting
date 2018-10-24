@@ -19,7 +19,7 @@ export class CryptographyService implements ICryptographyService {
       .vote.signed_address;
   }
 
-  verify(message: string, signature: string, key: IRSAKey): boolean {
+  rawVerify(message: string, signature: string, key: IRSAKey): boolean {
     // we might be trying to confirm that the blind signature matches the blind address
     const collectionsMatchingBlindAddress = Mock.Voters.filter(voter => voter.blinded_address === message);
     if (collectionsMatchingBlindAddress.length > 0) {
@@ -34,7 +34,7 @@ export class CryptographyService implements ICryptographyService {
     return false;
   }
 
-  sign(rawMessage: string, modulus: string, privateExponent: string): string {
+  rawSign(rawMessage: string, modulus: string, privateExponent: string): string {
     // we might be trying to get the get the blind signature from the blind address
     const collectionsMatchingBlindAddress = Mock.Voters.filter(voter => voter.blinded_address === rawMessage);
     if (collectionsMatchingBlindAddress.length > 0) {
