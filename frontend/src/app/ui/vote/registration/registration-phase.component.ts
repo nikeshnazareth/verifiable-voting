@@ -72,8 +72,8 @@ export class RegistrationPhaseComponent implements OnInit, OnDestroy {
       .switchMap(form => this.voteManagerSvc.registerAt$(
         this.contract,
         this.key,
-        form.voterAddress,
-        form.anonymousAddress,
+        `0x${form.voterAddress}`,
+        `0x${form.anonymousAddress}`,
         form.blindingFactor
       ))
       .map(() => this.form.reset());

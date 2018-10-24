@@ -508,8 +508,8 @@ describe('Component: RegistrationPhaseComponent', () => {
           expect(page.voteManagerSvc.registerAt$).toHaveBeenCalledWith(
             collection.address,
             collection.parameters.registration_key,
-            voter.public_address,
-            voter.anonymous_address,
+            `0x${voter.public_address}`,
+            `0x${voter.anonymous_address}`,
             voter.blinding_factor
           );
         });
