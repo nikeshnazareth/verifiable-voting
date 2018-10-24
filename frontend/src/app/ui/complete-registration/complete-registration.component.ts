@@ -87,7 +87,7 @@ export class CompleteRegistrationComponent implements OnInit, OnDestroy {
             pendingRegCtx.voter,
             pendingRegCtx.registrationAuthority,
             pendingRegCtx.registrationKey,
-            form.privateExponent,
+            `0x${form.privateExponent}`,
             pendingRegCtx.blindedAddress
           ))
       )
@@ -111,13 +111,14 @@ export class CompleteRegistrationComponent implements OnInit, OnDestroy {
   private initCompletableRegistrations(): Observable<IPendingRegistrationContext[]> {
     const pendingRegistrations$ = this.initPendingRegistrations();
     const normalisedForm = this.form.valueChanges.map(values => {
-      for (const param in values) {
-        if (values.hasOwnProperty(param) && param !== 'existsCompletable') {
-          values[param] = values[param] ? values[param] : '';
-          values[param] = '0x' + values[param].toLowerCase();
+      const normalised = Object.assign({}, values);
+      for (const param in normalised) {
+        if (normalised.hasOwnProperty(param) && param !== 'existsCompletable') {
+          normalised[param] = normalised[param] ? normalised[param] : '';
+          normalised[param] = `0x${normalised[param].toLowerCase()}`;
         }
       }
-      return values;
+      return normalised;
     });
 
     return pendingRegistrations$.combineLatest(normalisedForm, (pendingList, formValues) =>

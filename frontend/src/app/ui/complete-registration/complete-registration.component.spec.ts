@@ -335,7 +335,7 @@ describe('Component: CompleteRegistrationComponent', () => {
                                   voter.public_address,
                                   vote.regAuth,
                                   vote.key,
-                                  '0x' + private_exp,
+                                  `0x${private_exp}`,
                                   voter.blinded_address
                                 );
                               });
