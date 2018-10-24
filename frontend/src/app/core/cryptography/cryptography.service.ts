@@ -16,6 +16,10 @@ export interface ICryptographyService {
 
   unblind(blinded_signature: string, factor: string, key: IRSAKey): string;
 
+  verify(message: string, signature: string, key: IRSAKey): boolean;
+
+  sign(message: string, modulus: string, privateExponent: string): string;
+
   rawVerify(rawMessage: string, signature: string, key: IRSAKey): boolean;
 
   rawSign(rawMessage: string, modulus: string, privateExponent: string): string;
@@ -122,6 +126,26 @@ export class CryptographyService implements ICryptographyService {
   }
 
   /**
+   * @param {string} message the message to be verified
+   * @param {string} signature the signature
+   * @param {IRSAKey} key the public component of the RSA key that signed the hashed message
+   * @returns {boolean} whether the signature matches the hashed message and key
+   */
+  verify(message: string, signature: string, key: IRSAKey): boolean {
+    return this.rawVerify(this.web3Svc.sha3(message), signature, key);
+  }
+
+  /**
+   * @param {string} message the message to be signed
+   * @param {string} modulus the modulus of the RSA key
+   * @param {string} privateExponent the private signing key exponent
+   * @returns {string} the signature of the message or null if there is an error
+   */
+  sign(message: string, modulus: string, privateExponent: string): string {
+    return this.rawSign(this.web3Svc.sha3(message), modulus, privateExponent);
+  }
+
+  /**
    * @param {string} rawMessage the message to be verified directly (ignoring hashing)
    * @param {string} signature the signature
    * @param {IRSAKey} key the public component of the RSA key that signed the raw message
@@ -209,9 +233,9 @@ export class CryptographyService implements ICryptographyService {
     }
 
     // TODO: this is a hack. It should be implemented by finding phi and checking that e and d are inverse mod phi
-    const messageHash: string = this.web3Svc.sha3('ARBITRARY MESSAGE');
-    const sig: string = this.rawSign(messageHash, key.modulus, privateExponent);
-    return this.rawVerify(messageHash, sig, key);
+    const message: string = 'ARBITRARY MESSAGE';
+    const sig: string = this.sign(message, key.modulus, privateExponent);
+    return this.verify(message, sig, key);
   }
 
   private static isHexString(val: string) {
