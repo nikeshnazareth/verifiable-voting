@@ -1,4 +1,4 @@
-pragma solidity ^0.4.21;
+pragma solidity ^0.4.22;
 
 
 /**
@@ -56,7 +56,7 @@ contract VotePhases {
         @param _registrationDeadline the time when the Registration phase ends
         @param _votingDeadline the time when the Voting phase ends
     */
-    function VotePhases(uint _registrationDeadline, uint _votingDeadline) public {
+    constructor(uint _registrationDeadline, uint _votingDeadline) public {
         require(_registrationDeadline > now);
         require(_votingDeadline > _registrationDeadline);
 

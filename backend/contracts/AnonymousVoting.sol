@@ -1,7 +1,7 @@
 import "./VotePhases.sol";
 import "./Gatekeeper.sol";
 
-pragma solidity ^0.4.21;
+pragma solidity ^0.4.22;
 
 /**
     @title Anonymous Voting
@@ -69,7 +69,7 @@ contract AnonymousVoting is VotePhases {
         @param _eligibilityContract the contract that determines if an address is eligible to vote
         @param _registrationAuthority the address that can publish the blinded signatures
     */
-    function AnonymousVoting(
+    constructor(
         uint _registrationDeadline,
         uint _votingDeadline,
         string _paramsHash,

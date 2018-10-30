@@ -7,13 +7,13 @@
 
 import "../AnonymousVoting.sol";
 
-pragma solidity ^0.4.21;
+pragma solidity ^0.4.22;
 
 
 contract TestAnonymousVotingPhases is AnonymousVoting {
 
     /// @notice pass all constructor parameters through to the AnonymousVoting constructor
-    function TestAnonymousVotingPhases(
+    constructor(
         uint _registrationDeadline,
         uint _votingDeadline,
         string _paramsHash,
