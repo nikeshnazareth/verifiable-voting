@@ -2,32 +2,20 @@ const VoteListing = artifacts.require('VoteListing');
 const NoRestriction = artifacts.require('NoRestriction');
 const AnonymousVoting = artifacts.require('AnonymousVoting');
 const SampleVotes = require('./sample_votes');
-const axios = require('axios');
+const addToIPFS = require('./ipfs');
 
 const sec = 1000;
 const day = sec * 60 * 60 * 24;
 const now = () => (new Date()).getTime();
 
-
-function addToIPFS(data) {
-    return axios({
-        method: 'post',
-        url: 'http://ipfs.nikeshnazareth.com:3000/add',
-        data: {record: data}
-    })
-        .then(result => result.data.data)
-        .catch(err => console.error(err.response.data));
-}
-
 module.exports = async function (deployer, network) {
 
-    // const useLocalStorage = ['develop', 'ganache'].includes(network);
-    const useLocalStorage = false;
+    const useLocalStorage = ['develop', 'ganache'].includes(network);
 
     const eligibilityContract = (await NoRestriction.deployed()).address;
     const listing = await VoteListing.deployed();
 
-    for (vote of SampleVotes) {
+    SampleVotes.forEach(async (vote, idx) => {
         let registrationDeadline, votingDeadline;
         if (vote.phase === 0) {
             registrationDeadline = now() + 100 * day;
@@ -59,10 +47,10 @@ module.exports = async function (deployer, network) {
             eligibilityContract,
             vote.registration_authority.address
         );
-        const contract = await listing.votingContracts.call(0).then(addr => AnonymousVoting.at(addr));
+        const contract = await listing.votingContracts.call(idx).then(addr => AnonymousVoting.at(addr));
 
         // register voters
-        for (voter of vote.voters) {
+        vote.voters.forEach(async (voter) => {
             const blindAddrHash = useLocalStorage ?
                 voter.brave_hashes.blindedAddress :
                 await addToIPFS({blinded_address: voter.derivations.blindedAddress});
@@ -77,30 +65,6 @@ module.exports = async function (deployer, network) {
                 blindSig,
                 {from: vote.registration_authority.address}
             );
-        }
-
-        try {
-            // vote
-            if (vote.phase > 0) {
-                // wait for the voting phase to begin
-                await
-                    new Promise(resolve => setTimeout(resolve, Math.min(registrationDeadline - now(), 0)));
-
-                for (voter of vote.voters) {
-                    const voteHash = useLocalStorage ?
-                        voter.brave_hashes.vote :
-                        await
-                            addToIPFS({
-                                signed_address: voter.derivations.signedAddress,
-                                candidateIdx: voter.candidateIdx
-                            });
-
-                    await
-                        contract.vote(voteHash, {from: voter.anonymous_address});
-                }
-            }
-        } catch (e) {
-            console.log(e);
-        }
-    }
+        });
+    });
 };

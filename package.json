@@ -21,6 +21,7 @@
   },
   "homepage": "https://github.com/nikeshnazareth/verifiable-voting#readme",
   "dependencies": {
+    "axios": "^0.18.0",
     "truffle-hdwallet-provider": "0.0.5"
   }
 }
