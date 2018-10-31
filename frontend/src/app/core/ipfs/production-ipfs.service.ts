@@ -24,7 +24,7 @@ export class IPFSService implements IIPFSService {
    * @returns {Observable<string>} the IPFS address (hash) of the data
    */
   addJSON(data: object): Observable<string> {
-    return this.http.post(this.url(this.postCfg), data, this.postCfg.headers ? {headers: this.postCfg.headers} : null)
+    return this.http.post(this.url(this.postCfg), {record: data}, this.postCfg.headers ? {headers: this.postCfg.headers} : null)
       .map(response => <string> response['data']);
   }
 
