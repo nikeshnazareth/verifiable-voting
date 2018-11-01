@@ -8,9 +8,8 @@ export let APP_CONFIG = {
   ipfs: {
     // my web facing IPFS node
     post: {
-      protocol: 'http',
+      protocol: 'https',
       host: 'ipfs.nikeshnazareth.com',
-      port: 3000,
       endpoint: 'add',
       headers: {'Content-Type': 'application/json'}
     },

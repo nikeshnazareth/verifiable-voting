@@ -38,7 +38,7 @@ export class IPFSService implements IIPFSService {
   }
 
   private url(cfg: HttpEndpoint) {
-    return `${cfg.protocol}://${cfg.host}${cfg.port ? `:${cfg.port}` : ''}/${cfg.endpoint}`;
+    return `${cfg.protocol}://${cfg.host}/${cfg.endpoint}`;
   }
 
 }
