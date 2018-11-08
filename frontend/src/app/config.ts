@@ -2,7 +2,7 @@ import * as AnonymousVoting from '../../../backend/build/contracts/AnonymousVoti
 import * as NoRestriction from '../../../backend/build/contracts/NoRestriction.json';
 import * as VoteListing from '../../../backend/build/contracts/VoteListing.json';
 
-const networkName: string = 'ROPSTEN (test) network';
+const networkName: string = 'RINKEBY (test) network';
 
 export let APP_CONFIG = {
   ipfs: {
