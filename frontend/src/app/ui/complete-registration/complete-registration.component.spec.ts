@@ -10,6 +10,7 @@ import { ErrorService } from '../../core/error-service/error.service';
 import { Web3Errors } from '../../core/ethereum/web3-errors';
 import { Web3Service } from '../../core/ethereum/web3.service';
 import { VoteManagerService } from '../../core/vote-manager/vote-manager.service';
+import { RetrievalStatus } from '../../core/vote-retrieval/vote-retreival.service.constants';
 import { VoteRetrievalService } from '../../core/vote-retrieval/vote-retrieval.service';
 import { MaterialModule } from '../../material/material.module';
 import { DOMInteractionUtility } from '../../mock/dom-interaction-utility';
@@ -249,6 +250,23 @@ describe('Component: CompleteRegistrationComponent', () => {
           {address: 'MOCK_ADDRESS_3', regAuth: regAuths[1], key: regKeys[2], numPending: 2},
         ];
 
+        // a full voter registration has three parts: retrieving, voter initiated, completed
+        const registration$$ = Observable.from(Mock.Voters)
+          .map(voter => Observable.from([
+            {
+              status: RetrievalStatus.retrieving,
+              value: null
+            },
+            {
+              status: RetrievalStatus.available,
+              value: {voter: voter.public_address, blindedAddress: voter.blinded_address, blindSignature: null}
+            },
+            {
+              status: RetrievalStatus.available,
+              value: {voter: voter.public_address, blindedAddress: voter.blinded_address, blindSignature: voter.signed_blinded_address}
+            }
+          ]));
+
         const private_exp = 'cafebabe';
 
         let privateExponentMatches: boolean;
@@ -256,16 +274,17 @@ describe('Component: CompleteRegistrationComponent', () => {
 
         beforeEach(() => {
           const originalDetailsAtIndex$ = page.voteRetrievalSvc.detailsAtIndex$;
-          spyOn(page.voteRetrievalSvc, 'detailsAtIndex$').and.callFake(idx =>
-            originalDetailsAtIndex$(idx)
+          spyOn(page.voteRetrievalSvc, 'detailsAtIndex$').and.callFake(voteIdx =>
+            originalDetailsAtIndex$(voteIdx)
               .do(details => {
-                details.address.value = votes[idx].address;
-                details.registrationAuthority.value = votes[idx].regAuth;
-                details.key.value = votes[idx].key;
-                details.pendingRegistrations.value = range(votes[idx].numPending).map(voterIdx => ({
-                  voter: Mock.Voters[voterIdx].public_address,
-                  blindedAddress: Mock.Voters[voterIdx].blinded_address
-                }));
+                details.address.value = votes[voteIdx].address;
+                details.registrationAuthority.value = votes[voteIdx].regAuth;
+                details.key.value = votes[voteIdx].key;
+                details.registration$$ = registration$$.map((voterReg$, voterIdx) =>
+                  voterIdx < votes[voteIdx].numPending ?
+                    voterReg$.take(2).concat(Observable.never()) :  // the registration is pending. Drop the last (completion) event
+                    voterReg$ // the registration is complete
+                );
               })
           );
           spyOn(page.cryptoSvc, 'isPrivateExponent').and.callFake(() => privateExponentMatches);
@@ -301,43 +320,34 @@ describe('Component: CompleteRegistrationComponent', () => {
                         .reduce((a, b) => a + b, 0) :
                       0;
                     const isValid = numCompletable > 0;
-                    const validStr = isValid ? 'valid' : 'invalid';
-
-                    describe('existsCompletable', () => {
-                      const getCtrl = () => page.form.get('existsCompletable');
-
-                      it(`should be ${validStr}`, () => {
-                        expect(getCtrl().valid).toEqual(isValid);
-                      });
-                    });
-
-                    it(`form should be ${validStr}`, () => {
-                      expect(page.form.valid).toEqual(isValid);
-                    });
 
                     describe('form submission', () => {
                       beforeEach(() => {
-                       DOMInteractionUtility.clickOn(page.submitButton);
-                       fixture.detectChanges();
+                        DOMInteractionUtility.clickOn(page.submitButton);
+                        fixture.detectChanges();
                       });
 
                       if (isValid) {
-                        it(`should call "completeRegistrationAt$" ${numCompletable} times`, () => {
-                          expect(page.voteManagerSvc.completeRegistrationAt$).toHaveBeenCalledTimes(numCompletable);
+                        it(`should call "completeRegistrationAt$" ${numCompletable > 0 ? 1 : 0} times`, () => {
+                          expect(page.voteManagerSvc.completeRegistrationAt$).toHaveBeenCalledTimes(numCompletable > 0 ? 1 : 0);
                         });
 
                         it('should pass the completable registrations to "completeRegistrationAt$"', () => {
+                          let completedFirstRegistration = false;
                           votes.filter(vote => vote.regAuth === regAuth && vote.key === regKey)
                             .map(vote => {
                               Mock.Voters.slice(0, vote.numPending).map(voter => {
-                                expect(page.voteManagerSvc.completeRegistrationAt$).toHaveBeenCalledWith(
-                                  vote.address,
-                                  voter.public_address,
-                                  vote.regAuth,
-                                  vote.key,
-                                  `0x${private_exp}`,
-                                  voter.blinded_address
-                                );
+                                if (!completedFirstRegistration) {
+                                  expect(page.voteManagerSvc.completeRegistrationAt$).toHaveBeenCalledWith(
+                                    vote.address,
+                                    voter.public_address,
+                                    vote.regAuth,
+                                    vote.key,
+                                    `0x${private_exp}`,
+                                    voter.blinded_address
+                                  );
+                                  completedFirstRegistration = true;
+                                }
                               });
                             });
                         });

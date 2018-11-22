@@ -29,7 +29,7 @@
       <p>There are {{numCompletableRegistrations$ | async}} pending registrations that can be completed with these
         details</p>
     </ng-template>
-    <button type="submit" [disabled]="!form.valid" mat-raised-button color="primary">COMPLETE REGISTRATIONS</button>
+    <button type="submit" [disabled]="!(validForm$ | async)" mat-raised-button color="primary">COMPLETE NEXT REGISTRATION</button>
   </form>
   <mat-divider></mat-divider>
   <div class="info">

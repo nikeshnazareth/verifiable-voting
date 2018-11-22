@@ -1,12 +1,14 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { AbstractControl, FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { BehaviorSubject } from 'rxjs/BehaviorSubject';
-import { Subscription } from 'rxjs/index';
+import { ReplaySubject, Subscription } from 'rxjs/index';
 import { Observable } from 'rxjs/Observable';
 import { Subject } from 'rxjs/Subject';
 
 import 'rxjs/add/operator/map';
+import 'rxjs/add/operator/mergeMap';
+import 'rxjs/add/operator/switchMap';
 import 'rxjs/add/operator/take';
+import { map, scan, switchAll, switchMap, take } from 'rxjs/operators';
 import { CryptographyService } from '../../core/cryptography/cryptography.service';
 import { IRSAKey } from '../../core/cryptography/rsa-key.interface';
 import { ErrorService } from '../../core/error-service/error.service';
@@ -14,7 +16,7 @@ import { address } from '../../core/ethereum/type.mappings';
 import { Web3Errors } from '../../core/ethereum/web3-errors';
 import { Web3Service } from '../../core/ethereum/web3.service';
 import { VoteManagerService } from '../../core/vote-manager/vote-manager.service';
-import { RetrievalStatus } from '../../core/vote-retrieval/vote-retreival.service.constants';
+import { IVotingContractDetails, RetrievalStatus } from '../../core/vote-retrieval/vote-retreival.service.constants';
 import { VoteRetrievalService } from '../../core/vote-retrieval/vote-retrieval.service';
 import { EthereumAddressValidator } from '../../validators/ethereum-address.validator';
 import { LowercaseHexValidator } from '../../validators/lowercase-hex.validator';
@@ -29,9 +31,10 @@ export class CompleteRegistrationComponent implements OnInit, OnDestroy {
   public form: FormGroup;
   public submission$: Subject<ICompleteRegistrationForm>;
   public numCompletableRegistrations$: Observable<number>;
+  public validForm$: Observable<boolean>;
 
   private subscription: Subscription;
-  private completableRegistrations$: BehaviorSubject<IPendingRegistrationContext[]>;
+  private completableRegistrations$: ReplaySubject<IPendingRegistrationContext[]>;
 
   constructor(private fb: FormBuilder,
               private voteRetrievalSvc: VoteRetrievalService,
@@ -40,21 +43,18 @@ export class CompleteRegistrationComponent implements OnInit, OnDestroy {
               private web3Svc: Web3Service,
               private errSvc: ErrorService) {
     this.submission$ = new Subject<ICompleteRegistrationForm>();
-    this.completableRegistrations$ = new BehaviorSubject<IPendingRegistrationContext[]>([]);
+    this.completableRegistrations$ = new ReplaySubject<IPendingRegistrationContext[]>();
   }
 
   ngOnInit() {
     this.createForm();
-    this.initCompletableRegistrations().subscribe(this.completableRegistrations$);
-    this.numCompletableRegistrations$ = this.completableRegistrations$.map(L => L.length);
 
-    this.subscription = this.handleSubmissions().subscribe();
-    this.subscription.add(this.numCompletableRegistrations$.subscribe(count => {
-      const ctrl = this.form.get('existsCompletable');
-      if (ctrl.value !== (count > 0)) {
-        ctrl.setValue(count > 0);
-      }
-    }));
+    this.subscription = this.initCompletableRegistrations$().subscribe(this.completableRegistrations$);
+    this.numCompletableRegistrations$ = this.completableRegistrations$.pipe(map(completable => completable.length));
+    this.validForm$ = this.form.valueChanges.combineLatest(this.numCompletableRegistrations$,
+      (_, N) => this.form.valid && N > 0
+    );
+    this.subscription.add(this.handleSubmissions().subscribe());
   }
 
   ngOnDestroy() {
@@ -68,8 +68,7 @@ export class CompleteRegistrationComponent implements OnInit, OnDestroy {
     this.form = this.fb.group({
       regAuthAddress: ['', [Validators.required, EthereumAddressValidator.validate]],
       modulus: ['', [Validators.required, LowercaseHexValidator.validate]],
-      privateExponent: ['', [Validators.required, LowercaseHexValidator.validate]],
-      existsCompletable: [false, Validators.requiredTrue]
+      privateExponent: ['', [Validators.required, LowercaseHexValidator.validate]]
     });
   }
 
@@ -82,17 +81,19 @@ export class CompleteRegistrationComponent implements OnInit, OnDestroy {
     return this.submission$
       .withLatestFrom(this.completableRegistrations$, (form, pendingRegContexts) =>
         Observable.from(pendingRegContexts)
-          .switchMap(pendingRegCtx => this.voteManagerSvc.completeRegistrationAt$(
-            pendingRegCtx.contract,
-            pendingRegCtx.voter,
-            pendingRegCtx.registrationAuthority,
-            pendingRegCtx.registrationKey,
-            `0x${form.privateExponent}`,
-            pendingRegCtx.blindedAddress
+          .pipe(take(1))
+          .pipe(switchMap(pendingRegCtx =>
+            this.voteManagerSvc.completeRegistrationAt$(
+              pendingRegCtx.contract,
+              pendingRegCtx.voter,
+              pendingRegCtx.registrationAuthority,
+              pendingRegCtx.registrationKey,
+              `0x${form.privateExponent}`,
+              pendingRegCtx.blindedAddress
+            )
           ))
       )
-      .switch()
-      .do(() => this.form.reset());
+      .switch();
   }
 
   /**
@@ -108,51 +109,82 @@ export class CompleteRegistrationComponent implements OnInit, OnDestroy {
     }
   }
 
-  private initCompletableRegistrations(): Observable<IPendingRegistrationContext[]> {
-    const pendingRegistrations$ = this.initPendingRegistrations();
-    const normalisedForm = this.form.valueChanges.map(values => {
+
+  /**
+   * Normalise the form values so that all addresses are lowercase and start with 0x
+   */
+  private normalisedForm$(): Observable<ICompleteRegistrationForm> {
+    return this.form.valueChanges.map(values => {
       const normalised = Object.assign({}, values);
       for (const param in normalised) {
-        if (normalised.hasOwnProperty(param) && param !== 'existsCompletable') {
+        if (normalised.hasOwnProperty(param)) {
           normalised[param] = normalised[param] ? normalised[param] : '';
           normalised[param] = `0x${normalised[param].toLowerCase()}`;
         }
       }
       return normalised;
     });
-
-    return pendingRegistrations$.combineLatest(normalisedForm, (pendingList, formValues) =>
-      pendingList.filter(pending => pending.registrationAuthority === formValues.regAuthAddress)
-        .filter(pending => pending.registrationKey.modulus === formValues.modulus)
-        .filter(pending => this.cryptoSvc.isPrivateExponent(pending.registrationKey, formValues.privateExponent))
-    );
   }
 
-  private initPendingRegistrations(): Observable<IPendingRegistrationContext[]> {
-    return this.voteRetrievalSvc.summaries$
+  /**
+   * @returns {Observable<IPendingRegistrationContext[]>} The completable pending registration contexts
+   * The outer observable corresponds to the form values. Each time they are updated, emit an observable
+   * with all the pending contexts
+   */
+  private initCompletableRegistrations$(): Observable<IPendingRegistrationContext[]> {
+    const normalisedForm$ = this.normalisedForm$();
+    const availableVotes$ = new ReplaySubject<IVotingContractDetails>();
+    this.voteRetrievalSvc.summaries$
       .pipe(this.maxRange)
-      .mergeMap(idx =>
-        this.voteRetrievalSvc.detailsAtIndex$(idx)
-          .filter(details =>
-            details.address.status === RetrievalStatus.available &&
-            details.registrationAuthority.status === RetrievalStatus.available &&
-            details.key.status === RetrievalStatus.available &&
-            details.pendingRegistrations.status === RetrievalStatus.available
-          )
-          .take(1)
-          .switchMap(details =>
-            Observable.from(details.pendingRegistrations.value)
-              .map(pending => ({
-                  contract: details.address.value,
-                  registrationAuthority: details.registrationAuthority.value,
-                  registrationKey: details.key.value,
-                  voter: pending.voter,
-                  blindedAddress: pending.blindedAddress
-                })
-              )
-          )
-      )
-      .scan((arr, el) => arr.concat(el), []);
+      .mergeMap(idx => this.voteRetrievalSvc.detailsAtIndex$(idx)
+        .filter(details => details.address.status === RetrievalStatus.available)
+        .filter(details => details.registrationAuthority.status === RetrievalStatus.available)
+        .filter(details => details.key.status === RetrievalStatus.available)
+        .take(1)
+      ).subscribe(availableVotes$);
+
+    return normalisedForm$.switchMap(formValues =>
+      // an observable of all the matching IPendingRegistrationContext objects
+      availableVotes$
+      // ensure the vote matches the form details
+      // Note: we cannot use a filter because it should revert to non-completable if a previously valid value is changed
+        .pipe(switchMap(details =>
+          details.registrationAuthority.value === formValues.regAuthAddress &&
+          details.key.value.modulus === formValues.modulus &&
+          this.cryptoSvc.isPrivateExponent(details.key.value, formValues.privateExponent) ?
+            Observable.of(details) :
+            Observable.of(null)
+        ))
+        .pipe(map(details => details ?
+          // an observable of the IPendingRegistrationContext objects for this vote
+          details.registration$$
+            .scan((arr, voterReg$) => arr.concat(voterReg$), [])
+            .switchMap(arr => arr.reduce(
+              (combined$, voterReg$) => combined$.combineLatest(voterReg$,
+                (combined, voterReg) => voterReg.status === RetrievalStatus.available && voterReg.value.blindSignature === null ?
+                  combined.concat({
+                    contract: details.address.value,
+                    registrationAuthority: details.registrationAuthority.value,
+                    registrationKey: details.key.value,
+                    voter: voterReg.value.voter,
+                    blindedAddress: voterReg.value.blindedAddress
+                  }) :
+                  combined
+              ),
+              Observable.of([])
+            ))
+            .startWith([]) :
+          Observable.of([])
+        ))
+        // combine the pending registration contexts per vote into a single observable
+        .pipe(scan(
+          (allRegCtxs$, voteRegCtxs$) => allRegCtxs$.combineLatest(voteRegCtxs$,
+            (allRegCtxs, voteRegCtxs) => allRegCtxs.concat(voteRegCtxs)
+          ),
+          Observable.of([])
+        ))
+        .pipe(switchAll())
+    );
   }
 
   /**
