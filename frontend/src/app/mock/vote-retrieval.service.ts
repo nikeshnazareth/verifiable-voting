@@ -2,7 +2,7 @@ import { Observable } from 'rxjs/Observable';
 
 import { VotePhases } from '../core/ethereum/anonymous-voting-contract/contract.constants';
 import {
-  IDynamicValue, ISingleVoterRegistration,
+  IDynamicValue, ISingleRegistration,
   IVotingContractDetails,
   IVotingContractSummary, RetrievalStatus
 } from '../core/vote-retrieval/vote-retreival.service.constants';
@@ -10,6 +10,11 @@ import { IVoteRetrievalService } from '../core/vote-retrieval/vote-retrieval.ser
 import { Mock } from './module';
 
 export class VoteRetrievalService implements IVoteRetrievalService {
+  public static numPendingRegistrations$(reg$$: Observable<Observable<IDynamicValue<ISingleRegistration>>>):
+    Observable<IDynamicValue<number>> {
+    return Observable.of({status: RetrievalStatus.available, value: 0});
+  }
+
   get summaries$(): Observable<IVotingContractSummary[]> {
     return Observable.of(
       Mock.AnonymousVotingContractCollections.map((collection, idx) => ({
@@ -65,8 +70,5 @@ export class VoteRetrievalService implements IVoteRetrievalService {
       });
   }
 
-  numPendingRegistrations$(reg$$: Observable<Observable<IDynamicValue<ISingleVoterRegistration>>>): Observable<IDynamicValue<number>> {
-    return Observable.of({status: RetrievalStatus.available, value: 0});
-  }
 
 }

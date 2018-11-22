@@ -11,8 +11,7 @@ export interface IVotingContractDetails {
   registrationAuthority: IDynamicValue<address>;
   key: IDynamicValue<IRSAKey>;
   candidates: IDynamicValue<string[]>;
-  registration$$: Observable<Observable<IDynamicValue<ISingleVoterRegistration>>>;
-  numPendingRegistrations: IDynamicValue<number>;
+  registration$$: Observable<Observable<IDynamicValue<ISingleRegistration>>>;
   results: IDynamicValue<ICandidateTotal[]>;
 }
 
@@ -23,7 +22,7 @@ export interface IVotingContractSummary {
   phase: IDynamicValue<string>;
 }
 
-export interface ISingleVoterRegistration {
+export interface ISingleRegistration {
   voter: address;
   blindedAddress: string;
   blindSignature: string;

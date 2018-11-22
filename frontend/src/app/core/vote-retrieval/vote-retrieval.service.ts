@@ -37,7 +37,7 @@ import { FormatValidator } from './format-validator';
 import { VoteRetrievalErrors } from './vote-retreival-errors';
 import {
   IDynamicValue,
-  ISingleVoterRegistration,
+  ISingleRegistration,
   IVotingContractDetails,
   IVotingContractSummary,
   RetrievalStatus
@@ -62,6 +62,29 @@ export class VoteRetrievalService implements IVoteRetrievalService {
   }
 
   /**
+   * Counts the number of incomplete voter registrations in the provided value
+   * @param {Observable<Observable<IDynamicValue<ISingleRegistration>>>} reg$$ an observable that emits one
+   * observable per voter, where each inner observable emits a dynamic value with current status of that voter's registration.
+   * The blindSignature is null if the Registration Authority has not completed the registration for that voter.
+   * The inner observable is "UNAVAILABLE" if the hashes cannot be resolved or the blind signature does not match the blinded address
+   * (it is expected this parameter will be retrieved from the "registration$$" field in an IVotingContractDetails object)
+   * @returns {Observable<IDynamicValue<number>>} the number of incomplete voter registrations
+   */
+  static numPendingRegistrations$(reg$$: Observable<Observable<IDynamicValue<ISingleRegistration>>>): Observable<IDynamicValue<number>> {
+    return reg$$.scan(
+      (count$, dynamicVoterReg$) => count$.combineLatest(dynamicVoterReg$, (count, dynamicVoterReg) =>
+        (count == null || dynamicVoterReg.status !== RetrievalStatus.available) ?
+          null :
+          dynamicVoterReg.value.blindSignature ? count : count + 1
+      ),
+      Observable.of(0)
+    )
+      .startWith(Observable.of(0))
+      .switch()
+      .pipe(this.wrapRetrieval);
+  }
+
+  /**
    * Retrieves the vote summary information (from cache if possible) for each deployed
    * contract in the VoteListingService, merges them all into a single array and emits the result
    * The result is designed to be used by the VoteListingService
@@ -72,9 +95,9 @@ export class VoteRetrievalService implements IVoteRetrievalService {
     return this.voteListingSvc.deployedVotes$
       .map((addr, idx) => {
         const cm: IAnonymousVotingContractManager = this.anonymousVotingContractSvc.at(addr);
-        const phase$ = this.phase$(cm).pipe(this.wrapRetrieval);
-        const topic$ = this.params$(cm).map(params => params.topic).pipe(this.wrapRetrieval);
-        const address$ = Observable.of(addr).pipe(this.wrapRetrieval);
+        const phase$ = this.phase$(cm).pipe(VoteRetrievalService.wrapRetrieval);
+        const topic$ = this.params$(cm).map(params => params.topic).pipe(VoteRetrievalService.wrapRetrieval);
+        const address$ = Observable.of(addr).pipe(VoteRetrievalService.wrapRetrieval);
 
         return phase$.combineLatest(topic$, address$, (phase, topic, contractAddr) => ({
           index: idx,
@@ -104,25 +127,14 @@ export class VoteRetrievalService implements IVoteRetrievalService {
       .filter(summary => summary.address.status === RetrievalStatus.available)
       .switchMap(summary => {
         const cm = this.anonymousVotingContractSvc.at(summary.address.value);
-        const regAuth$ = cm.constants$.map(constants => constants.registrationAuthority).pipe(this.wrapRetrieval);
-        const key$ = this.params$(cm).map(params => params.registration_key).pipe(this.wrapRetrieval);
-        const candidates$ = this.params$(cm).map(params => params.candidates).pipe(this.wrapRetrieval);
-        const registration$ = this.registration$(cm);
-        const numPendingRegistrations$ = registration$.scan(
-          (count$, dynamicVoterReg$) => count$.combineLatest(dynamicVoterReg$, (count, dynamicVoterReg) =>
-            (count == null || dynamicVoterReg.status !== RetrievalStatus.available) ?
-              null :
-              dynamicVoterReg.value.blindSignature ? count : count + 1
-          ),
-          Observable.of(0)
-        )
-          .switch()
-          .pipe(this.wrapRetrieval);
+        const registration$ = this.registration$$(cm);
+        const regAuth$ = cm.constants$.map(constants => constants.registrationAuthority).pipe(VoteRetrievalService.wrapRetrieval);
+        const key$ = this.params$(cm).map(params => params.registration_key).pipe(VoteRetrievalService.wrapRetrieval);
+        const candidates$ = this.params$(cm).map(params => params.candidates).pipe(VoteRetrievalService.wrapRetrieval);
+        const tally$ = this.tally(cm).pipe(VoteRetrievalService.wrapRetrieval);
 
-        const tally$ = this.tally(cm).pipe(this.wrapRetrieval);
-
-        return regAuth$.combineLatest(key$, candidates$, numPendingRegistrations$, tally$,
-          (regAuth, key, candidates, numPending, tally) => ({
+        return regAuth$.combineLatest(key$, candidates$, tally$,
+          (regAuth, key, candidates, tally) => ({
             index: idx,
             address: summary.address,
             topic: summary.topic,
@@ -131,10 +143,26 @@ export class VoteRetrievalService implements IVoteRetrievalService {
             key: key,
             candidates: candidates,
             registration$$: registration$,
-            numPendingRegistrations: numPending,
             results: tally
           }));
       });
+  }
+
+  /**
+   * Prepend an empty value with status "RETRIEVING" to the source observable and then
+   * apply the status "AVAILABLE" to all values or emit an "UNAVAILABLE" status if the source observable is empty or null
+   * @param {Observable<T>} obs the source observable
+   * @returns {Observable<IDynamicValue<T>>} an observable the wraps retrieval status information around the source observable
+   * @private
+   */
+  private static wrapRetrieval<T>(obs: Observable<T>): Observable<IDynamicValue<T>> {
+    return obs
+      .defaultIfEmpty(null)
+      .map(val => val === null ?
+        {status: RetrievalStatus.unavailable, value: null} :
+        {status: RetrievalStatus.available, value: val}
+      )
+      .startWith({status: RetrievalStatus.retrieving, value: null});
   }
 
   /**
@@ -197,13 +225,13 @@ export class VoteRetrievalService implements IVoteRetrievalService {
   /**
    * Retrieves and validates the registration mapping (voters to blind signatures)
    * @param {IAnonymousVotingContractManager} cm the contract manager for the AnonymousVoting contract
-   * @returns {Observable<Observable<IDynamicValue<ISingleVoterRegistration>>>} an observable that emits one
+   * @returns {Observable<Observable<IDynamicValue<ISingleRegistration>>>} an observable that emits one
    * observable per voter, where each inner observable emits a dynamic value with current status of that voter's registration.
    * The blindSignature is null if the Registration Authority has not completed the registration for that voter.
    * The inner observable is "UNAVAILABLE" if the hashes cannot be resolved or the blind signature does not match the blinded address
    * @private
    */
-  private registration$(cm: IAnonymousVotingContractManager): Observable<Observable<IDynamicValue<ISingleVoterRegistration>>> {
+  private registration$$(cm: IAnonymousVotingContractManager): Observable<Observable<IDynamicValue<ISingleRegistration>>> {
     const key$ = this.params$(cm).map(params => params.registration_key);
 
     return cm.registrationHashes$
@@ -229,7 +257,7 @@ export class VoteRetrievalService implements IVoteRetrievalService {
           }
           return reg;
         })
-          .pipe(this.wrapRetrieval);
+          .pipe(VoteRetrievalService.wrapRetrieval);
       }));
   }
 
@@ -280,23 +308,6 @@ export class VoteRetrievalService implements IVoteRetrievalService {
         }
       }
     ));
-  }
-
-  /**
-   * Prepend an empty value with status "RETRIEVING" to the source observable and then
-   * apply the status "AVAILABLE" to all values or emit an "UNAVAILABLE" status if the source observable is empty or null
-   * @param {Observable<T>} obs the source observable
-   * @returns {Observable<IDynamicValue<T>>} an observable the wraps retrieval status information around the source observable
-   * @private
-   */
-  private wrapRetrieval<T>(obs: Observable<T>): Observable<IDynamicValue<T>> {
-    return obs
-      .defaultIfEmpty(null)
-      .map(val => val === null ?
-        {status: RetrievalStatus.unavailable, value: null} :
-        {status: RetrievalStatus.available, value: val}
-      )
-      .startWith({status: RetrievalStatus.retrieving, value: null});
   }
 }
 
