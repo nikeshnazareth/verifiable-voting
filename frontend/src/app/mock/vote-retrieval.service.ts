@@ -2,6 +2,7 @@ import { Observable } from 'rxjs/Observable';
 
 import { VotePhases } from '../core/ethereum/anonymous-voting-contract/contract.constants';
 import {
+  IDynamicValue, ISingleVoterRegistration,
   IVotingContractDetails,
   IVotingContractSummary, RetrievalStatus
 } from '../core/vote-retrieval/vote-retreival.service.constants';
@@ -31,10 +32,9 @@ export class VoteRetrievalService implements IVoteRetrievalService {
         topic: {status: RetrievalStatus.unavailable, value: null},
         phase: {status: RetrievalStatus.unavailable, value: null},
         registrationAuthority: {status: RetrievalStatus.unavailable, value: null},
-        pendingRegistrations: {status: RetrievalStatus.unavailable, value: null},
         key: {status: RetrievalStatus.unavailable, value: null},
         candidates: {status: RetrievalStatus.unavailable, value: null},
-        registration: {status: RetrievalStatus.unavailable, value: null},
+        registration$$: Observable.never(),
         results: {status: RetrievalStatus.unavailable, value: null}
       }) :
       Observable.of({
@@ -52,7 +52,6 @@ export class VoteRetrievalService implements IVoteRetrievalService {
           status: RetrievalStatus.available,
           value: Mock.AnonymousVotingContractCollections[index].voteConstants.registrationAuthority
         },
-        pendingRegistrations: {status: RetrievalStatus.available, value: []},
         key: {
           status: RetrievalStatus.available,
           value: Mock.AnonymousVotingContractCollections[index].parameters.registration_key
@@ -61,8 +60,13 @@ export class VoteRetrievalService implements IVoteRetrievalService {
           status: RetrievalStatus.available,
           value: Mock.AnonymousVotingContractCollections[index].parameters.candidates
         },
-        registration: {status: RetrievalStatus.available, value: {}},
+        registration$$: Observable.never(),
         results: {status: RetrievalStatus.available, value: []}
       });
   }
+
+  numPendingRegistrations$(reg$$: Observable<Observable<IDynamicValue<ISingleVoterRegistration>>>): Observable<IDynamicValue<number>> {
+    return Observable.of({status: RetrievalStatus.available, value: 0});
+  }
+
 }

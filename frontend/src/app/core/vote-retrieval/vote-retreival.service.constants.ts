@@ -1,3 +1,4 @@
+import { Observable } from 'rxjs/index';
 import { ICandidateTotal } from '../../ui/vote/results/results-component';
 import { IRSAKey } from '../cryptography/rsa-key.interface';
 import { address } from '../ethereum/type.mappings';
@@ -8,10 +9,10 @@ export interface IVotingContractDetails {
   topic: IDynamicValue<string>;
   phase: IDynamicValue<string>;
   registrationAuthority: IDynamicValue<address>;
-  pendingRegistrations: IDynamicValue<ISinglePendingRegistration[]>;
   key: IDynamicValue<IRSAKey>;
   candidates: IDynamicValue<string[]>;
-  registration: IDynamicValue<IRegistration>;
+  registration$$: Observable<Observable<IDynamicValue<ISingleVoterRegistration>>>;
+  numPendingRegistrations: IDynamicValue<number>;
   results: IDynamicValue<ICandidateTotal[]>;
 }
 
@@ -20,17 +21,6 @@ export interface IVotingContractSummary {
   address: IDynamicValue<address>;
   topic: IDynamicValue<string>;
   phase: IDynamicValue<string>;
-}
-
-export interface IRegistration {
-  [voter: string]: {
-    blindSignature: string
-  };
-}
-
-export interface ISinglePendingRegistration {
-  voter: address;
-  blindedAddress: string;
 }
 
 export interface ISingleVoterRegistration {

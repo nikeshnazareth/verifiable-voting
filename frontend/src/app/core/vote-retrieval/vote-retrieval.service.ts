@@ -26,12 +26,10 @@ import { Observable } from 'rxjs/Observable';
 
 import { ICandidateTotal } from '../../ui/vote/results/results-component';
 import { CryptographyService } from '../cryptography/cryptography.service';
-import { IRSAKey } from '../cryptography/rsa-key.interface';
 import { ErrorService } from '../error-service/error.service';
-import { IAnonymousVotingContractManager, IRegistrationHashes } from '../ethereum/anonymous-voting-contract/contract-manager';
+import { IAnonymousVotingContractManager } from '../ethereum/anonymous-voting-contract/contract-manager';
 import { VotePhases } from '../ethereum/anonymous-voting-contract/contract.constants';
 import { AnonymousVotingContractService } from '../ethereum/anonymous-voting-contract/contract.service';
-import { address } from '../ethereum/type.mappings';
 import { VoteListingContractService } from '../ethereum/vote-listing-contract/contract.service';
 import { IVote, IVoteParameters } from '../ipfs/formats.interface';
 import { IPFSService } from '../ipfs/ipfs.service';
@@ -39,7 +37,7 @@ import { FormatValidator } from './format-validator';
 import { VoteRetrievalErrors } from './vote-retreival-errors';
 import {
   IDynamicValue,
-  IRegistration, ISinglePendingRegistration, ISingleVoterRegistration,
+  ISingleVoterRegistration,
   IVotingContractDetails,
   IVotingContractSummary,
   RetrievalStatus
@@ -107,23 +105,33 @@ export class VoteRetrievalService implements IVoteRetrievalService {
       .switchMap(summary => {
         const cm = this.anonymousVotingContractSvc.at(summary.address.value);
         const regAuth$ = cm.constants$.map(constants => constants.registrationAuthority).pipe(this.wrapRetrieval);
-        const pendingRegistrations$ = this.pendingRegistrations$(cm).pipe(this.wrapRetrieval);
         const key$ = this.params$(cm).map(params => params.registration_key).pipe(this.wrapRetrieval);
         const candidates$ = this.params$(cm).map(params => params.candidates).pipe(this.wrapRetrieval);
-        const registration$ = this.registration$(cm).pipe(this.wrapRetrieval);
+        const registration$ = this.registration$(cm);
+        const numPendingRegistrations$ = registration$.scan(
+          (count$, dynamicVoterReg$) => count$.combineLatest(dynamicVoterReg$, (count, dynamicVoterReg) =>
+            (count == null || dynamicVoterReg.status !== RetrievalStatus.available) ?
+              null :
+              dynamicVoterReg.value.blindSignature ? count : count + 1
+          ),
+          Observable.of(0)
+        )
+          .switch()
+          .pipe(this.wrapRetrieval);
+
         const tally$ = this.tally(cm).pipe(this.wrapRetrieval);
 
-        return regAuth$.combineLatest(pendingRegistrations$, key$, candidates$, registration$, tally$,
-          (regAuth, pendingRegistrations, key, candidates, registration, tally) => ({
+        return regAuth$.combineLatest(key$, candidates$, numPendingRegistrations$, tally$,
+          (regAuth, key, candidates, numPending, tally) => ({
             index: idx,
             address: summary.address,
             topic: summary.topic,
             phase: summary.phase,
             registrationAuthority: regAuth,
-            pendingRegistrations: pendingRegistrations,
             key: key,
             candidates: candidates,
-            registration: registration,
+            registration$$: registration$,
+            numPendingRegistrations: numPending,
             results: tally
           }));
       });
@@ -187,87 +195,42 @@ export class VoteRetrievalService implements IVoteRetrievalService {
   }
 
   /**
-   * Retrieves the blinded addresses for each pending registration
-   * @param {IAnonymousVotingContractManager} cm the contract manager for the AnonymousVoting contract
-   * @returns {Observable<ISinglePendingRegistration[]>} an observable that emits the list of pending registrations
-   * or null if there is an error
-   */
-  private pendingRegistrations$(cm: IAnonymousVotingContractManager): Observable<ISinglePendingRegistration[]> {
-    return cm.registrationHashes$
-      .map(regHashes => Object.keys(regHashes).map(voter => (
-        {voter: voter, hashPair: regHashes[voter]}
-      )))
-      .switchMap(voterHashes => Observable.from(voterHashes))
-      .filter(voterHash => voterHash.hashPair.signature === null)
-      .mergeMap(voterHash => this.retrieveIPFSHash(voterHash.hashPair.blindedAddress, FormatValidator.blindAddressFormatError)
-        .map(obj => obj.blinded_address)
-        .map(blindedAddress => ({voter: voterHash.voter, blindedAddress: blindedAddress}))
-        .pipe(this.throwIfEmpty)
-      )
-      .scan((arr, el) => arr.concat(el), [])
-      .startWith([])
-      .catch(err => Observable.of(null));
-  }
-
-  /**
    * Retrieves and validates the registration mapping (voters to blind signatures)
    * @param {IAnonymousVotingContractManager} cm the contract manager for the AnonymousVoting contract
-   * @returns {Observable<IRegistration>} an observable of the registration mapping or an observable that emits
-   * null if there is an error
+   * @returns {Observable<Observable<IDynamicValue<ISingleVoterRegistration>>>} an observable that emits one
+   * observable per voter, where each inner observable emits a dynamic value with current status of that voter's registration.
+   * The blindSignature is null if the Registration Authority has not completed the registration for that voter.
+   * The inner observable is "UNAVAILABLE" if the hashes cannot be resolved or the blind signature does not match the blinded address
    * @private
    */
-  private registration$(cm: IAnonymousVotingContractManager): Observable<IRegistration> {
-    return this.pendingRegistrations$(cm)
-      .switchMap(pending => pending.length > 0 ? Observable.of(null) : // the registration is invalid while there are pending registrations
-        cm.registrationHashes$
-          .switchMap(regHashes =>
-            Observable.from(Object.keys(regHashes))
-              .mergeMap(voter => this.params$(cm)
-                // TODO: this seems like a redundant check (because of the pending.length check) but there is something about the timing
-                // and the fact that values are getting replayed that causes this branch to be executed with null signatures
-                  .filter(p => regHashes[voter].signature !== null)
-                  .map(p => p.registration_key)
-                  .switchMap(key => this.validateRegistration(regHashes, voter, key).pipe(this.throwIfEmpty))
-              )
-              .scan((L, el) => L.concat(el), [])
-              .startWith([])
-              .map(L => {
-                const registration: IRegistration = {};
-                L.map(reg => {
-                  registration[reg.voter] = {blindSignature: reg.blindSignature};
-                });
-                return registration;
-              })
-          )
-      )
-      .catch(err => Observable.of(null));
-  }
+  private registration$(cm: IAnonymousVotingContractManager): Observable<Observable<IDynamicValue<ISingleVoterRegistration>>> {
+    const key$ = this.params$(cm).map(params => params.registration_key);
 
-  /**
-   * Retrieves the blinded address and blind signature from their IPFS hashes and verifies that they match each other
-   * @param {IRegistrationHashes} regHashes the list of IPFS registration (blinded address and blind signature) hashes
-   * @param {address} voter the particular voter record to check
-   * @param {IRSAKey} key the registration key used to create the blind signature
-   * @returns {Observable<ISingleVoterRegistration>} an observable of the voter, blindAddress and blind signature. Throws an error
-   * if the hashes cannot be resolved or the blind signature doesn't match the blind address
-   * @private
-   */
-  private validateRegistration(regHashes: IRegistrationHashes, voter: address, key: IRSAKey): Observable<ISingleVoterRegistration> {
-    const blindedAddress$ = this.retrieveIPFSHash(regHashes[voter].blindedAddress, FormatValidator.blindAddressFormatError)
-      .map(obj => obj.blinded_address);
+    return cm.registrationHashes$
+      .map(regHashes$ => regHashes$.switchMap(regHashes => {
+        const blindedAddress$ = this.retrieveIPFSHash(regHashes.blindedAddressHash, FormatValidator.blindAddressFormatError)
+          .map(obj => obj.blinded_address);
 
-    const blindSignature$ = this.retrieveIPFSHash(regHashes[voter].signature, FormatValidator.blindSignatureFormatError)
-      .map(obj => obj.blinded_signature);
+        const blindSignature$ = regHashes.blindSignatureHash ?
+          this.retrieveIPFSHash(regHashes.blindSignatureHash, FormatValidator.blindSignatureFormatError)
+            .map(obj => obj.blinded_signature) :
+          Observable.of(null);
 
-    return blindedAddress$.combineLatest(blindSignature$, (addr, sig) => ({
-      voter: voter, blindedAddress: addr, blindSignature: sig
-    }))
-      .do(reg => {
-        if (!this.cryptoSvc.rawVerify(reg.blindedAddress, reg.blindSignature, key)) {
-          this.errSvc.add(VoteRetrievalErrors.registration, null);
-          throw new Error(null);
-        }
-      });
+        const registration$ = blindedAddress$.combineLatest(blindSignature$, (addr, sig) => ({
+          voter: regHashes.voter,
+          blindedAddress: addr,
+          blindSignature: sig
+        }));
+
+        return registration$.combineLatest(key$, (reg, key) => {
+          if (reg.blindSignature && !this.cryptoSvc.rawVerify(reg.blindedAddress, reg.blindSignature, key)) {
+            this.errSvc.add(VoteRetrievalErrors.registration, null);
+            return null;
+          }
+          return reg;
+        })
+          .pipe(this.wrapRetrieval);
+      }));
   }
 
   /**
@@ -278,23 +241,20 @@ export class VoteRetrievalService implements IVoteRetrievalService {
    * @private
    */
   private tally(cm: IAnonymousVotingContractManager): Observable<ICandidateTotal[]> {
-    return this.registration$(cm)
-      .switchMap(reg => !reg ? Observable.of(null) :
-        this.params$(cm)
-          .map(params => params.candidates)
-          .switchMap(candidates =>
-            cm.voteHashes$
-              .mergeMap(voteEvent => this.retrieveIPFSHash(voteEvent.voteHash, FormatValidator.voteFormatError).pipe(this.throwIfEmpty))
-              .map(vote => <IVote> vote)
-              .map(vote => vote.candidateIdx)
-              // create a histogram of the selected candidate indices
-              .scan((tally, candidateIdx) => {
-                  tally[candidateIdx].count = tally[candidateIdx].count + 1;
-                  return tally;
-                }, candidates.map(candidate => ({candidate: candidate, count: 0}))
-              )
-              .startWith(candidates.map(candidate => ({candidate: candidate, count: 0})))
+    return this.params$(cm)
+      .map(params => params.candidates)
+      .switchMap(candidates =>
+        cm.voteHashes$
+          .mergeMap(voteEvent => this.retrieveIPFSHash(voteEvent.voteHash, FormatValidator.voteFormatError).pipe(this.throwIfEmpty))
+          .map(vote => <IVote>vote)
+          .map(vote => vote.candidateIdx)
+          // create a histogram of the selected candidate indices
+          .scan((tally, candidateIdx) => {
+              tally[candidateIdx].count = tally[candidateIdx].count + 1;
+              return tally;
+            }, candidates.map(candidate => ({candidate: candidate, count: 0}))
           )
+          .startWith(candidates.map(candidate => ({candidate: candidate, count: 0})))
       )
       .catch(err => Observable.of(null));
   }
