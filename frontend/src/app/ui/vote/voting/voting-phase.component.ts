@@ -1,5 +1,6 @@
 import { Component, Input, OnDestroy, OnInit } from '@angular/core';
 import { AbstractControl, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import 'rxjs/add/operator/last';
 import 'rxjs/add/operator/map';
 import 'rxjs/add/operator/switchMap';
 import { Observable } from 'rxjs/Observable';
@@ -10,9 +11,9 @@ import { IRSAKey } from '../../../core/cryptography/rsa-key.interface';
 import { ErrorService } from '../../../core/error-service/error.service';
 import { address } from '../../../core/ethereum/type.mappings';
 import { Web3Errors } from '../../../core/ethereum/web3-errors';
-import { Web3Service} from '../../../core/ethereum/web3.service';
+import { Web3Service } from '../../../core/ethereum/web3.service';
 import { VoteManagerService } from '../../../core/vote-manager/vote-manager.service';
-import { IRegistration } from '../../../core/vote-retrieval/vote-retreival.service.constants';
+import { IDynamicValue, ISingleRegistration } from '../../../core/vote-retrieval/vote-retreival.service.constants';
 import { EthereumAddressValidator } from '../../../validators/ethereum-address.validator';
 
 @Component({
@@ -24,7 +25,7 @@ export class VotingPhaseComponent implements OnInit, OnDestroy {
   @Input() contract: address;
   @Input() key: IRSAKey;
   @Input() candidates: string[];
-  @Input() registration: IRegistration;
+  @Input() registration: Observable<Observable<IDynamicValue<ISingleRegistration>>>;
 
   public form: FormGroup;
   public submission$: Subject<IVotingForm>;
@@ -66,14 +67,22 @@ export class VotingPhaseComponent implements OnInit, OnDestroy {
    */
   handleSubmissions(): Observable<void> {
     return this.submission$
-      .switchMap(form => this.voteManagerSvc.voteAt$(
-        this.contract,
-        this.key,
-        `0x${form.anonymousAddress}`,
-        this.registration[`0x${form.voterAddress}`].blindSignature,
-        form.blindingFactor,
-        form.chosenCandidate
-      ))
+      .switchMap(form => this.registration
+        .mergeMap(voterReg$ => voterReg$.last())
+        .filter(voterReg => voterReg.value.voter === `0x${form.voterAddress}`)
+        .map(voterReg => voterReg.value.blindSignature)
+        .take(1)
+        .switchMap(blindSig =>
+          this.voteManagerSvc.voteAt$(
+            this.contract,
+            this.key,
+            `0x${form.anonymousAddress}`,
+            blindSig,
+            form.blindingFactor,
+            form.chosenCandidate
+          )
+        )
+      )
       .map(() => this.form.reset());
   }
 

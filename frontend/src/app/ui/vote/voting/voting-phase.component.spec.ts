@@ -10,6 +10,7 @@ import { ErrorService } from '../../../core/error-service/error.service';
 import { Web3Errors } from '../../../core/ethereum/web3-errors';
 import { Web3Service } from '../../../core/ethereum/web3.service';
 import { VoteManagerService } from '../../../core/vote-manager/vote-manager.service';
+import { RetrievalStatus } from '../../../core/vote-retrieval/vote-retreival.service.constants';
 import { MaterialModule } from '../../../material/material.module';
 import { DOMInteractionUtility } from '../../../mock/dom-interaction-utility';
 import { IAnonymousVotingContractCollection, IVoter, Mock } from '../../../mock/module';
@@ -283,7 +284,7 @@ describe('Component: VotingPhaseComponent', () => {
       });
 
       it('should start with no selection', () => {
-        expect((<MatRadioGroup> Page.candidateRadioGroup.componentInstance).value).toBeFalsy();
+        expect((<MatRadioGroup>Page.candidateRadioGroup.componentInstance).value).toBeFalsy();
       });
 
       it('should be a form control', () => {
@@ -379,12 +380,22 @@ describe('Component: VotingPhaseComponent', () => {
           fixture.componentInstance.contract = voteCollection.address;
           fixture.componentInstance.key = voteCollection.parameters.registration_key;
           fixture.componentInstance.candidates = voteCollection.parameters.candidates;
-          fixture.componentInstance.registration = {};
-          Mock.Voters.map(v => {
-            fixture.componentInstance.registration[`0x${v.public_address}`] = {
-              blindSignature: v.signed_blinded_address
-            };
-          });
+          fixture.componentInstance.registration = Observable.from(Mock.Voters.map(v =>
+            Observable.from([
+              {
+                status: RetrievalStatus.retrieving,
+                value: null
+              },
+              {
+                status: RetrievalStatus.available,
+                value: {voter: `0x${v.public_address}`, blindedAddress: v.blinded_address, blindSignature: null}
+              },
+              {
+                status: RetrievalStatus.available,
+                value: {voter: `0x${v.public_address}`, blindedAddress: v.blinded_address, blindSignature: v.signed_blinded_address}
+              },
+            ])
+          ));
           populateForm();
         });
 
