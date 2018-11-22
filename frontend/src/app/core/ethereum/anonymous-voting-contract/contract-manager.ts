@@ -2,7 +2,6 @@ import 'rxjs/add/observable/from';
 import 'rxjs/add/observable/timer';
 import 'rxjs/add/operator/map';
 import 'rxjs/add/operator/reduce';
-import { BehaviorSubject } from 'rxjs/BehaviorSubject';
 import { Observable } from 'rxjs/Observable';
 import { ReplaySubject } from 'rxjs/ReplaySubject';
 
@@ -19,7 +18,7 @@ import { AnonymousVotingAPI } from './contract.api';
 export interface IAnonymousVotingContractManager {
   phase$: Observable<number>;
   constants$: Observable<IVoteConstants>;
-  registrationHashes$: Observable<IRegistrationHashes>;
+  registrationHashes$: Observable<Observable<IRegistrationHashes>>;
   voteHashes$: Observable<IVoteHash>;
 
   register$(voterAddr: address, blindAddressHash: string): Observable<ITransactionReceipt>;
@@ -32,17 +31,21 @@ export interface IAnonymousVotingContractManager {
 export class AnonymousVotingContractManager implements IAnonymousVotingContractManager {
   private events$: ReplaySubject<IContractLog>;
   private voteConstants$: ReplaySubject<IVoteConstants>;
-  private registrationHashes: IRegistrationHashes;
-  private updatedRegistrationHashes$: BehaviorSubject<boolean>;
+  private regHashes$: ReplaySubject<ReplaySubject<IRegistrationHashes>>;
 
   constructor(private contract$: Observable<AnonymousVotingAPI>, private errSvc: ErrorService) {
     this.events$ = new ReplaySubject<IContractLog>();
     this.voteConstants$ = new ReplaySubject<IVoteConstants>();
-    this.updatedRegistrationHashes$ = new BehaviorSubject<boolean>(true);
+    this.regHashes$ = new ReplaySubject<ReplaySubject<IRegistrationHashes>>();
 
+    // Replace the observables with Replay Subjects
     this.initEvents$().subscribe(this.events$);
     this.initVoteConstants$().subscribe(this.voteConstants$);
-    this.initRegistrationHashes();
+    this.initRegistrationHashes$().subscribe(obs => {
+      const record$ = new ReplaySubject<IRegistrationHashes>();
+      obs.subscribe(record$);
+      this.regHashes$.next(record$);
+    });
   }
 
   /**
@@ -73,11 +76,13 @@ export class AnonymousVotingContractManager implements IAnonymousVotingContractM
   }
 
   /**
-   * @returns {Observable<IRegistrationHashes>} An observable of the registration IPFS hashes as they are published
+   * @returns {Observable<Observable<IRegistrationHashes>>} An observable of the registration IPFS hashes as they are published.
+   * Each item is an observable of the two registration steps per voter:
+   * 1. The partial record after the VoterInitiatedRegistration event (ie. unknown (null) blind signature hash)
+   * 2. The full record
    */
-  get registrationHashes$(): Observable<IRegistrationHashes> {
-    return this.updatedRegistrationHashes$
-      .map(() => this.registrationHashes);
+  get registrationHashes$(): Observable<Observable<IRegistrationHashes>> {
+    return this.regHashes$;
   }
 
   /**
@@ -189,33 +194,37 @@ export class AnonymousVotingContractManager implements IAnonymousVotingContractM
   }
 
   /**
-   * Caches the registration IPFS hashes as they are published and triggers an observable
-   * so observers know about the update
+   * @returns an observable of the IPFS Registration hashes as they are published,
+   * where each item corresponds to a single voter and is an observable of the two relevant events
+   * (the voter initiated registration and the registration authority completed the registration)
    * @private
    */
-  private initRegistrationHashes(): void {
-    this.registrationHashes = {};
-    this.events$
-      .filter(log => [VoterInitiatedRegistration.name, RegistrationComplete.name].includes(log.event))
-      .subscribe(log => {
-        if (log.event === VoterInitiatedRegistration.name) {
-          const args = (<VoterInitiatedRegistration.Log> log).args;
-          this.registrationHashes[args.voter] = {
-            blindedAddress: args.blindedAddressHash,
-            signature: null
-          };
-        } else {
-          const args = (<RegistrationComplete.Log> log).args;
-          this.registrationHashes[args.voter].signature = args.signatureHash;
-        }
-        this.updatedRegistrationHashes$.next(true);
-      });
+  private initRegistrationHashes$(): Observable<Observable<IRegistrationHashes>> {
+    return this.events$
+      .filter(log => log.event === VoterInitiatedRegistration.name)
+      .map(log => (<VoterInitiatedRegistration.Log> log).args)
+      .map(initiatedEventArgs =>
+        Observable.of({
+          voter: initiatedEventArgs.voter,
+          blindedAddressHash: initiatedEventArgs.blindedAddressHash,
+          blindSignatureHash: null
+        }).concat(
+          this.events$.filter(log => log.event === RegistrationComplete.name)
+            .map(log => (<RegistrationComplete.Log> log).args)
+            .filter(completeEventArgs => completeEventArgs.voter === initiatedEventArgs.voter)
+            .take(1)
+            .map(completeEventArgs => ({
+              voter: initiatedEventArgs.voter,
+              blindedAddressHash: initiatedEventArgs.blindedAddressHash,
+              blindSignatureHash: completeEventArgs.signatureHash
+            }))
+        )
+      );
   }
 }
 
 export interface IRegistrationHashes {
-  [voter: string]: {
-    blindedAddress: string;
-    signature: string;
-  };
+  voter: string;
+  blindedAddressHash: string;
+  blindSignatureHash: string;
 }

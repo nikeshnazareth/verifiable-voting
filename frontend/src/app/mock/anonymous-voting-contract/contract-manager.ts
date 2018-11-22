@@ -37,8 +37,8 @@ export class AnonymousVotingContractManager implements IAnonymousVotingContractM
       .map(collection => collection.voteConstants);
   }
 
-  get registrationHashes$(): Observable<IRegistrationHashes> {
-    return Observable.of({});
+  get registrationHashes$(): Observable<Observable<IRegistrationHashes>> {
+    return Observable.never();
   }
 
   get voteHashes$(): Observable<IVoteHash> {
