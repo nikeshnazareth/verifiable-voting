@@ -1,6 +1,7 @@
 import { Component, Input, OnInit } from '@angular/core';
 import 'rxjs/add/operator/pluck';
 import { Observable } from 'rxjs/Observable';
+import { map, switchMap } from 'rxjs/operators';
 import { ReplaySubject } from 'rxjs/ReplaySubject';
 
 import { IVotingContractDetails, } from '../../core/vote-retrieval/vote-retreival.service.constants';
@@ -15,9 +16,10 @@ import { IPhaseStatus, VoteComponentMessages } from './vote-component-messages';
 export class VoteComponent implements OnInit {
   public voteIsSelected: boolean;
   public index$: ReplaySubject<number>;
-  public heading$: Observable<string>;
-  public status$: Observable<IPhaseStatus>;
   public voteDetails$: ReplaySubject<IVotingContractDetails>;
+  public registrationStatus$: ReplaySubject<IPhaseStatus>;
+  public votingStatus$: ReplaySubject<IPhaseStatus>;
+  public resultsStatus$: ReplaySubject<IPhaseStatus>;
 
   constructor(private voteRetrievalSvc: VoteRetrievalService) {
     this.index$ = new ReplaySubject<number>();
@@ -29,11 +31,41 @@ export class VoteComponent implements OnInit {
    */
   ngOnInit() {
     this.voteDetails$ = new ReplaySubject<IVotingContractDetails>();
-    this.index$.switchMap(idx => this.voteRetrievalSvc.detailsAtIndex$(idx))
+    this.registrationStatus$ = new ReplaySubject<IPhaseStatus>();
+    this.votingStatus$ = new ReplaySubject<IPhaseStatus>();
+    this.resultsStatus$ = new ReplaySubject<IPhaseStatus>();
+
+    this.index$.pipe(switchMap(idx => this.voteRetrievalSvc.detailsAtIndex$(idx)))
       .subscribe(this.voteDetails$);
 
-    this.heading$ = this.voteDetails$.map(details => `${details.index}. ${details.topic.value}`);
-    this.status$ = this.voteDetails$.map(details => VoteComponentMessages.status(details));
+    this.voteDetails$.pipe(map(details => VoteComponentMessages.registrationStatus(details)))
+      .subscribe(this.registrationStatus$);
+
+    this.voteDetails$.pipe(switchMap(details => VoteComponentMessages.votingStatus$(details)))
+      .subscribe(this.votingStatus$);
+
+    this.voteDetails$.pipe(map(details => VoteComponentMessages.resultsStatus(details)))
+      .subscribe(this.resultsStatus$);
+  }
+
+  get heading$() {
+    return this.voteDetails$.pipe(map(details => `${details.index}. ${details.topic.value}`));
+  }
+
+  getProperty$(prop: string) {
+    return this.voteDetails$.pipe(map(details => details[prop].value));
+  }
+
+  get registration$$() {
+    return this.voteDetails$.pipe(map(details => details.registration$$));
+  }
+
+  getMessage$(status$: ReplaySubject<IPhaseStatus>): Observable<string> {
+    return status$.pipe(map(status => status.message));
+  }
+
+  isDisabled$(status$: ReplaySubject<IPhaseStatus>): Observable<boolean> {
+    return status$.pipe(map(status => status.disabled));
   }
 
   /**
@@ -48,5 +80,3 @@ export class VoteComponent implements OnInit {
     }
   }
 }
-
-

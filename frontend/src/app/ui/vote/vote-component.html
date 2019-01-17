@@ -1,32 +1,32 @@
 <div class="container" *ngIf="voteIsSelected">
   <h2>{{heading$ | async}}</h2>
-  <mat-expansion-panel [disabled]="status$.pluck('registration').pluck('disabled') | async">
+  <mat-expansion-panel [disabled]="isDisabled$(registrationStatus$) | async">
     <mat-expansion-panel-header>
       <mat-panel-title>REGISTER</mat-panel-title>
-      <mat-panel-description>{{status$.pluck('registration').pluck('message') | async}}</mat-panel-description>
+      <mat-panel-description>{{getMessage$(registrationStatus$) | async}}</mat-panel-description>
     </mat-expansion-panel-header>
-    <vv-registration-phase [contract]="voteDetails$.pluck('address').pluck('value') | async"
-                           [key]="voteDetails$.pluck('key').pluck('value') | async">
+    <vv-registration-phase [contract]="getProperty$('address') | async"
+                           [key]="getProperty$('key') | async">
     </vv-registration-phase>
   </mat-expansion-panel>
 
-  <mat-expansion-panel [disabled]="status$.pluck('voting').pluck('disabled') | async">
+  <mat-expansion-panel [disabled]="isDisabled$(votingStatus$) | async">
     <mat-expansion-panel-header>
       <mat-panel-title>VOTE</mat-panel-title>
-      <mat-panel-description>{{status$.pluck('voting').pluck('message') | async}}</mat-panel-description>
+      <mat-panel-description>{{getMessage$(votingStatus$) | async}}</mat-panel-description>
     </mat-expansion-panel-header>
-    <vv-voting-phase [contract]="voteDetails$.pluck('address').pluck('value') | async"
-                     [key]="voteDetails$.pluck('key').pluck('value') | async"
-                     [candidates]="voteDetails$.pluck('candidates').pluck('value') | async"
-                     [registration]="voteDetails$.pluck('registration').pluck('value') | async">
+    <vv-voting-phase [contract]="getProperty$('address') | async"
+                     [key]="getProperty$('key') | async"
+                     [candidates]="getProperty$('candidates') | async"
+                     [registration]="registration$$ | async">
     </vv-voting-phase>
   </mat-expansion-panel>
 
-  <mat-expansion-panel [disabled]="status$.pluck('results').pluck('disabled') | async">
+  <mat-expansion-panel [disabled]="isDisabled$(resultsStatus$) | async">
     <mat-expansion-panel-header>
       <mat-panel-title>RESULTS</mat-panel-title>
-      <mat-panel-description>{{status$.pluck('results').pluck('message') | async}}</mat-panel-description>
+      <mat-panel-description>{{getMessage$(resultsStatus$) | async}}</mat-panel-description>
     </mat-expansion-panel-header>
-    <vv-results [tally]="voteDetails$.pluck('results').pluck('value') | async"></vv-results>
+    <vv-results [tally]="getProperty$('results') | async"></vv-results>
   </mat-expansion-panel>
 </div>

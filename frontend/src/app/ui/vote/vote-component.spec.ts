@@ -2,13 +2,14 @@ import { Component, DebugElement, Input } from '@angular/core';
 import { async, ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import 'rxjs/add/operator/concat';
 import { Observable } from 'rxjs/Observable';
 
 import { IRSAKey } from '../../core/cryptography/rsa-key.interface';
 import { VotePhases } from '../../core/ethereum/anonymous-voting-contract/contract.constants';
 import { address } from '../../core/ethereum/type.mappings';
 import {
-  IRegistration,
+  IDynamicValue, ISingleRegistration,
   IVotingContractDetails,
   RetrievalStatus
 } from '../../core/vote-retrieval/vote-retreival.service.constants';
@@ -72,7 +73,7 @@ describe('Component: VoteComponent', () => {
       });
   }));
 
-  const completeDetails = (idx) => {
+  const completeDetails: ((number) => IVotingContractDetails) = (idx) => {
     const collection = Mock.AnonymousVotingContractCollections[idx];
     return {
       index: idx,
@@ -80,10 +81,9 @@ describe('Component: VoteComponent', () => {
       topic: {status: RetrievalStatus.available, value: collection.parameters.topic},
       phase: {status: RetrievalStatus.available, value: VotePhases[collection.currentPhase]},
       registrationAuthority: {status: RetrievalStatus.available, value: collection.voteConstants.registrationAuthority},
-      pendingRegistrations: {status: RetrievalStatus.available, value: []},
       key: {status: RetrievalStatus.available, value: collection.parameters.registration_key},
       candidates: {status: RetrievalStatus.available, value: collection.parameters.candidates},
-      registration: {status: RetrievalStatus.available, value: {}},
+      registration$$: Observable.empty(),
       results: {status: RetrievalStatus.available, value: []}
     };
   };
@@ -252,13 +252,13 @@ describe('Component: VoteComponent', () => {
           });
 
           requiredPanelIndices.forEach(panelIdx => {
-            it(`should state "${VoteComponentMessages.retrieving}" on panel ${panelIdx}`, () => {
-              expect(page.panelDescriptions[panelIdx]).toEqual(VoteComponentMessages.retrieving);
-            });
+            it(`should state "${VoteComponentMessages.retrieving}" on panel ${panelIdx}`, () =>
+              expect(page.panelDescriptions[panelIdx]).toEqual(VoteComponentMessages.retrieving)
+            );
 
-            it(`should disable panel ${panelIdx}`, () => {
-              expect(page.expansionPanels[panelIdx].componentInstance.disabled).toEqual(true);
-            });
+            it(`should disable panel ${panelIdx}`, () =>
+              expect(page.expansionPanels[panelIdx].componentInstance.disabled).toEqual(true)
+            );
           });
         });
 
@@ -286,13 +286,11 @@ describe('Component: VoteComponent', () => {
       requiredTests('address', 'address', [0, 1]);
       requiredTests('registration key', 'key', [0, 1]);
       requiredTests('candidates list', 'candidates', [1]);
-      requiredTests('list of pending registrations', 'pendingRegistrations', [1]);
-      requiredTests('list of completed registrations', 'registration', [1]);
       requiredTests('histogram of results', 'results', [2]);
 
       describe('case: all parameters are available', () => {
         describe('parameter: phase', () => {
-          describe(`case: it is "${VotePhases[0]}"`, () => {
+          describe(`case: it is phase "${VotePhases[0]}"`, () => {
             let details: IVotingContractDetails;
 
             beforeEach(() => {
@@ -335,8 +333,14 @@ describe('Component: VoteComponent', () => {
                 const numPending = 3;
 
                 beforeEach(() => {
-                  details.pendingRegistrations.value = Mock.Voters.filter((_, i) => i < numPending)
-                    .map(voter => ({voter: voter.public_address, blindedAddress: voter.blinded_address}));
+                  details.registration$$ = Observable.of(
+                    Observable.range(0, numPending)
+                      .map(i => Mock.Voters[i])
+                      .map(voter => ({
+                        status: RetrievalStatus.available,
+                        value: {voter: voter.public_address, blindedAddress: voter.blinded_address, blindSignature: null}
+                      }))
+                  );
                   spyOn(page.voteRetrievalSvc, 'detailsAtIndex$').and.returnValue(Observable.of(details));
                   fixture.detectChanges();
                 });
@@ -367,7 +371,7 @@ describe('Component: VoteComponent', () => {
             });
           });
 
-          describe(`case: it is "${VotePhases[1]}"`, () => {
+          describe(`case: it is phase "${VotePhases[1]}"`, () => {
             let details: IVotingContractDetails;
 
             beforeEach(() => {
@@ -410,19 +414,31 @@ describe('Component: VoteComponent', () => {
                 const numPending = 3;
 
                 beforeEach(() => {
-                  details.pendingRegistrations.value = Mock.Voters.filter((_, i) => i < numPending)
-                    .map(voter => ({voter: voter.public_address, blindedAddress: voter.blinded_address}));
+                  details.registration$$ = Observable.range(0, numPending)
+                    .map(i => Mock.Voters[i])
+                    .map(voter => Observable.from([
+                        {
+                          status: RetrievalStatus.retrieving,
+                          value: null
+                        },
+                        {
+                          status: RetrievalStatus.available,
+                          value: {voter: voter.public_address, blindedAddress: voter.blinded_address, blindSignature: null}
+                        }
+                      ]).concat(Observable.never())
+                    );
+
                   spyOn(page.voteRetrievalSvc, 'detailsAtIndex$').and.returnValue(Observable.of(details));
                   fixture.detectChanges();
                 });
 
-                it(`should state ${VoteComponentMessages.pendingRegistrations(3)} on the expansion panel description`, () => {
-                  expect(page.panelDescriptions[1]).toEqual(VoteComponentMessages.pendingRegistrations(3));
-                });
+                it(`should state ${VoteComponentMessages.pendingRegistrations(3)} on the expansion panel description`, () =>
+                  expect(page.panelDescriptions[1]).toEqual(VoteComponentMessages.pendingRegistrations(3))
+                );
 
-                it('should be disabled', () => {
-                  expect(page.expansionPanels[1].componentInstance.disabled).toEqual(true);
-                });
+                it('should be disabled', () =>
+                  expect(page.expansionPanels[1].componentInstance.disabled).toEqual(true)
+                );
               });
             });
 
@@ -442,7 +458,7 @@ describe('Component: VoteComponent', () => {
             });
           });
 
-          describe(`case: it is "${VotePhases[2]}"`, () => {
+          describe(`case: it is phase "${VotePhases[2]}"`, () => {
             let details: IVotingContractDetails;
 
             beforeEach(() => {
@@ -485,8 +501,14 @@ describe('Component: VoteComponent', () => {
                 const numPending = 3;
 
                 beforeEach(() => {
-                  details.pendingRegistrations.value = Mock.Voters.filter((_, i) => i < numPending)
-                    .map(voter => ({voter: voter.public_address, blindedAddress: voter.blinded_address}));
+                  details.registration$$ = Observable.of(
+                    Observable.range(0, numPending)
+                      .map(i => Mock.Voters[i])
+                      .map(voter => ({
+                        status: RetrievalStatus.available,
+                        value: {voter: voter.public_address, blindedAddress: voter.blinded_address, blindSignature: null}
+                      }))
+                  );
                   spyOn(page.voteRetrievalSvc, 'detailsAtIndex$').and.returnValue(Observable.of(details));
                   fixture.detectChanges();
                 });
@@ -521,7 +543,6 @@ describe('Component: VoteComponent', () => {
     });
 
     describe('Sub components', () => {
-
 
       describe('Registration Phase Component', () => {
         const regPhaseComponent = () => fixture.debugElement.query(By.css('vv-registration-phase'));
@@ -620,15 +641,16 @@ describe('Component: VoteComponent', () => {
           let mockRegistration;
 
           beforeEach(() => {
-            mockRegistration = Mock.addresses.map(addr => ({arbitrary: 'MOCK REGISTRATION ' + addr}));
+            // these are not valid registrations but we're simply checking that the correct one gets passed
+            mockRegistration = Mock.addresses.map(addr => Observable.of(Observable.of({status: RetrievalStatus.available, value: addr})));
             spyOn(page.voteRetrievalSvc, 'detailsAtIndex$').and.callFake((idx) => {
               const details = completeDetails(idx);
-              details.registration.value = mockRegistration[idx];
+              details.registration$$ = mockRegistration[idx];
               return Observable.of(details);
             });
           });
 
-          it('should be a mapping from public voter addresses to blind signatures', () => {
+          it('should be an observable of voter registration observables', () => {
             fixture.componentInstance.index = 0;
             fixture.detectChanges();
             expect(votingPhaseComponent().componentInstance.registration).toEqual(mockRegistration[0]);
@@ -698,7 +720,7 @@ class StubVotingPhaseComponent {
   @Input() contract: address;
   @Input() key: IRSAKey;
   @Input() candidates: string[];
-  @Input() registration: IRegistration;
+  @Input() registration: Observable<Observable<IDynamicValue<ISingleRegistration>>>;
 }
 
 @Component({
