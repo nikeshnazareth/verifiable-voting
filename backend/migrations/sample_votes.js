@@ -11,9 +11,16 @@ const registrationAuthorities = [
 
 module.exports = [
     {
+        "topic": "How many roads must a man walk down?",
+        "candidates": ["Seven", "Eight", "Do I know what rhetorical means?"],
+        "registration_authority": registrationAuthorities[0],
+        "phase": 0,
+    },
+    {
         "topic": "Who will police the police?",
         "candidates": ["Super Troopers", "Police all the way down", "Coast Guard"],
         "registration_authority": registrationAuthorities[0],
+        "phase": 1,
         "voters": [
             {
                 "public": "0x8b31ab5e10db3dfe665f61d186662d746bb855a3",
@@ -42,10 +49,4 @@ module.exports = [
             },
         ]
     },
-    {
-        "topic": "How many roads must a man walk down?",
-        "candidates": ["Seven", "Eight", "Do I know what rhetorical means?"],
-        "registration_authority": registrationAuthorities[0],
-        "voters": []
-    }
 ];
