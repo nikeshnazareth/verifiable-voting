@@ -99,6 +99,7 @@ describe('class: AnonymousVotingContractManager', () => {
   });
 
   describe('property: phase$', () => {
+    // note: this has ms resolution ( in contrast to the Ethereum block timestamp which has second resolution )
     let now: Date;
 
     const init_phase$_and_subscribe = () => {
@@ -123,7 +124,7 @@ describe('class: AnonymousVotingContractManager', () => {
 
     describe('case: before the registration deadline', () => {
       beforeEach(() => {
-        now = new Date(voteCollection.voteConstants.registrationDeadline - msPerDay);
+        now = new Date(voteCollection.voteConstants.registrationDeadline * 1000 - msPerDay);
       });
 
       it('should start at phase 0', fakeAsync(() => {
@@ -168,7 +169,7 @@ describe('class: AnonymousVotingContractManager', () => {
 
     describe('case: during the voting phase', () => {
       beforeEach(() => {
-        now = new Date(voteCollection.voteConstants.registrationDeadline + msPerDay);
+        now = new Date(voteCollection.voteConstants.registrationDeadline * 1000 + msPerDay);
       });
 
       it('should immediately emit phases "0" and "1"', fakeAsync(() => {
@@ -200,7 +201,7 @@ describe('class: AnonymousVotingContractManager', () => {
 
     describe('case: after the voting phase', () => {
       beforeEach(() => {
-        now = new Date(voteCollection.voteConstants.votingDeadline + msPerDay);
+        now = new Date(voteCollection.voteConstants.votingDeadline * 1000 + msPerDay);
       });
 
       beforeEach(fakeAsync(() => init_phase$_and_subscribe()));

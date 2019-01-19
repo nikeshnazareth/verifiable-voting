@@ -33,9 +33,9 @@ import { VoteManagerService } from './vote-manager.service';
 import { VoteRetrievalService } from './vote-retrieval.service';
 import { Web3Service } from './web3.service';
 
-
-const msPerDay: number = 1000 * 60 * 60 * 24;
-const today = new Date(2018, 5, 28, 12); // Noon Tau Day
+// Ethereum contracts use seconds as the smallest unit of time
+const secondsPerDay: number = 60 * 60 * 24;
+const today = (new Date(2018, 5, 28, 12)).getTime() / 1000; // Noon Tau Day
 
 export class Mock {
   // constants
@@ -94,8 +94,8 @@ export interface IAnonymousVotingContractCollection {
 }
 
 function generateMockVoteContract(idx: number): IAnonymousVotingContractCollection {
-  const registrationDeadline: number = today.getTime() + 5 * msPerDay;
-  const votingDeadline: number = registrationDeadline + 7 * msPerDay;
+  const registrationDeadline: number = today + 5 * secondsPerDay;
+  const votingDeadline: number = registrationDeadline + 7 * secondsPerDay;
   const paramsHash: string = 'MOCK_PARAMETERS_IPFS_HASH_' + idx;
   const eligibilityContract: address = 'deadbeef' + idx;
   const registrationAuthority: address = Array(40).fill(idx).join('');

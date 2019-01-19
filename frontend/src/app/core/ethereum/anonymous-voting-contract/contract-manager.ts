@@ -1,4 +1,5 @@
 import 'rxjs/add/observable/from';
+import 'rxjs/add/observable/never';
 import 'rxjs/add/observable/timer';
 import 'rxjs/add/operator/map';
 import 'rxjs/add/operator/reduce';
@@ -54,7 +55,8 @@ export class AnonymousVotingContractManager implements IAnonymousVotingContractM
    * @returns {Observable<number>} An observable of the current phase
    */
   get phase$(): Observable<number> {
-    const now: number = (new Date()).getTime();
+    const now: number = Math.floor((new Date()).getTime() / 1000);
+
     return this.constants$
     // map deadlines to the delay until that deadline (from the previous delay)
       .map(constants => [
@@ -64,7 +66,13 @@ export class AnonymousVotingContractManager implements IAnonymousVotingContractM
       ])
       .switchMap(delays => Observable.from(delays))
       // the phase is the index in the array
-      .concatMap((delay, phase) => Observable.timer(delay).map(() => phase));
+      .concatMap((delay, phase) =>
+        // the delay is a maximum 32-bit number. For larger values (corresponding to longer than 49 days)
+        // treat it like infinity ( the user will need to refresh the page to get the update )
+        delay * 1000 > 0xffffffff ?
+          Observable.never() :
+          Observable.timer(delay * 1000).map(() => phase)
+      );
   }
 
   /**
@@ -91,7 +99,7 @@ export class AnonymousVotingContractManager implements IAnonymousVotingContractM
   get voteHashes$(): Observable<IVoteHash> {
     return this.events$
       .filter(log => log.event === VoteSubmitted.name)
-      .map(log => (<VoteSubmitted.Log> log).args);
+      .map(log => (<VoteSubmitted.Log>log).args);
   }
 
   /**
@@ -107,7 +115,7 @@ export class AnonymousVotingContractManager implements IAnonymousVotingContractM
       .switchMap(registerPromise => Observable.fromPromise(registerPromise))
       .catch(err => {
         this.errSvc.add(AnonymousVotingContractErrors.registration, err);
-        return <Observable<ITransactionReceipt>> Observable.empty();
+        return <Observable<ITransactionReceipt>>Observable.empty();
       });
   }
 
@@ -125,7 +133,7 @@ export class AnonymousVotingContractManager implements IAnonymousVotingContractM
       .switchMap(completeRegPromise => Observable.fromPromise(completeRegPromise))
       .catch(err => {
         this.errSvc.add(AnonymousVotingContractErrors.completeRegistration, err);
-        return <Observable<ITransactionReceipt>> Observable.empty();
+        return <Observable<ITransactionReceipt>>Observable.empty();
       });
   }
 
@@ -143,7 +151,7 @@ export class AnonymousVotingContractManager implements IAnonymousVotingContractM
       .switchMap(votePromise => Observable.fromPromise(votePromise))
       .catch(err => {
         this.errSvc.add(AnonymousVotingContractErrors.vote, err);
-        return <Observable<ITransactionReceipt>> Observable.empty();
+        return <Observable<ITransactionReceipt>>Observable.empty();
       });
   }
 
@@ -155,7 +163,7 @@ export class AnonymousVotingContractManager implements IAnonymousVotingContractM
   private initEvents$(): Observable<IContractLog> {
     return this.contract$
       .map(contract => contract.allEvents({fromBlock: 0, toBlock: 'latest'}))
-      .switchMap(events => <Observable<IContractLog>> Observable.create(observer => {
+      .switchMap(events => <Observable<IContractLog>>Observable.create(observer => {
         events.watch((err, log) => err ?
           this.errSvc.add(AnonymousVotingContractErrors.events, err) :
           observer.next(log)
@@ -202,7 +210,7 @@ export class AnonymousVotingContractManager implements IAnonymousVotingContractM
   private initRegistrationHashes$(): Observable<Observable<IRegistrationHashes>> {
     return this.events$
       .filter(log => log.event === VoterInitiatedRegistration.name)
-      .map(log => (<VoterInitiatedRegistration.Log> log).args)
+      .map(log => (<VoterInitiatedRegistration.Log>log).args)
       .map(initiatedEventArgs =>
         Observable.of({
           voter: initiatedEventArgs.voter,
@@ -210,7 +218,7 @@ export class AnonymousVotingContractManager implements IAnonymousVotingContractM
           blindSignatureHash: null
         }).concat(
           this.events$.filter(log => log.event === RegistrationComplete.name)
-            .map(log => (<RegistrationComplete.Log> log).args)
+            .map(log => (<RegistrationComplete.Log>log).args)
             .filter(completeEventArgs => completeEventArgs.voter === initiatedEventArgs.voter)
             .take(1)
             .map(completeEventArgs => ({
