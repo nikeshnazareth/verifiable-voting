@@ -12,6 +12,7 @@ import { IPFSService } from './ipfs/ipfs.service';
 import { TransactionService } from './transaction-service/transaction.service';
 import { VoteManagerService } from './vote-manager/vote-manager.service';
 import { VoteRetrievalService } from './vote-retrieval/vote-retrieval.service';
+import { WindowSizeService } from './window-size/window-size.service';
 
 @NgModule({
   providers: [
@@ -25,7 +26,8 @@ import { VoteRetrievalService } from './vote-retrieval/vote-retrieval.service';
     VoteManagerService,
     NoRestrictionContractService,
     CryptographyService,
-    TransactionService
+    TransactionService,
+    WindowSizeService
   ],
   imports: [
     HttpClientModule

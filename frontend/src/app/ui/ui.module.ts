@@ -9,6 +9,7 @@ import { ExplanationComponent } from './explanation/explanation.component';
 import { LaunchVoteComponent } from './launch-vote/launch-vote.component';
 import { ListTransactionsComponent } from './list-transactions/list-transactions.component';
 import { ListVotesComponent } from './list-votes/list-votes.component';
+import { MobileViewComponent } from './mobile-view/mobile-view.component';
 import { RegistrationPhaseComponent } from './vote/registration/registration-phase.component';
 import { ResultsComponent } from './vote/results/results-component';
 import { VoteComponent } from './vote/vote-component';
@@ -22,6 +23,7 @@ import { VotingPhaseComponent } from './vote/voting/voting-phase.component';
     LaunchVoteComponent,
     ListTransactionsComponent,
     ListVotesComponent,
+    MobileViewComponent,
     RegistrationPhaseComponent,
     ResultsComponent,
     VoteComponent,
@@ -40,6 +42,7 @@ import { VotingPhaseComponent } from './vote/voting/voting-phase.component';
     LaunchVoteComponent,
     ListTransactionsComponent,
     ListVotesComponent,
+    MobileViewComponent,
     RegistrationPhaseComponent,
     ResultsComponent,
     VoteComponent,
