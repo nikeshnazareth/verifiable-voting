@@ -1,0 +1,21 @@
+.container {
+  margin: 20px;
+
+  h2 {
+    margin-top: 20px;
+  }
+
+  mat-icon {
+    margin-right: 10px;
+  }
+
+  ul {
+    list-style-type: none;
+
+    li {
+      display: flex;
+      align-items: center;
+      margin-top: 10px;
+    }
+  }
+}

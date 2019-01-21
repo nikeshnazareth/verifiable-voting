@@ -1,3 +1,5 @@
+import { Observable } from 'rxjs/Observable';
+
 import { IWeb3Provider, IWeb3Service } from '../core/ethereum/web3.service';
 import { Mock } from './module';
 
@@ -15,6 +17,10 @@ export class Web3Service implements IWeb3Service {
 
   get defaultAccount(): string {
     return this.isInjected ? arbitraryEthAcount : null;
+  }
+
+  get network$(): Observable<string> {
+    return Observable.empty();
   }
 
   sha3(preimage: string): string {
