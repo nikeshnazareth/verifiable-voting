@@ -48,6 +48,9 @@ import { WindowSizeService } from './core/window-size/window-size.service';
           <mat-tab label="[ Registration Authority only ]" *ngIf="isOnRinkeby$ | async">
             <vv-complete-registration></vv-complete-registration>
           </mat-tab>
+          <mat-tab label="Disclaimer">
+            <vv-disclaimer></vv-disclaimer>
+          </mat-tab>
         </mat-tab-group>
       </ng-template>
     </div>

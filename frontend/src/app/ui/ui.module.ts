@@ -6,6 +6,7 @@ import { MaterialModule } from '../material/material.module';
 import { CompleteRegistrationComponent } from './complete-registration/complete-registration.component';
 import { ConnectEthereumComponent } from './connect-ethereum/connect-ethereum';
 import { DatetimePickerComponent } from './datetime-picker/datetime-picker.component';
+import { DisclaimerComponent } from './disclaimer/disclaimer.component';
 import { ExplanationComponent } from './explanation/explanation.component';
 import { LaunchVoteComponent } from './launch-vote/launch-vote.component';
 import { ListTransactionsComponent } from './list-transactions/list-transactions.component';
@@ -21,6 +22,7 @@ import { VotingPhaseComponent } from './vote/voting/voting-phase.component';
     ConnectEthereumComponent,
     CompleteRegistrationComponent,
     DatetimePickerComponent,
+    DisclaimerComponent,
     ExplanationComponent,
     LaunchVoteComponent,
     ListTransactionsComponent,
@@ -41,6 +43,7 @@ import { VotingPhaseComponent } from './vote/voting/voting-phase.component';
     ConnectEthereumComponent,
     CompleteRegistrationComponent,
     DatetimePickerComponent,
+    DisclaimerComponent,
     ExplanationComponent,
     LaunchVoteComponent,
     ListTransactionsComponent,
