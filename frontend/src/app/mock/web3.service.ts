@@ -15,12 +15,16 @@ export class Web3Service implements IWeb3Service {
     return this.isInjected ? arbitraryWeb3Provider : null;
   }
 
-  get defaultAccount(): string {
-    return this.isInjected ? arbitraryEthAcount : null;
+  get defaultAccount$(): Observable<string> {
+    return this.isInjected ? Observable.of(arbitraryEthAcount) : Observable.of(null);
   }
 
   get network$(): Observable<string> {
     return Observable.empty();
+  }
+
+  requestAccountAccess$(): Observable<boolean> {
+    return Observable.of(true);
   }
 
   sha3(preimage: string): string {

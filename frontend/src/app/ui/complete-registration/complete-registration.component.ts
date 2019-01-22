@@ -101,14 +101,15 @@ export class CompleteRegistrationComponent implements OnInit, OnDestroy {
    * raise an error if it is undefined
    */
   fillAddress(ctrl: AbstractControl) {
-    const account: string = this.web3Svc.defaultAccount;
-    if (typeof account === 'undefined') {
-      this.errSvc.add(Web3Errors.account, null);
-    } else {
-      ctrl.setValue(this.web3Svc.defaultAccount.slice(2));
-    }
+    this.web3Svc.defaultAccount$
+      .subscribe(account => {
+        if (typeof account === 'undefined' || account === null) {
+          this.errSvc.add(Web3Errors.account, null);
+        } else {
+          ctrl.setValue(account.slice(2));
+        }
+      });
   }
-
 
   /**
    * Normalise the form values so that all addresses are lowercase and start with 0x

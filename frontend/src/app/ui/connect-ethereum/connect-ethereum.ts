@@ -9,7 +9,9 @@ import { Web3Service } from '../../core/ethereum/web3.service';
       <ul>
         <li>
           <mat-icon *ngIf="web3Injected; else web3Missing">check_box</mat-icon>
-          <ng-template #web3Missing><mat-icon>check_box_outline_blank</mat-icon></ng-template>
+          <ng-template #web3Missing>
+            <mat-icon>check_box_outline_blank</mat-icon>
+          </ng-template>
           <span>Install the <a href="https://metamask.io">MetaMask</a> browser extension</span>
         </li>
         <li>
@@ -26,6 +28,6 @@ export class ConnectEthereumComponent {
   public web3Injected: boolean;
 
   constructor(private web3Svc: Web3Service) {
-    this.web3Injected = this.web3Svc.isInjected;
+    this.web3Injected = this.web3Svc.currentProvider !== null;
   }
 }

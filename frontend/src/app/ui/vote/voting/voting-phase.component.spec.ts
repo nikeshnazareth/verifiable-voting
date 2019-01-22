@@ -153,11 +153,12 @@ describe('Component: VotingPhaseComponent', () => {
         it('should fill the Voter Address input box with the current web3 active account', () => {
           expect(Page.voterAddressInput.nativeElement.value).toBeFalsy();
           DOMInteractionUtility.clickOn(Page.voterAddressButton);
-          expect(Page.voterAddressInput.nativeElement.value).toEqual(page.web3Svc.defaultAccount.slice(2));
+          page.web3Svc.defaultAccount$
+            .subscribe(account => expect(Page.voterAddressInput.nativeElement.value).toEqual(account.slice(2)));
         });
 
         it('should raise an error with the Error Service if the default account is undefined', () => {
-          spyOnProperty(page.web3Svc, 'defaultAccount').and.returnValue(undefined);
+          spyOnProperty(page.web3Svc, 'defaultAccount$').and.returnValue(Observable.of(undefined));
           DOMInteractionUtility.clickOn(Page.voterAddressButton);
           expect(page.errSvc.add).toHaveBeenCalledWith(Web3Errors.account, null);
         });
@@ -215,11 +216,12 @@ describe('Component: VotingPhaseComponent', () => {
         it('should fill the Anonymous Address input box with the current web3 active account', () => {
           expect(Page.anonymousAddressInput.nativeElement.value).toBeFalsy();
           DOMInteractionUtility.clickOn(Page.anonymousAddressButton);
-          expect(Page.anonymousAddressInput.nativeElement.value).toEqual(page.web3Svc.defaultAccount.slice(2));
+          page.web3Svc.defaultAccount$
+            .subscribe(account => expect(Page.anonymousAddressInput.nativeElement.value).toEqual(account.slice(2)));
         });
 
         it('should raise an error with the Error Service if the default account is undefined', () => {
-          spyOnProperty(page.web3Svc, 'defaultAccount').and.returnValue(undefined);
+          spyOnProperty(page.web3Svc, 'defaultAccount$').and.returnValue(Observable.of(undefined));
           DOMInteractionUtility.clickOn(Page.anonymousAddressButton);
           expect(page.errSvc.add).toHaveBeenCalledWith(Web3Errors.account, null);
         });

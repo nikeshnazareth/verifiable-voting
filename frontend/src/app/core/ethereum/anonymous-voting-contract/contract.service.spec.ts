@@ -5,15 +5,14 @@ import { APP_CONFIG } from '../../../config';
 import { Mock } from '../../../mock/module';
 import { ErrorService } from '../../error-service/error.service';
 import { ITruffleContractWrapperService, TruffleContractWrapperService } from '../truffle-contract-wrapper.service';
-import { IWeb3Service, Web3Service } from '../web3.service';
+import { Web3Service } from '../web3.service';
 import { AnonymousVotingContractService } from './contract.service';
 
 describe('Service: AnonymousVotingContractService', () => {
-  let web3Svc: IWeb3Service;
+  let web3Svc: Web3Service;
   let contractSvc: ITruffleContractWrapperService;
   let errSvc: ErrorService;
   const anonymousVotingSvc = () => new AnonymousVotingContractService(web3Svc, contractSvc, errSvc);
-
 
   beforeEach(() => {
     TestBed.configureTestingModule({

@@ -18,6 +18,8 @@ import { AnonymousVotingContractService } from '../ethereum/anonymous-voting-con
 import { ITransactionReceipt } from '../ethereum/transaction.interface';
 import { address } from '../ethereum/type.mappings';
 import { VoteListingContractService } from '../ethereum/vote-listing-contract/contract.service';
+import { Web3Errors } from '../ethereum/web3-errors';
+import { Web3Service } from '../ethereum/web3.service';
 import { IVoteParameters } from '../ipfs/formats.interface';
 import { IPFSService } from '../ipfs/ipfs.service';
 import { TransactionService } from '../transaction-service/transaction.service';
@@ -60,6 +62,7 @@ export class VoteManagerService implements IVoteManagerService {
               private cryptoSvc: CryptographyService,
               private txSvc: TransactionService,
               private ipfsSvc: IPFSService,
+              private web3Svc: Web3Service,
               private errSvc: ErrorService) {
   }
 
@@ -78,22 +81,30 @@ export class VoteManagerService implements IVoteManagerService {
               params: IVoteParameters,
               eligibilityContract: address,
               registrationAuth: address): Observable<void> {
-    return this.ipfsSvc.addJSON(params)
-      .catch(err => {
-        this.errSvc.add(VoteManagerErrors.ipfs.addParametersHash(params), err);
-        return <Observable<string>> Observable.empty();
-      })
-      .do(hash => {
-        const tx: Observable<ITransactionReceipt> = this.voteListingSvc.deployVote$({
-          paramsHash: hash,
-          eligibilityContract: eligibilityContract,
-          registrationAuthority: registrationAuth,
-          registrationDeadline: registrationDeadline,
-          votingDeadline: votingDeadline
-        });
-        this.txSvc.add(tx, VoteManagerMessages.deploy(params.topic));
-      })
-      .map(() => {
+    return this.web3Svc.requestAccountAccess$()
+      .switchMap(granted => {
+        if (granted) {
+          return this.ipfsSvc.addJSON(params)
+            .catch(err => {
+              this.errSvc.add(VoteManagerErrors.ipfs.addParametersHash(params), err);
+              return <Observable<string>>Observable.empty();
+            })
+            .do(hash => {
+              const tx: Observable<ITransactionReceipt> = this.voteListingSvc.deployVote$({
+                paramsHash: hash,
+                eligibilityContract: eligibilityContract,
+                registrationAuthority: registrationAuth,
+                registrationDeadline: registrationDeadline,
+                votingDeadline: votingDeadline
+              });
+              this.txSvc.add(tx, VoteManagerMessages.deploy(params.topic));
+            })
+            .map(() => {
+            });
+        } else {
+          this.errSvc.add(Web3Errors.unauthorised, null);
+          return Observable.empty();
+        }
       });
   }
 
@@ -111,20 +122,28 @@ export class VoteManagerService implements IVoteManagerService {
               voterAddr: address,
               anonymousAddr: address,
               blindingFactor: string): Observable<void> {
-    return Observable.of(this.cryptoSvc.blind(anonymousAddr, blindingFactor, registrationKey))
-      .filter(blindedAddr => blindedAddr !== null)
-      .map(blindedAddr => ({blinded_address: blindedAddr}))
-      .switchMap(wrappedBlindedAddr => this.ipfsSvc.addJSON(wrappedBlindedAddr))
-      .catch(err => {
-        this.errSvc.add(VoteManagerErrors.ipfs.addBlindedAddress(), err);
-        return <Observable<string>> Observable.empty();
-      })
-      .do(blindedAddrHash => {
-        const tx: Observable<ITransactionReceipt> =
-          this.anonymousVotingContractSvc.at(contractAddr).register$(voterAddr, blindedAddrHash);
-        this.txSvc.add(tx, VoteManagerMessages.register());
-      })
-      .map(() => {
+    return this.web3Svc.requestAccountAccess$()
+      .switchMap(granted => {
+        if (granted) {
+          return Observable.of(this.cryptoSvc.blind(anonymousAddr, blindingFactor, registrationKey))
+            .filter(blindedAddr => blindedAddr !== null)
+            .map(blindedAddr => ({blinded_address: blindedAddr}))
+            .switchMap(wrappedBlindedAddr => this.ipfsSvc.addJSON(wrappedBlindedAddr))
+            .catch(err => {
+              this.errSvc.add(VoteManagerErrors.ipfs.addBlindedAddress(), err);
+              return <Observable<string>>Observable.empty();
+            })
+            .do(blindedAddrHash => {
+              const tx: Observable<ITransactionReceipt> =
+                this.anonymousVotingContractSvc.at(contractAddr).register$(voterAddr, blindedAddrHash);
+              this.txSvc.add(tx, VoteManagerMessages.register());
+            })
+            .map(() => {
+            });
+        } else {
+          this.errSvc.add(Web3Errors.unauthorised, null);
+          return Observable.empty();
+        }
       });
   }
 
@@ -144,20 +163,28 @@ export class VoteManagerService implements IVoteManagerService {
                           registrationKey: IRSAKey,
                           privateExponent: string,
                           blindedAddress: string): Observable<void> {
-    return Observable.of(this.cryptoSvc.rawSign(blindedAddress, registrationKey.modulus, privateExponent))
-      .filter(blindSignature => blindSignature !== null)
-      .map(blindSignature => ({blinded_signature: blindSignature}))
-      .switchMap(wrappedBlindSig => this.ipfsSvc.addJSON(wrappedBlindSig))
-      .catch(err => {
-        this.errSvc.add(VoteManagerErrors.ipfs.addBlindSignature(), err);
-        return <Observable<string>> Observable.empty();
-      })
-      .do(blindSigHash => {
-        const tx: Observable<ITransactionReceipt> =
-          this.anonymousVotingContractSvc.at(contractAddr).completeRegistration$(voterAddr, blindSigHash, registrationAuthority);
-        this.txSvc.add(tx, VoteManagerMessages.completeRegistration());
-      })
-      .map(() => {
+    return this.web3Svc.requestAccountAccess$()
+      .switchMap(granted => {
+        if (granted) {
+          return Observable.of(this.cryptoSvc.rawSign(blindedAddress, registrationKey.modulus, privateExponent))
+            .filter(blindSignature => blindSignature !== null)
+            .map(blindSignature => ({blinded_signature: blindSignature}))
+            .switchMap(wrappedBlindSig => this.ipfsSvc.addJSON(wrappedBlindSig))
+            .catch(err => {
+              this.errSvc.add(VoteManagerErrors.ipfs.addBlindSignature(), err);
+              return <Observable<string>>Observable.empty();
+            })
+            .do(blindSigHash => {
+              const tx: Observable<ITransactionReceipt> =
+                this.anonymousVotingContractSvc.at(contractAddr).completeRegistration$(voterAddr, blindSigHash, registrationAuthority);
+              this.txSvc.add(tx, VoteManagerMessages.completeRegistration());
+            })
+            .map(() => {
+            });
+        } else {
+          this.errSvc.add(Web3Errors.unauthorised, null);
+          return Observable.empty();
+        }
       });
   }
 
@@ -177,24 +204,32 @@ export class VoteManagerService implements IVoteManagerService {
           blindedSignature: string,
           blindingFactor: string,
           candidateIdx: number): Observable<void> {
-    return Observable.of(this.cryptoSvc.unblind(blindedSignature, blindingFactor, registrationKey))
-      .filter(signedAddress => signedAddress != null)
-      .filter(signedAddress => this.confirmAuthorised(anonymousAddr, signedAddress, registrationKey))
-      .map(signedAddress => ({
-        signed_address: signedAddress,
-        candidateIdx: candidateIdx
-      }))
-      .switchMap(vote => this.ipfsSvc.addJSON(vote))
-      .catch(err => {
-        this.errSvc.add(VoteManagerErrors.ipfs.addVote(), err);
-        return <Observable<string>> Observable.empty();
-      })
-      .do(voteHash => {
-        const tx: Observable<ITransactionReceipt> =
-          this.anonymousVotingContractSvc.at(contractAddr).vote$(anonymousAddr, voteHash);
-        this.txSvc.add(tx, VoteManagerMessages.vote());
-      })
-      .map(() => {
+    return this.web3Svc.requestAccountAccess$()
+      .switchMap(granted => {
+        if (granted) {
+          return Observable.of(this.cryptoSvc.unblind(blindedSignature, blindingFactor, registrationKey))
+            .filter(signedAddress => signedAddress != null)
+            .filter(signedAddress => this.confirmAuthorised(anonymousAddr, signedAddress, registrationKey))
+            .map(signedAddress => ({
+              signed_address: signedAddress,
+              candidateIdx: candidateIdx
+            }))
+            .switchMap(vote => this.ipfsSvc.addJSON(vote))
+            .catch(err => {
+              this.errSvc.add(VoteManagerErrors.ipfs.addVote(), err);
+              return <Observable<string>>Observable.empty();
+            })
+            .do(voteHash => {
+              const tx: Observable<ITransactionReceipt> =
+                this.anonymousVotingContractSvc.at(contractAddr).vote$(anonymousAddr, voteHash);
+              this.txSvc.add(tx, VoteManagerMessages.vote());
+            })
+            .map(() => {
+            });
+        } else {
+          this.errSvc.add(Web3Errors.unauthorised, null);
+          return Observable.empty();
+        }
       });
   }
 

@@ -6,12 +6,12 @@ import { Observable } from 'rxjs/Observable';
 import { Subject } from 'rxjs/Subject';
 import { Subscription } from 'rxjs/Subscription';
 
-import { CryptographyService} from '../../../core/cryptography/cryptography.service';
+import { CryptographyService } from '../../../core/cryptography/cryptography.service';
 import { IRSAKey } from '../../../core/cryptography/rsa-key.interface';
 import { ErrorService } from '../../../core/error-service/error.service';
 import { address } from '../../../core/ethereum/type.mappings';
 import { Web3Errors } from '../../../core/ethereum/web3-errors';
-import { Web3Service} from '../../../core/ethereum/web3.service';
+import { Web3Service } from '../../../core/ethereum/web3.service';
 import { VoteManagerService } from '../../../core/vote-manager/vote-manager.service';
 import { EthereumAddressValidator } from '../../../validators/ethereum-address.validator';
 
@@ -91,12 +91,14 @@ export class RegistrationPhaseComponent implements OnInit, OnDestroy {
    * raise an error if it is undefined
    */
   fillAddress(ctrl: AbstractControl) {
-    const account: string = this.web3Svc.defaultAccount;
-    if (typeof account === 'undefined') {
-      this.errSvc.add(Web3Errors.account, null);
-    } else {
-      ctrl.setValue(this.web3Svc.defaultAccount.slice(2));
-    }
+    this.web3Svc.defaultAccount$
+      .subscribe(account => {
+        if (typeof account === 'undefined' || account === null) {
+          this.errSvc.add(Web3Errors.account, null);
+        } else {
+          ctrl.setValue(account.slice(2));
+        }
+      });
   }
 }
 

@@ -7,6 +7,7 @@ import { CryptographyService } from '../cryptography/cryptography.service';
 import { ErrorService } from '../error-service/error.service';
 import { AnonymousVotingContractService } from '../ethereum/anonymous-voting-contract/contract.service';
 import { VoteListingContractService } from '../ethereum/vote-listing-contract/contract.service';
+import { Web3Service } from '../ethereum/web3.service';
 import { IPFSService } from '../ipfs/ipfs.service';
 import { TransactionService } from '../transaction-service/transaction.service';
 import Spy = jasmine.Spy;
@@ -20,9 +21,12 @@ describe('Service: VoteManagerService', () => {
   let cryptoSvc: CryptographyService;
   let txSvc: TransactionService;
   let ipfsSvc: IPFSService;
+  let web3Svc: Web3Service;
   let errSvc: ErrorService;
 
-  const voteManagerSvc = () => new VoteManagerService(voteListingSvc, anonymousVotingContractSvc, cryptoSvc, txSvc, ipfsSvc, errSvc);
+  const voteManagerSvc = () => new VoteManagerService(
+    voteListingSvc, anonymousVotingContractSvc, cryptoSvc, txSvc, ipfsSvc, web3Svc, errSvc
+  );
 
   beforeEach(() => {
     TestBed.configureTestingModule({
@@ -33,6 +37,7 @@ describe('Service: VoteManagerService', () => {
         {provide: VoteListingContractService, useClass: Mock.VoteListingContractService},
         {provide: AnonymousVotingContractService, useClass: Mock.AnonymousVotingContractService},
         {provide: CryptographyService, useClass: Mock.CryptographyService},
+        {provide: Web3Service, useClass: Mock.Web3Service},
         {provide: IPFSService, useClass: Mock.IPFSService},
       ]
     });
@@ -42,6 +47,7 @@ describe('Service: VoteManagerService', () => {
     cryptoSvc = TestBed.get(CryptographyService);
     txSvc = TestBed.get(TransactionService);
     ipfsSvc = TestBed.get(IPFSService);
+    web3Svc = TestBed.get(Web3Service);
     errSvc = TestBed.get(ErrorService);
   });
 
