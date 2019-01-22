@@ -18,6 +18,7 @@ import { IContractLog } from '../contract.interface';
 import { ITransactionReceipt } from '../transaction.interface';
 import { ITruffleContractAbstraction, TruffleContractWrapperService } from '../truffle-contract-wrapper.service';
 import { address } from '../type.mappings';
+import { Web3Errors } from '../web3-errors';
 import { Web3Service } from '../web3.service';
 import { VoteListingContractErrors } from './contract-errors';
 import { VoteCreatedEvent } from './contract-events.interface';
@@ -63,19 +64,27 @@ export class VoteListingContractService implements IVoteListingContractService {
    * or an empty observable if there was an error
    */
   deployVote$(voteConstants: IVoteConstants): Observable<ITransactionReceipt> {
-    return Observable.fromPromise(
-      this.contractPromise.then(contract => contract.deploy(
-        voteConstants.registrationDeadline,
-        voteConstants.votingDeadline,
-        voteConstants.paramsHash,
-        voteConstants.eligibilityContract,
-        voteConstants.registrationAuthority,
-        {from: this.web3Svc.defaultAccount}
-      ))
-    )
-      .catch(err => {
-        this.errSvc.add(VoteListingContractErrors.deployVote, err);
-        return Observable.empty();
+    return this.web3Svc.defaultAccount$
+      .switchMap(account => {
+        if (typeof account === 'undefined' || account === null) {
+          this.errSvc.add(Web3Errors.account, null);
+          return Observable.empty();
+        } else {
+          return Observable.fromPromise(
+            this.contractPromise.then(contract => contract.deploy(
+              voteConstants.registrationDeadline,
+              voteConstants.votingDeadline,
+              voteConstants.paramsHash,
+              voteConstants.eligibilityContract,
+              voteConstants.registrationAuthority,
+              {from: account}
+            ))
+          )
+            .catch(err => {
+              this.errSvc.add(VoteListingContractErrors.deployVote, err);
+              return Observable.empty();
+            });
+        }
       });
   }
 
@@ -107,7 +116,7 @@ export class VoteListingContractService implements IVoteListingContractService {
       .concatMap(promise => Observable.fromPromise(promise))
       .catch(err => {
         this.errSvc.add(VoteListingContractErrors.deployedVotes, err);
-        return <Observable<address>> Observable.empty();
+        return <Observable<address>>Observable.empty();
       });
   }
 
@@ -127,7 +136,7 @@ export class VoteListingContractService implements IVoteListingContractService {
       abstraction.setProvider(this.web3Svc.currentProvider);
 
       return abstraction.deployed()
-        .then(contract => <VoteListingAPI> contract)
+        .then(contract => <VoteListingAPI>contract)
         .catch(err => {
           this.errSvc.add(VoteListingContractErrors.network, err);
           return null;
@@ -159,7 +168,7 @@ export class VoteListingContractService implements IVoteListingContractService {
 
     return Observable.fromPromise(p).switch()
       .filter(log => log.event === VoteCreatedEvent.name)
-      .map(log => (<VoteCreatedEvent.Log> log).args.contractAddress);
+      .map(log => (<VoteCreatedEvent.Log>log).args.contractAddress);
   }
 }
 

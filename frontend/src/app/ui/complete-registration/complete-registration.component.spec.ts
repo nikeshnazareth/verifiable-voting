@@ -147,11 +147,12 @@ describe('Component: CompleteRegistrationComponent', () => {
         it('should fill the Registration Authority Address input box with the current web3 active account', () => {
           expect(page.registrationAuthInputBox.nativeElement.value).toBeFalsy();
           DOMInteractionUtility.clickOn(page.registrationAuthButton);
-          expect(page.registrationAuthInputBox.nativeElement.value).toEqual(page.web3Svc.defaultAccount.slice(2));
+          page.web3Svc.defaultAccount$
+            .subscribe(account => expect(page.registrationAuthInputBox.nativeElement.value).toEqual(account.slice(2)));
         });
 
         it('should raise an error with the Error Service if the default account is undefined', () => {
-          spyOnProperty(page.web3Svc, 'defaultAccount').and.returnValue(undefined);
+          spyOnProperty(page.web3Svc, 'defaultAccount$').and.returnValue(Observable.of(undefined));
           DOMInteractionUtility.clickOn(page.registrationAuthButton);
           expect(page.errSvc.add).toHaveBeenCalledWith(Web3Errors.account, null);
         });

@@ -4,6 +4,7 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 
 import { MaterialModule } from '../material/material.module';
 import { CompleteRegistrationComponent } from './complete-registration/complete-registration.component';
+import { ConnectEthereumComponent } from './connect-ethereum/connect-ethereum';
 import { DatetimePickerComponent } from './datetime-picker/datetime-picker.component';
 import { ExplanationComponent } from './explanation/explanation.component';
 import { LaunchVoteComponent } from './launch-vote/launch-vote.component';
@@ -17,6 +18,7 @@ import { VotingPhaseComponent } from './vote/voting/voting-phase.component';
 
 @NgModule({
   declarations: [
+    ConnectEthereumComponent,
     CompleteRegistrationComponent,
     DatetimePickerComponent,
     ExplanationComponent,
@@ -36,6 +38,7 @@ import { VotingPhaseComponent } from './vote/voting/voting-phase.component';
     CommonModule
   ],
   exports: [
+    ConnectEthereumComponent,
     CompleteRegistrationComponent,
     DatetimePickerComponent,
     ExplanationComponent,
